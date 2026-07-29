@@ -1,0 +1,20 @@
+:root {
+
+    /* COLORS */
+
+    --color-primary: #1976D2;
+    --color-primary-hover: #1565C0;
+
+    --color-success: #43A047;
+    --color-warning: #FB8C00;
+    --color-danger: #E53935;
+
+    --color-text: #202124;
+    --color-text-light: #666666;
+
+    --surface-primary: #FFFFFF;
+    --surface-secondary: #F5F7FA;
+
+    --border-color: #DDDDDD;
+
+}

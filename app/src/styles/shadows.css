@@ -1,0 +1,9 @@
+:root {
+
+    --shadow-card:
+        0 10px 25px rgba(0,0,0,.08);
+
+    --shadow-popup:
+        0 16px 40px rgba(0,0,0,.15);
+
+}

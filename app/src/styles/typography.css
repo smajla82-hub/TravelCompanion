@@ -1,0 +1,18 @@
+:root {
+
+    --font-family:
+        Inter,
+        system-ui,
+        sans-serif;
+
+    --font-xs: 12px;
+    --font-sm: 14px;
+    --font-md: 16px;
+    --font-lg: 22px;
+    --font-xl: 36px;
+
+    --font-weight-normal: 400;
+    --font-weight-medium: 500;
+    --font-weight-bold: 700;
+
+}
