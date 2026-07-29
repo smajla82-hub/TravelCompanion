@@ -1,0 +1,1 @@
+The Core Engine contains all business knowledge of the Travel Companion platform.
