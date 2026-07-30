@@ -1,11 +1,14 @@
+import { Container, Heading } from "../components/ui";
 import { CurrentTripCard } from "../components/cards";
 
 export default function DashboardPage() {
-  return (
-    <>
-      <h1>Travel Companion</h1>
+    return (
+        <Container>
+            <Heading level={1}>
+                Travel Companion
+            </Heading>
 
-      <CurrentTripCard />
-    </>
-  );
+            <CurrentTripCard />
+        </Container>
+    );
 }
