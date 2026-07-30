@@ -1,15 +1,11 @@
-import CurrentTripCard from "../components/cards/CurrentTripCard";
+import { CurrentTripCard } from "../components/cards";
 
 export default function DashboardPage() {
-    return (
-        <main
-            style={{
-                display: "flex",
-                justifyContent: "center",
-                marginTop: "80px",
-            }}
-        >
-            <CurrentTripCard />
-        </main>
-    );
+  return (
+    <>
+      <h1>Travel Companion</h1>
+
+      <CurrentTripCard />
+    </>
+  );
 }
