@@ -1,0 +1,29 @@
+.tc-button{
+    width:100%;
+
+    padding:14px 18px;
+
+    border:none;
+
+    border-radius:12px;
+
+    background:var(--color-primary);
+
+    color:white;
+
+    font-size:16px;
+
+    font-weight:600;
+
+    cursor:pointer;
+
+    transition:.2s;
+}
+
+.tc-button:hover{
+    filter:brightness(.95);
+}
+
+.tc-button:active{
+    transform:scale(.98);
+}
