@@ -4,6 +4,8 @@ import type { Trip } from "../../types/Trip";
 
 import "./TripCard.css";
 
+import { formatDate } from "../../utils/formatDate";
+
 type TripCardProps = {
     trip: Trip;
 };
@@ -17,7 +19,7 @@ export function TripCard({
                 <h3>{trip.destination}</h3>
 
                 <p>
-                    {trip.startDate} – {trip.endDate}
+                    {formatDate(trip.startDate)} – {formatDate(trip.endDate)}
                 </p>
 
                 <p>{trip.country}</p>
@@ -25,3 +27,4 @@ export function TripCard({
         </Card>
     );
 }
+

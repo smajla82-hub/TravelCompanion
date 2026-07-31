@@ -4,6 +4,8 @@ import "./CurrentTripCard.css";
 
 import type { Trip } from "../../types/Trip";
 
+import { formatDate } from "../../utils/formatDate";
+
 type CurrentTripCardProps = {
     trip: Trip;
 };
@@ -25,7 +27,7 @@ export function CurrentTripCard({
                 </div>
 
                 <p>
-                    {trip.startDate} – {trip.endDate}
+                    {formatDate(trip.startDate)} – {formatDate(trip.endDate)}
                 </p>
 
                 <p>

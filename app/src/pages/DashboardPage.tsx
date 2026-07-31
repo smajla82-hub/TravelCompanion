@@ -5,12 +5,13 @@ import {
     TripCard,
 } from "../components/cards";
 
-import { TripService } from "../services/TripService";
+import { useTrips } from "../hooks/useTrips";
 
 export default function DashboardPage() {
-    const activeTrip = TripService.getActive();
-
-    const trips = TripService.getAll();
+    const {
+        trips,
+        activeTrip,
+    } = useTrips();
 
     return (
         <Container>
