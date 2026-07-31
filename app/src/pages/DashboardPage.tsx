@@ -1,4 +1,4 @@
-import { Container, Heading } from "../components/ui";
+import { Container, Grid, Heading } from "../components/ui";
 import { CurrentTripCard } from "../components/cards";
 
 export default function DashboardPage() {
@@ -8,7 +8,9 @@ export default function DashboardPage() {
                 Travel Companion
             </Heading>
 
-            <CurrentTripCard />
+            <Grid columns={2}>
+                <CurrentTripCard />
+            </Grid>
         </Container>
     );
 }

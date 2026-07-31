@@ -1,8 +1,6 @@
-.grid{
-    display:grid;
-
-    gap:24px;
-
-    grid-template-columns:
-        repeat(auto-fit,minmax(340px,1fr));
+.tc-grid {
+    display: grid;
+    gap: var(--space-lg);
+    width: 100%;
+    align-items: start;
 }
