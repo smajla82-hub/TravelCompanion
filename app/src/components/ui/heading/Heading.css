@@ -1,12 +1,12 @@
 h1 {
-    font-size: 42px;
-    margin-bottom: 32px;
+    font-size: var(--font-size-2xl);
+    margin-bottom: var(--space-xl);
 }
 
 h2 {
-    font-size: 28px;
+    font-size: var(--font-size-xl);
 }
 
 h3 {
-    font-size: 22px;
+    font-size: var(--font-size-lg);
 }
