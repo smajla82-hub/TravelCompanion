@@ -10,6 +10,8 @@ export const trips: Trip[] = [
 
         country: "Italy",
 
+        city: "Peschiera del Garda",
+
         startDate: "2026-07-15",
 
         endDate: "2026-07-20",

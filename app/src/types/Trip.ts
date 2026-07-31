@@ -7,6 +7,8 @@ export type Trip = {
 
     country: string;
 
+    city: string;
+
     startDate: string;
 
     endDate: string;

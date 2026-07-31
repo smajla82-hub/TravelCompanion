@@ -2,10 +2,10 @@ import { Container, Grid, Heading } from "../components/ui";
 
 import { CurrentTripCard } from "../components/cards";
 
-import { trips } from "../data/trips";
+import { TripService } from "../services/TripService";
 
 export default function DashboardPage() {
-    const activeTrip = trips.find((trip) => trip.active);
+    const activeTrip = TripService.getActive();
 
     return (
         <Container>
