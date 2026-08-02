@@ -4,4 +4,13 @@
   border-radius: 16px;
   padding: var(--space-lg);
   box-shadow: var(--shadow-card);
+
+}
+
+.tc-card--default{
+   /* default variant */
+}
+
+.tc-card--outlined{
+    box-shadow:none;
 }

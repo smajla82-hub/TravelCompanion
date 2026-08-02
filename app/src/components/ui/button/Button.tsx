@@ -1,14 +1,29 @@
 import "./Button.css";
 
-type ButtonProps = {
-  children: React.ReactNode;
-  onClick?: () => void;
-};
+import type { ReactNode, ButtonHTMLAttributes } from "react";
 
-export function Button({ children, onClick }: ButtonProps) {
-  return (
-    <button className="tc-button" onClick={onClick}>
-      {children}
-    </button>
-  );
+type ButtonVariant =
+    | "primary"
+    | "secondary";
+
+type ButtonProps =
+    ButtonHTMLAttributes<HTMLButtonElement> & {
+        children: ReactNode;
+        variant?: ButtonVariant;
+    };
+
+export function Button({
+    children,
+    variant = "primary",
+    className = "",
+    ...props
+}: ButtonProps) {
+    return (
+        <button
+            className={`tc-button tc-button--${variant} ${className}`}
+            {...props}
+        >
+            {children}
+        </button>
+    );
 }

@@ -27,3 +27,15 @@
 .tc-button:active{
     transform:scale(.98);
 }
+
+.tc-button--primary{
+    background:var(--color-primary);
+    color:white;
+}
+
+.tc-button--secondary{
+    background:white;
+    color:var(--color-primary);
+
+    border:1px solid var(--color-primary);
+}
