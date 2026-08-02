@@ -7,3 +7,4 @@ export * from "./heading";
 export * from "./icon";
 export * from "./stack";
 export * from "./text";
+export * from "./modal";
