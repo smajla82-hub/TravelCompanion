@@ -2,7 +2,7 @@ import { Card, Button, Stack } from "../ui";
 
 import "./CurrentTripCard.css";
 
-import type { Trip } from "../../types/Trip";
+import type { Trip } from "../../types";
 
 import { formatDate } from "../../utils/formatDate";
 

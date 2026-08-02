@@ -1,13 +1,15 @@
-export type Trip = {
-    id: string;
+export type TripStatus =
+    | "planning"
+    | "active"
+    | "finished";
 
-    title: string;
+export interface Trip {
+
+    id: string;
 
     destination: string;
 
     country: string;
-
-    city: string;
 
     startDate: string;
 
@@ -15,5 +17,8 @@ export type Trip = {
 
     travellers: number;
 
-    active: boolean;
-};
+    coverImage?: string;
+
+    status: TripStatus;
+
+}
