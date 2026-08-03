@@ -1,13 +1,21 @@
 import { trips } from "../data/trips";
 
-import type { Trip } from "../types/Trip";
+import type { Trip } from "../types";
 
-export class TripService {
-    static getAll(): Trip[] {
+export const TripService = {
+
+    getAll(): Trip[] {
         return trips;
-    }
+    },
 
-    static getActive(): Trip | undefined {
-        return trips.find((trip) => trip.active);
-    }
-}
+    getActive(): Trip | undefined {
+        return trips.find(
+            trip => trip.status === "active"
+        );
+    },
+
+    add(trip: Trip) {
+        trips.push(trip);
+    },
+
+};

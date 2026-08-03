@@ -15,8 +15,15 @@ import {
 import { NewTripModal } from "../components/trips";
 
 export default function DashboardPage() {
+
     const [newTripOpen, setNewTripOpen] =
         useState(false);
+
+    const [, forceRefresh] = useState(0);
+
+    function refreshTrips() {
+        forceRefresh(v => v + 1);
+    }
 
     return (
         <Container>
@@ -43,6 +50,7 @@ export default function DashboardPage() {
                 onClose={() =>
                     setNewTripOpen(false)
                 }
+                onTripCreated={refreshTrips}
             />
         </Container>
     );
