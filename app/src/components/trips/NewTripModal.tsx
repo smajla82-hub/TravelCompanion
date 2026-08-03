@@ -28,6 +28,26 @@ export function NewTripModal({
 
     function handleSave() {
 
+        if (!destination.trim()) {
+            alert("Destination is required.");
+            return;
+        }
+
+        if (!country.trim()) {
+            alert("Country is required.");
+            return;
+        }
+
+        if (!startDate || !endDate) {
+            alert("Both dates are required.");
+            return;
+        }
+
+        if (endDate < startDate) {
+            alert("End date cannot be before start date.");
+            return;
+        }
+
         const trip: Trip = {
             id: crypto.randomUUID(),
 
@@ -47,6 +67,12 @@ export function NewTripModal({
         TripService.add(trip);
 
         onTripCreated?.();
+
+        setDestination("");
+        setCountry("");
+        setStartDate("");
+        setEndDate("");
+        setTravellers(1);
 
         onClose();
     }
