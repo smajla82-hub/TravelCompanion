@@ -18,39 +18,38 @@ export function Modal({
     children,
     onClose,
 }: ModalProps) {
-    
     useEffect(() => {
+        if (!open) {
+            document.body.style.overflow = "";
 
-    if (!open) {
-        return;
-    }
-
-    const listener = (
-        event: KeyboardEvent,
-    ) => {
-
-        if (event.key === "Escape") {
-            onClose();
+            return;
         }
 
-    };
+        document.body.style.overflow = "hidden";
 
-    window.addEventListener(
-        "keydown",
-        listener,
-    );
+        const listener = (
+            event: KeyboardEvent,
+        ) => {
+            if (event.key === "Escape") {
+                onClose();
+            }
+        };
 
-    return () => {
-
-        window.removeEventListener(
+        window.addEventListener(
             "keydown",
             listener,
         );
 
-    };
+        return () => {
+            document.body.style.overflow = "";
 
-}, [open, onClose]);
-    
+            window.removeEventListener(
+                "keydown",
+                listener,
+            );
+        };
+    }, [open, onClose]);
+
     if (!open) {
         return null;
     }
@@ -63,6 +62,13 @@ export function Modal({
             <div
                 className="tc-modal"
                 onClick={(e) => e.stopPropagation()}
+                role="dialog"
+                aria-modal="true"
+                aria-labelledby={
+                    title
+                        ? "tc-modal-title"
+                        : undefined
+                }
             >
                 <button
                     className="tc-modal-close"
@@ -73,7 +79,10 @@ export function Modal({
                 </button>
 
                 {title && (
-                    <h2 className="tc-modal-title">
+                    <h2
+                        id="tc-modal-title"
+                        className="tc-modal-title"
+                    >
                         {title}
                     </h2>
                 )}
