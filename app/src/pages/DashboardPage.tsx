@@ -1,4 +1,10 @@
-import { Container, Heading } from "../components/ui";
+import { useState } from "react";
+
+import {
+    Container,
+    Heading,
+    Button,
+} from "../components/ui";
 
 import {
     CurrentTripSection,
@@ -6,18 +12,38 @@ import {
     ItinerarySection,
 } from "../components/sections";
 
+import { NewTripModal } from "../components/trips";
+
 export default function DashboardPage() {
+    const [newTripOpen, setNewTripOpen] =
+        useState(false);
+
     return (
         <Container>
             <Heading level={1}>
                 Travel Companion
             </Heading>
 
+            <Button
+                onClick={() =>
+                    setNewTripOpen(true)
+                }
+            >
+                + New Trip
+            </Button>
+
             <CurrentTripSection />
 
             <TripsSection />
 
             <ItinerarySection />
+
+            <NewTripModal
+                open={newTripOpen}
+                onClose={() =>
+                    setNewTripOpen(false)
+                }
+            />
         </Container>
     );
 }
