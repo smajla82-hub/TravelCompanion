@@ -9,8 +9,9 @@
     padding: 24px;
 
     background: rgba(0, 0, 0, 0.45);
-
     z-index: 1000;
+
+    animation: overlay-fade-in .2s ease;
 }
 
 .tc-modal {
@@ -28,6 +29,8 @@
     position: relative;
 
     box-shadow: 0 24px 64px rgba(0, 0, 0, .25);
+
+    animation: modalIn .25s ease;
 }
 
 .tc-modal-title {
@@ -55,4 +58,30 @@
     font-size: 28px;
 
     line-height: 1;
+}
+
+@keyframes overlayFade {
+
+    from {
+        opacity: 0;
+    }
+
+    to {
+        opacity: 1;
+    }
+
+}
+
+@keyframes modalIn {
+
+    from {
+        opacity: 0;
+        transform: translateY(20px) scale(.97);
+    }
+
+    to {
+        opacity: 1;
+        transform: translateY(0) scale(1);
+    }
+
 }
