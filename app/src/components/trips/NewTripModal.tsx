@@ -4,6 +4,10 @@ import { Modal, Button, Stack } from "../ui";
 
 import { TripService } from "../../services/TripService";
 
+import {
+    NewTripForm,
+} from ".";
+
 import type { Trip } from "../../types";
 
 import "./NewTripModal.css";
@@ -50,17 +54,12 @@ export function NewTripModal({
 
         const trip: Trip = {
             id: crypto.randomUUID(),
-
             destination,
             country,
-
             startDate,
             endDate,
-
             travellers,
-
             coverImage: "",
-
             status: "planning",
         };
 
@@ -83,68 +82,63 @@ export function NewTripModal({
             onClose={onClose}
             title="New Trip"
         >
-            <Stack
-                gap="md"
-                className="tc-trip-form"
-            >
-                <label>
-                    Destination
+            <NewTripForm>
 
-                    <input
-                        type="text"
-                        value={destination}
-                        onChange={(e) => setDestination(e.target.value)}
-                    />
-                </label>
+                <Stack gap="md">
 
-                <label>
-                    Country
+                    <label>
+                        Destination
+                        <input
+                            value={destination}
+                            onChange={e => setDestination(e.target.value)}
+                        />
+                    </label>
 
-                    <input
-                        type="text"
-                        value={country}
-                        onChange={(e) => setCountry(e.target.value)}
-                    />
-                </label>
+                    <label>
+                        Country
+                        <input
+                            value={country}
+                            onChange={e => setCountry(e.target.value)}
+                        />
+                    </label>
 
-                <label>
-                    Start Date
+                    <label>
+                        Start Date
+                        <input
+                            type="date"
+                            value={startDate}
+                            onChange={e => setStartDate(e.target.value)}
+                        />
+                    </label>
 
-                    <input
-                        type="date"
-                        value={startDate}
-                        onChange={(e) => setStartDate(e.target.value)}
-                    />
-                </label>
+                    <label>
+                        End Date
+                        <input
+                            type="date"
+                            value={endDate}
+                            onChange={e => setEndDate(e.target.value)}
+                        />
+                    </label>
 
-                <label>
-                    End Date
+                    <label>
+                        Travellers
+                        <input
+                            type="number"
+                            min={1}
+                            value={travellers}
+                            onChange={e => setTravellers(Number(e.target.value))}
+                        />
+                    </label>
 
-                    <input
-                        type="date"
-                        value={endDate}
-                        onChange={(e) => setEndDate(e.target.value)}
-                    />
-                </label>
+                    <Button 
+                    type="button"
+                    onClick={handleSave}>
+                        Save Trip
+                    </Button>
 
-                <label>
-                    Travellers
+                </Stack>
 
-                    <input
-                        type="number"
-                        min={1}
-                        value={travellers}
-                        onChange={(e) =>
-                            setTravellers(Number(e.target.value))
-                        }
-                    />
-                </label>
-
-                <Button onClick={handleSave}>
-                    Save Trip
-                </Button>
-
-            </Stack>
+            </NewTripForm>
         </Modal>
     );
 }
