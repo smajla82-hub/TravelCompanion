@@ -4,12 +4,14 @@ import type { ReactNode } from "react";
 
 type ModalProps = {
     open: boolean;
+    title?: string;
     children: ReactNode;
     onClose: () => void;
 };
 
 export function Modal({
     open,
+    title,
     children,
     onClose,
 }: ModalProps) {
@@ -29,11 +31,20 @@ export function Modal({
                 <button
                     className="tc-modal-close"
                     onClick={onClose}
+                    aria-label="Close"
                 >
                     ×
                 </button>
 
-                {children}
+                {title && (
+                    <h2 className="tc-modal-title">
+                        {title}
+                    </h2>
+                )}
+
+                <div className="tc-modal-content">
+                    {children}
+                </div>
             </div>
         </div>
     );

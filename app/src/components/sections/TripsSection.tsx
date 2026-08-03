@@ -39,8 +39,8 @@ export function TripsSection() {
 
             <Modal
                 open={selectedTrip !== null}
-                onClose={() =>
-                    setSelectedTrip(null)
+                title="Trip Detail"
+                onClose={() => setSelectedTrip(null)
                 }
             >
                 {selectedTrip && (
@@ -49,4 +49,5 @@ export function TripsSection() {
             </Modal>
         </>
     );
+
 }
