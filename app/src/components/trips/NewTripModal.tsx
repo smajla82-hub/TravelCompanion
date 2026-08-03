@@ -15,20 +15,30 @@ import "./NewTripModal.css";
 type NewTripModalProps = {
     open: boolean;
     onClose: () => void;
+
     onTripCreated?: () => void;
+
+    initialTrip?: {
+        destination: string;
+        country: string;
+        startDate: string;
+        endDate: string;
+        travellers: number;
+    };
 };
 
 export function NewTripModal({
     open,
     onClose,
     onTripCreated,
-}: NewTripModalProps) {
+    initialTrip,
+}: NewTripModalProps){
 
-    const [destination, setDestination] = useState("");
-    const [country, setCountry] = useState("");
-    const [startDate, setStartDate] = useState("");
-    const [endDate, setEndDate] = useState("");
-    const [travellers, setTravellers] = useState(1);
+    const [destination, setDestination] = useState(initialTrip?.destination ?? "");
+    const [country, setCountry] = useState(initialTrip?.country ?? "");
+    const [startDate, setStartDate] = useState(initialTrip?.startDate ?? "");
+    const [endDate, setEndDate] = useState(initialTrip?.endDate ?? "");
+    const [travellers, setTravellers] = useState(initialTrip?.travellers ?? 1);
 
     function handleSave() {
 
