@@ -6,16 +6,19 @@ type TripDetailProps = {
     trip: Trip;
     onEdit?: () => void;
     onDelete?: () => void;
+    onSetActive?: () => void;
 };
 
 export function TripDetail({
     trip,
     onEdit,
     onDelete,
+    onSetActive,
 }: TripDetailProps) {
     return (
         <Card>
             <Stack gap="md">
+
                 <Heading level={2}>
                     {trip.destination}
                 </Heading>
@@ -33,6 +36,16 @@ export function TripDetail({
                 </p>
 
                 <Stack gap="sm">
+
+                    {trip.status !== "active" && (
+                        <Button
+                            type="button"
+                            onClick={onSetActive}
+                        >
+                            Set as Active Trip
+                        </Button>
+                    )}
+
                     <Button
                         type="button"
                         onClick={onEdit}
@@ -46,7 +59,9 @@ export function TripDetail({
                     >
                         Delete Trip
                     </Button>
+
                 </Stack>
+
             </Stack>
         </Card>
     );

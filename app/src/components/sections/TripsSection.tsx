@@ -78,6 +78,17 @@ export function TripsSection({
         onTripChanged?.();
     }
 
+    function setActiveTrip() {
+        if (!selectedTrip) {
+            return;
+        }
+
+        TripService.setActive(selectedTrip.id);
+
+        setSelectedTrip(null);
+        onTripChanged?.();
+    }
+
     return (
         <>
             <Heading level={2}>
@@ -106,6 +117,7 @@ export function TripsSection({
                         trip={selectedTrip}
                         onEdit={openEdit}
                         onDelete={openDelete}
+                        onSetActive={setActiveTrip}
                     />
                 )}
             </Modal>
@@ -113,7 +125,9 @@ export function TripsSection({
             <NewTripModal
                 open={editingTrip !== null}
                 onClose={closeEdit}
-                initialTrip={editingTrip ?? undefined}
+                initialTrip={
+                    editingTrip ?? undefined
+                }
                 onTripCreated={onTripChanged}
             />
 
@@ -133,6 +147,7 @@ export function TripsSection({
                         </p>
 
                         <Stack gap="sm">
+
                             <Button
                                 type="button"
                                 onClick={confirmDelete}
@@ -146,6 +161,7 @@ export function TripsSection({
                             >
                                 Cancel
                             </Button>
+
                         </Stack>
                     </>
                 )}

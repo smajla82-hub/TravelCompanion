@@ -42,4 +42,21 @@ export const TripService = {
         trips.splice(index, 1);
     },
 
+    setActive(id: string) {
+        const trip = trips.find(
+            item => item.id === id
+        );
+
+        if (!trip) {
+            return;
+        }
+
+        trips.forEach(item => {
+            item.status =
+                item.id === id
+                    ? "active"
+                    : "planning";
+        });
+    },
+
 };
