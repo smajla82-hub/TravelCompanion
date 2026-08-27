@@ -1,12 +1,16 @@
-import { Card, Heading, Stack } from "../ui";
+import { Card, Heading, Stack, Button } from "../ui";
 
 import type { Trip } from "../../types";
 
 type TripDetailProps = {
     trip: Trip;
+    onEdit?: () => void;
 };
 
-export function TripDetail({ trip }: TripDetailProps) {
+export function TripDetail({
+    trip,
+    onEdit,
+}: TripDetailProps) {
     return (
         <Card>
             <Stack gap="md">
@@ -25,6 +29,13 @@ export function TripDetail({ trip }: TripDetailProps) {
                 <p>
                     {trip.travellers} travellers
                 </p>
+
+                <Button
+                    type="button"
+                    onClick={onEdit}
+                >
+                    Edit Trip
+                </Button>
             </Stack>
         </Card>
     );

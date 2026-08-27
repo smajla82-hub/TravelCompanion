@@ -8,6 +8,7 @@ import {
 
 import { TripCard } from "../cards";
 import { TripDetail } from "../tripDetail";
+import { NewTripModal } from "../trips";
 
 import { useTrips } from "../../hooks";
 
@@ -18,6 +19,26 @@ export function TripsSection() {
 
     const [selectedTrip, setSelectedTrip] =
         useState<Trip | null>(null);
+
+    const [editingTrip, setEditingTrip] =
+        useState<Trip | null>(null);
+
+    function closeDetail() {
+        setSelectedTrip(null);
+    }
+
+    function openEdit() {
+        if (!selectedTrip) {
+            return;
+        }
+
+        setEditingTrip(selectedTrip);
+        setSelectedTrip(null);
+    }
+
+    function closeEdit() {
+        setEditingTrip(null);
+    }
 
     return (
         <>
@@ -40,14 +61,21 @@ export function TripsSection() {
             <Modal
                 open={selectedTrip !== null}
                 title="Trip Detail"
-                onClose={() => setSelectedTrip(null)
-                }
+                onClose={closeDetail}
             >
                 {selectedTrip && (
-                    <TripDetail trip={selectedTrip} />
+                    <TripDetail
+                        trip={selectedTrip}
+                        onEdit={openEdit}
+                    />
                 )}
             </Modal>
+
+            <NewTripModal
+                open={editingTrip !== null}
+                onClose={closeEdit}
+                initialTrip={editingTrip ?? undefined}
+            />
         </>
     );
-
 }

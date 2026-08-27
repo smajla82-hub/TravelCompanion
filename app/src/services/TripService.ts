@@ -18,4 +18,16 @@ export const TripService = {
         trips.push(trip);
     },
 
+    update(trip: Trip) {
+        const index = trips.findIndex(
+            item => item.id === trip.id
+        );
+
+        if (index === -1) {
+            return;
+        }
+
+        trips[index] = trip;
+    },
+
 };
