@@ -4,6 +4,8 @@ import {
     Grid,
     Heading,
     Modal,
+    Stack,
+    Button,
 } from "../ui";
 
 import { TripCard } from "../cards";
@@ -12,15 +14,27 @@ import { NewTripModal } from "../trips";
 
 import { useTrips } from "../../hooks";
 
+import { TripService } from "../../services/TripService";
+
 import type { Trip } from "../../types";
 
-export function TripsSection() {
+type TripsSectionProps = {
+    onTripChanged?: () => void;
+};
+
+export function TripsSection({
+    onTripChanged,
+}: TripsSectionProps) {
+
     const { trips } = useTrips();
 
     const [selectedTrip, setSelectedTrip] =
         useState<Trip | null>(null);
 
     const [editingTrip, setEditingTrip] =
+        useState<Trip | null>(null);
+
+    const [deletingTrip, setDeletingTrip] =
         useState<Trip | null>(null);
 
     function closeDetail() {
@@ -38,6 +52,30 @@ export function TripsSection() {
 
     function closeEdit() {
         setEditingTrip(null);
+    }
+
+    function openDelete() {
+        if (!selectedTrip) {
+            return;
+        }
+
+        setDeletingTrip(selectedTrip);
+        setSelectedTrip(null);
+    }
+
+    function closeDelete() {
+        setDeletingTrip(null);
+    }
+
+    function confirmDelete() {
+        if (!deletingTrip) {
+            return;
+        }
+
+        TripService.delete(deletingTrip.id);
+
+        setDeletingTrip(null);
+        onTripChanged?.();
     }
 
     return (
@@ -67,6 +105,7 @@ export function TripsSection() {
                     <TripDetail
                         trip={selectedTrip}
                         onEdit={openEdit}
+                        onDelete={openDelete}
                     />
                 )}
             </Modal>
@@ -75,7 +114,42 @@ export function TripsSection() {
                 open={editingTrip !== null}
                 onClose={closeEdit}
                 initialTrip={editingTrip ?? undefined}
+                onTripCreated={onTripChanged}
             />
+
+            <Modal
+                open={deletingTrip !== null}
+                title="Delete Trip"
+                onClose={closeDelete}
+            >
+                {deletingTrip && (
+                    <>
+                        <p>
+                            Are you sure you want to delete{" "}
+                            <strong>
+                                {deletingTrip.destination}
+                            </strong>
+                            ?
+                        </p>
+
+                        <Stack gap="sm">
+                            <Button
+                                type="button"
+                                onClick={confirmDelete}
+                            >
+                                Delete
+                            </Button>
+
+                            <Button
+                                type="button"
+                                onClick={closeDelete}
+                            >
+                                Cancel
+                            </Button>
+                        </Stack>
+                    </>
+                )}
+            </Modal>
         </>
     );
 }

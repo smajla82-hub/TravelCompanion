@@ -5,11 +5,13 @@ import type { Trip } from "../../types";
 type TripDetailProps = {
     trip: Trip;
     onEdit?: () => void;
+    onDelete?: () => void;
 };
 
 export function TripDetail({
     trip,
     onEdit,
+    onDelete,
 }: TripDetailProps) {
     return (
         <Card>
@@ -30,12 +32,21 @@ export function TripDetail({
                     {trip.travellers} travellers
                 </p>
 
-                <Button
-                    type="button"
-                    onClick={onEdit}
-                >
-                    Edit Trip
-                </Button>
+                <Stack gap="sm">
+                    <Button
+                        type="button"
+                        onClick={onEdit}
+                    >
+                        Edit Trip
+                    </Button>
+
+                    <Button
+                        type="button"
+                        onClick={onDelete}
+                    >
+                        Delete Trip
+                    </Button>
+                </Stack>
             </Stack>
         </Card>
     );

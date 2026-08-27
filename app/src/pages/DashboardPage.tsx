@@ -41,7 +41,9 @@ export default function DashboardPage() {
 
             <CurrentTripSection />
 
-            <TripsSection />
+            <TripsSection
+                onTripChanged={refreshTrips}
+            />
 
             <ItinerarySection />
 
