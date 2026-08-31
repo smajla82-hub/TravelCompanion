@@ -1,3 +1,5 @@
+import type { ItineraryDay } from "./ItineraryDay";
+
 export type TripStatus =
     | "planning"
     | "active"
@@ -20,5 +22,7 @@ export interface Trip {
     coverImage?: string;
 
     status: TripStatus;
+
+    itinerary?: ItineraryDay[];
 
 }
