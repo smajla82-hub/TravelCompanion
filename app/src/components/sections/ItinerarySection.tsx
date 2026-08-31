@@ -1,6 +1,9 @@
 import { Grid, Heading } from "../ui";
 
-import { ItineraryCard } from "../itinerary";
+import {
+    ItineraryCard,
+    ItineraryDayDetail,
+} from "../itinerary";
 
 import { TripService } from "../../services/TripService";
 
@@ -20,11 +23,11 @@ export function ItinerarySection() {
 
             <Grid>
 
-                {itinerary.map((item) => (
+                {itinerary.map((day) => (
 
-                    <ItineraryCard
-                        key={item.id}
-                        item={item}
+                    <ItineraryDayDetail
+                        key={day.id}
+                        day={day}
                     />
 
                 ))}
