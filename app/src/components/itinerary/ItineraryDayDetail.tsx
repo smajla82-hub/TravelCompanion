@@ -1,34 +1,33 @@
-import { Card, Stack } from "../ui";
+import { Card, Heading, Stack, Button } from "../ui";
 
 import type { ItineraryDay } from "../../types";
 
-type Props = {
+type ItineraryDayDetailProps = {
     day: ItineraryDay;
+    onClose: () => void;
 };
 
-export function ItineraryDayDetail({ day }: Props) {
-
+export function ItineraryDayDetail({
+    day,
+    onClose,
+}: ItineraryDayDetailProps) {
     return (
         <Card>
             <Stack gap="md">
 
-                <div>
-                    <h3>
-                        {day.date}
-                        {day.title
-                            ? ` — ${day.title}`
-                            : ""}
-                    </h3>
+                <Heading level={2}>
+                    {day.date}
+                    {day.title
+                        ? ` — ${day.title}`
+                        : ""}
+                </Heading>
 
-                    <p>
-                        {day.items.length} activities
-                    </p>
-                </div>
+                <p>
+                    {day.items.length} activities
+                </p>
 
                 <Stack gap="md">
-
                     {day.items.map((item) => (
-
                         <div key={item.id}>
 
                             <strong>
@@ -70,10 +69,10 @@ export function ItineraryDayDetail({ day }: Props) {
 
                             {item.price !== undefined &&
                                 item.price !== null && (
-                                <div>
-                                    Price: {item.price}
-                                </div>
-                            )}
+                                    <div>
+                                        Price: {item.price}
+                                    </div>
+                                )}
 
                             {item.note && (
                                 <div>
@@ -82,10 +81,15 @@ export function ItineraryDayDetail({ day }: Props) {
                             )}
 
                         </div>
-
                     ))}
-
                 </Stack>
+
+                <Button
+                    type="button"
+                    onClick={onClose}
+                >
+                    Back to Itinerary
+                </Button>
 
             </Stack>
         </Card>

@@ -1,19 +1,42 @@
+import { useState } from "react";
+
 import { Grid, Heading } from "../ui";
 
 import {
-    ItineraryCard,
+    ItineraryDayCard,
     ItineraryDayDetail,
 } from "../itinerary";
 
 import { TripService } from "../../services/TripService";
 
-export function ItinerarySection() {
+import type { ItineraryDay } from "../../types";
 
+export function ItinerarySection() {
     const activeTrip =
         TripService.getActive();
 
     const itinerary =
         activeTrip?.itinerary ?? [];
+
+    const [selectedDay, setSelectedDay] =
+        useState<ItineraryDay | null>(null);
+
+    if (selectedDay) {
+        return (
+            <>
+                <Heading level={2}>
+                    Itinerary
+                </Heading>
+
+                <ItineraryDayDetail
+                    day={selectedDay}
+                    onClose={() =>
+                        setSelectedDay(null)
+                    }
+                />
+            </>
+        );
+    }
 
     return (
         <>
@@ -22,16 +45,15 @@ export function ItinerarySection() {
             </Heading>
 
             <Grid>
-
                 {itinerary.map((day) => (
-
-                    <ItineraryDayDetail
+                    <ItineraryDayCard
                         key={day.id}
                         day={day}
+                        onClick={() =>
+                            setSelectedDay(day)
+                        }
                     />
-
                 ))}
-
             </Grid>
         </>
     );
