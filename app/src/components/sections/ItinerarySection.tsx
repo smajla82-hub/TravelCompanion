@@ -3,7 +3,7 @@ import { useState } from "react";
 import { Grid, Heading } from "../ui";
 
 import {
-    ItineraryDayCard,
+    ItineraryCard,
     ItineraryDayDetail,
 } from "../itinerary";
 
@@ -46,13 +46,13 @@ export function ItinerarySection() {
 
             <Grid>
                 {itinerary.map((day) => (
-                    <ItineraryDayCard
-                        key={day.id}
-                        day={day}
-                        onClick={() =>
-                            setSelectedDay(day)
-                        }
-                    />
+                    <ItineraryCard
+    key={day.id}
+    day={day}
+    onClick={() =>
+        setSelectedDay(day)
+    }
+/>
                 ))}
             </Grid>
         </>

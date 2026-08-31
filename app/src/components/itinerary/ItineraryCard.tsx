@@ -2,22 +2,30 @@ import { Card, Stack } from "../ui";
 
 import "./ItineraryCard.css";
 
-import type { ItineraryItem } from "../../types";
+import type { ItineraryDay } from "../../types";
 
 type Props = {
-    item: ItineraryItem;
+    day: ItineraryDay;
+    onClick?: () => void;
 };
 
-export function ItineraryCard({ item }: Props) {
+export function ItineraryCard({
+    day,
+    onClick,
+}: Props) {
     return (
-        <Card>
-            <Stack gap="sm">
-                <h3>{item.title}</h3>
+        <div onClick={onClick}>
+            <Card>
+                <Stack gap="sm">
+                    <h3>
+                        {day.date} — {day.title}
+                    </h3>
 
-                <p>{item.location}</p>
-
-                <p>{item.date}</p>
-            </Stack>
-        </Card>
+                    <p>
+                        {day.items.length} activities
+                    </p>
+                </Stack>
+            </Card>
+        </div>
     );
 }
