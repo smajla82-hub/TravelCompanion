@@ -2,16 +2,18 @@ import { Grid, Heading } from "../ui";
 
 import { ItineraryCard } from "../itinerary";
 
-import { ItineraryService } from "../../services/itinerary";
+import { TripService } from "../../services/TripService";
 
 export function ItinerarySection() {
 
+    const activeTrip =
+        TripService.getActive();
+
     const itinerary =
-        ItineraryService.getAll();
+        activeTrip?.itinerary ?? [];
 
     return (
         <>
-
             <Heading level={2}>
                 Itinerary
             </Heading>
@@ -28,8 +30,6 @@ export function ItinerarySection() {
                 ))}
 
             </Grid>
-
         </>
     );
-
 }

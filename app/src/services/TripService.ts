@@ -1,18 +1,24 @@
 import { trips } from "../data/trips";
 
-import type { Trip } from "../types";
+import type {
+    ItineraryDay,
+    Trip,
+} from "../types";
 
-const STORAGE_KEY = "travel-companion.trips";
+const STORAGE_KEY =
+    "travel-companion.trips";
 
 function loadTrips() {
-    const stored = localStorage.getItem(STORAGE_KEY);
+    const stored =
+        localStorage.getItem(STORAGE_KEY);
 
     if (!stored) {
         return;
     }
 
     try {
-        const parsed: Trip[] = JSON.parse(stored);
+        const parsed: Trip[] =
+            JSON.parse(stored);
 
         trips.splice(
             0,
@@ -62,6 +68,23 @@ export const TripService = {
         }
 
         trips[index] = trip;
+        persistTrips();
+    },
+
+    setItinerary(
+        id: string,
+        itinerary: ItineraryDay[]
+    ) {
+        const trip = trips.find(
+            item => item.id === id
+        );
+
+        if (!trip) {
+            return;
+        }
+
+        trip.itinerary = itinerary;
+
         persistTrips();
     },
 
