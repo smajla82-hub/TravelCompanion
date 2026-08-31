@@ -6,6 +6,8 @@ import { importXlsxRoadBook } from "../../services/import/XlsxRoadBookImporter";
 
 import type { ItineraryDay } from "../../types";
 
+import { RoadBookPreview } from "./RoadBookPreview";
+
 export function RoadBookImport() {
 
     const [days, setDays] =
@@ -93,6 +95,10 @@ export function RoadBookImport() {
                         Clear Import
                     </Button>
                 )}
+
+                <RoadBookPreview
+                    days={days}
+                />
 
             </Stack>
         </Card>
