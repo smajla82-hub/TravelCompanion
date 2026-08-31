@@ -13,6 +13,7 @@ import {
 } from "../components/sections";
 
 import { NewTripModal } from "../components/trips";
+import { RoadBookImport } from "../components/import";
 
 export default function DashboardPage() {
 
@@ -27,6 +28,7 @@ export default function DashboardPage() {
 
     return (
         <Container>
+
             <Heading level={1}>
                 Travel Companion
             </Heading>
@@ -47,13 +49,15 @@ export default function DashboardPage() {
 
             <ItinerarySection />
 
+            <RoadBookImport />
+
             <NewTripModal
                 open={newTripOpen}
                 onClose={() =>
                     setNewTripOpen(false)
                 }
-                onTripCreated={refreshTrips}
             />
+
         </Container>
     );
 }
