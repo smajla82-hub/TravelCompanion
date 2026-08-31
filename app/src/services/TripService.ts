@@ -2,6 +2,39 @@ import { trips } from "../data/trips";
 
 import type { Trip } from "../types";
 
+const STORAGE_KEY = "travel-companion.trips";
+
+function loadTrips() {
+    const stored = localStorage.getItem(STORAGE_KEY);
+
+    if (!stored) {
+        return;
+    }
+
+    try {
+        const parsed: Trip[] = JSON.parse(stored);
+
+        trips.splice(
+            0,
+            trips.length,
+            ...parsed
+        );
+    } catch {
+        console.warn(
+            "Unable to load trips from localStorage."
+        );
+    }
+}
+
+function persistTrips() {
+    localStorage.setItem(
+        STORAGE_KEY,
+        JSON.stringify(trips)
+    );
+}
+
+loadTrips();
+
 export const TripService = {
 
     getAll(): Trip[] {
@@ -16,6 +49,7 @@ export const TripService = {
 
     add(trip: Trip) {
         trips.push(trip);
+        persistTrips();
     },
 
     update(trip: Trip) {
@@ -28,6 +62,7 @@ export const TripService = {
         }
 
         trips[index] = trip;
+        persistTrips();
     },
 
     delete(id: string) {
@@ -40,6 +75,7 @@ export const TripService = {
         }
 
         trips.splice(index, 1);
+        persistTrips();
     },
 
     setActive(id: string) {
@@ -57,6 +93,8 @@ export const TripService = {
                     ? "active"
                     : "planning";
         });
+
+        persistTrips();
     },
 
 };
