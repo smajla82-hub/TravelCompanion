@@ -21,10 +21,11 @@ UX
     Context Engine
 
 Architecture Decisions
-    ADR-001 SQLite
-    ADR-002 UUID
-    ADR-003 Online First
+    ADR-001 SQLite (superseded — see ADR-002)
+    ADR-002 PWA Architecture
 
 Roadmap
 
 Sprint Log
+
+Handoff
