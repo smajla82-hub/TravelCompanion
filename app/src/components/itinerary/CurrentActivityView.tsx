@@ -1,6 +1,10 @@
 import { useEffect, useState } from "react";
 
-import { Button, Card, Heading, Stack } from "../ui";
+import { Button, Card, Heading, Modal, Stack } from "../ui";
+
+import { ActivityActionStack } from "./ActivityActionStack";
+import { RecommendedVenueList } from "./RecommendedVenueList";
+import { DayStatsList } from "./DayStatsList";
 
 import type {
     ItineraryDay,
@@ -9,6 +13,10 @@ import type {
 } from "../../types";
 import { getItineraryItemTimingStatuses } from
     "../../utils/getItineraryItemTiming";
+import {
+    getMealTypeForItem,
+    matchesMealType,
+} from "../../utils/getMealTypeForItem";
 import "./CurrentActivityView.css";
 
 type CurrentActivityViewProps = {
@@ -90,6 +98,15 @@ export function CurrentActivityView({
 }: CurrentActivityViewProps) {
     const [now, setNow] = useState(() => new Date());
 
+    const [statsOpen, setStatsOpen] =
+        useState(false);
+
+    const [foodItemId, setFoodItemId] =
+        useState<string | null>(null);
+
+    const [parkingItemId, setParkingItemId] =
+        useState<string | null>(null);
+
     useEffect(() => {
         const intervalId = setInterval(() => {
             setNow(new Date());
@@ -158,11 +175,68 @@ export function CurrentActivityView({
         item => statuses[item.id] === "next"
     );
 
+    const parkingItem =
+        parkingItemId
+            ? day.items.find(
+                  item => item.id === parkingItemId
+              )
+            : undefined;
+
+    const parkingLocation =
+        parkingItem?.parking
+            ? day.parkingLocations?.find(
+                  location =>
+                      location.code === parkingItem.parking
+              )
+            : undefined;
+
+    const foodItem =
+        foodItemId
+            ? day.items.find(
+                  item => item.id === foodItemId
+              )
+            : undefined;
+
+    const mealType =
+        foodItem
+            ? getMealTypeForItem(foodItem)
+            : undefined;
+
+    const matchingVenues =
+        mealType
+            ? (day.venues ?? []).filter(venue =>
+                  matchesMealType(
+                      venue.mealType,
+                      mealType
+                  )
+              )
+            : undefined;
+
+    const foodVenues =
+        matchingVenues ??
+        day.venues ??
+        [];
+
+    const foodEmptyMessage =
+        mealType
+            ? "No recommended venues for this meal."
+            : "No recommended venues for this day.";
+
     return (
         <section>
             <h3 className="activity-label">Current Activity</h3>
             {currentItem ? (
-                <ActivitySummary item={currentItem} />
+                <div className="current-activity-row">
+                    <ActivitySummary item={currentItem} />
+
+                    <ActivityActionStack
+                        showFood={currentItem.priority === "FOOD"}
+                        showParking={Boolean(currentItem.parking)}
+                        onFood={() => setFoodItemId(currentItem.id)}
+                        onParking={() => setParkingItemId(currentItem.id)}
+                        onStatistics={() => setStatsOpen(true)}
+                    />
+                </div>
             ) : (
                 <p>No current activity.</p>
             )}
@@ -170,10 +244,20 @@ export function CurrentActivityView({
             {nextItem && (
                 <>
                     <h3 className="activity-label">Next Activity</h3>
-                    <ActivitySummary
-                        item={nextItem}
-                        compact
-                    />
+                    <div className="current-activity-row current-activity-row--compact">
+                        <ActivitySummary
+                            item={nextItem}
+                            compact
+                        />
+
+                        <ActivityActionStack
+                            showFood={nextItem.priority === "FOOD"}
+                            showParking={Boolean(nextItem.parking)}
+                            onFood={() => setFoodItemId(nextItem.id)}
+                            onParking={() => setParkingItemId(nextItem.id)}
+                            onStatistics={() => setStatsOpen(true)}
+                        />
+                    </div>
                 </>
             )}
 
@@ -190,6 +274,80 @@ export function CurrentActivityView({
             >
                 View whole Itinerary
             </Button>
+
+            <Modal
+                open={statsOpen}
+                onClose={() => setStatsOpen(false)}
+                title="Statistics"
+            >
+                <DayStatsList
+                    stats={day.stats ?? []}
+                />
+            </Modal>
+
+            <Modal
+                open={foodItemId !== null}
+                onClose={() => setFoodItemId(null)}
+                title="Recommended venues"
+            >
+                <RecommendedVenueList
+                    venues={foodVenues}
+                    emptyMessage={foodEmptyMessage}
+                />
+            </Modal>
+
+            <Modal
+                open={parkingItemId !== null}
+                onClose={() => setParkingItemId(null)}
+                title="Parking"
+            >
+                {parkingLocation ? (
+                    <div>
+                        <strong>
+                            {parkingLocation.code}:
+                        </strong>
+                        {" "}
+                        {parkingLocation.mapLink ? (
+                            <a
+                                href={parkingLocation.mapLink}
+                                target="_blank"
+                                rel="noreferrer"
+                            >
+                                {parkingLocation.name}
+                            </a>
+                        ) : (
+                            parkingLocation.name
+                        )}
+                    </div>
+                ) : (
+                    parkingItem?.parking && (
+                        <div>
+                            <strong>
+                                {parkingItem.parking}
+                            </strong>
+
+                            {parkingItem.mapLink ? (
+                                <div>
+                                    <a
+                                        href={parkingItem.mapLink}
+                                        target="_blank"
+                                        rel="noreferrer"
+                                    >
+                                        {parkingItem.smartChip ??
+                                            "Open in Google Maps"}
+                                    </a>
+                                </div>
+                            ) : (
+                                parkingItem.smartChip && (
+                                    <div>
+                                        {parkingItem.smartChip}
+                                    </div>
+                                )
+                            )}
+                        </div>
+                    )
+                )}
+            </Modal>
         </section>
     );
 }

@@ -12,6 +12,10 @@ Implemented the `appka_navrh_look.png` visual redesign: centralized color, typog
 **Status:** DONE  
 Refined the centered dashboard header, removed redundant controls and the Current Trip heading, and balanced the Active Trip card with a refined decorative graphic, larger status badge and bottom-centered Continue Trip action. Added a dedicated My Trips page with three-item Home/My Trips/Settings navigation, switched non-excepted buttons to transparent outlined styling, and moved Food/Parking/Statistics into a per-activity right-side action stack with separators in the full day-detail view.
 
+### 7.5.3
+**Status:** DONE  
+Fixed a `Stack` component CSS class-name mismatch that silently disabled its flex layout, which was the root cause of the Active Trip card's broken internal spacing; the card now uses an explicit content/button split with `justify-content: space-between` so "Continue Trip" is reliably bottom-centered with a deliberate gap, and the "Active Trip" badge gained a small white status dot. Added a white-text colored gradient header band to the dashboard (matching `appka_navrh_look.png` in both light and dark mode). Fixed the "Itinerary" heading/"View whole itinerary" button spacing by adding `justify-content: space-between` to `.itinerary-heading`. Setting a Trip active from the My Trips page now automatically navigates back to Home via `useNavigate()`. Fixed the bug where `CurrentActivityView` never rendered `ActivityActionStack`, so Food/Parking/Statistics icons and their read-only modals are now wired up for both the "Current Activity" and "Next Activity" blocks, reusing the same meal-type/parking resolution logic as `ItineraryDayDetail`. Fixed a dark-mode bug where `Modal`'s hardcoded white background made light-mode-only text (and the close button) invisible against a dark theme.
+
 ---
 
 ## Initial Project Structure

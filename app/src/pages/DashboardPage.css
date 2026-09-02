@@ -1,2 +1,17 @@
-.dashboard-header { display: flex; justify-content: center; margin-bottom: 20px; }
-.dashboard-header h1 { font-size: 28px; line-height: 34px; }
+.dashboard-header {
+    display: flex;
+    justify-content: center;
+    align-items: center;
+
+    margin: -32px -32px 20px;
+    padding: 24px 32px;
+
+    background: linear-gradient(135deg, var(--color-purple), var(--color-primary));
+    border-radius: 0 0 var(--tc-radius-card) var(--tc-radius-card);
+}
+
+.dashboard-header h1 {
+    color: #ffffff;
+    font-size: 28px;
+    line-height: 34px;
+}

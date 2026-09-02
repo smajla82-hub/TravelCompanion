@@ -4,3 +4,11 @@
 .activity-icon { display: grid; place-items: center; width: 34px; height: 34px; border-radius: 50%; background: color-mix(in srgb, var(--color-success) 18%, var(--color-surface)); color: var(--color-success); }
 .activity-detail { color: var(--color-text-secondary); font-size: 13px; padding-left: 44px; }
 .activity-summary--compact { padding: 12px; }
+
+.current-activity-row { display: flex; align-items: flex-start; gap: 12px; }
+.current-activity-row .activity-summary { flex: 1; min-width: 0; }
+.current-activity-row--compact .activity-action-stack .tc-button { width: 32px; height: 32px; font-size: 13px; }
+
+@media (max-width: 480px) {
+    .current-activity-row { flex-wrap: wrap; }
+}
