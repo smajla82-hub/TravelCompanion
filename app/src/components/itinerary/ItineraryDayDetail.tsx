@@ -1,4 +1,6 @@
 import { Card, Heading, Stack, Button } from "../ui";
+import { ItineraryDayAdditionalDetails } from
+    "./ItineraryDayAdditionalDetails";
 
 import type { ItineraryDay } from "../../types";
 
@@ -83,6 +85,10 @@ export function ItineraryDayDetail({
                         </div>
                     ))}
                 </Stack>
+
+                <ItineraryDayAdditionalDetails
+                    day={day}
+                />
 
                 <Button
                     type="button"

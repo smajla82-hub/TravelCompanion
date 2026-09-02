@@ -42,10 +42,10 @@ Trip creation, validation, editing, deletion, Active Trip management and persist
 
 Import existing RoadBook/XLSX planning data, map it into the domain model, persist it inside Trips and expose it through the Active Trip itinerary.
 
-Completed through **6.0.11**.
+Completed through **6.0.12**.
 
 Next:
-- 6.0.12 and subsequent itinerary/import work
+- 7.x — BlizzCon / real travel experience
 
 ### Milestone 5 — BlizzCon Ready
 **7.x — PLANNED**
@@ -121,16 +121,17 @@ Additional travel functionality, including:
 - 6.0.9 — RoadBook persistence into a selected Trip
 - 6.0.10 — Active Trip itinerary integration
 - 6.0.11 — Itinerary day cards and day-detail interaction
+- 6.0.12 — Recommended venues and day statistics import
 
-All work through **6.0.11** has been implemented and functionally tested.
+All work through **6.0.12** has been implemented and functionally tested.
 
 ---
 
 ## 5. Current State
 
 **Current Milestone:** 6.x — Data Import & Itinerary  
-**Current completed Feature:** 6.0.11  
-**Status:** DONE through 6.0.11
+**Current completed Feature:** 6.0.12  
+**Status:** DONE through 6.0.12
 
 The Trip system currently supports:
 
@@ -157,6 +158,8 @@ The RoadBook/itinerary system currently supports:
 - day cards
 - day-detail opening/closing
 - display of day activities
+- recommended venues and flexible day statistics
+- collapsed day-detail sections in the preview and saved itinerary
 
 Verified test data currently imports as:
 
@@ -166,10 +169,9 @@ Verified test data currently imports as:
 
 ## 6. Next Development Order
 
-1. 6.0.12+ — continue itinerary/import functionality
-2. 7.x — BlizzCon / real travel experience
-3. 8.x — Android/mobile
-4. 9.x+ — Extended travel functionality
+1. 7.x — BlizzCon / real travel experience
+2. 8.x — Android/mobile
+3. 9.x+ — Extended travel functionality
 
 The order remains intentional: reliable state and persistence are established before expanding the real-trip experience, and the application should be functionally stable before final mobile packaging.
 
