@@ -1,451 +1,371 @@
-Travel Companion — Mobile UI Design Specification
-1. Design direction
+# Travel Companion â€” Mobile UI Design Specification
+
+## 1. Design direction
 
 Overall style:
 
-modern mobile travel application
-clean, premium but practical
-rounded cards
-soft shadows
-strong visual hierarchy
-blue/purple primary branding
-green for positive/active/recommended states
-Light Mode + Dark Mode
-responsive/mobile-first
-typography: Inter
-2. Color system
-Light Mode
-Token	Value	Pouití
-primary	#2563EB	hlavní CTA, aktivní prvky
-primary-dark	#1E40AF	tmavší varianty primary
-success	#10B981	Active Trip, Recommended, pozitivní stav
-accent-purple	#8B5CF6	sekundární akce, ikony
-accent-blue	#38BDF8	sekundární modré akcenty
-text-primary	#0F172A	hlavní text
-text-secondary	#64748B	sekundární text
-background	#F8FAFC	hlavní pozadí
-surface	#FFFFFF	karty
-border	#E5E7EB	jemné okraje
-Poznámka
+- modern mobile travel application
+- clean, premium but practical
+- rounded cards
+- soft shadows
+- strong visual hierarchy
+- blue/purple primary branding
+- green for positive/active/recommended states
+- Light Mode + Dark Mode
+- responsive/mobile-first
+- typography: Inter
 
-V pùvodním obrázku je u barev dvakrát uvedeno Accent Purple a nìkolik hex hodnot je kvùli rozlišení mockupu špatnì èitelnıch. Vıše jsem to normalizoval do jednoznaèného design token systému.
+## 2. Color system â€” Light Mode
 
-3. Dark Mode
-Token	Value	Pouití
-primary	#60A5FA	hlavní CTA / primary
-primary-dark	#3B82F6	tmavší primary
-success	#10B981	Active Trip / pozitivní stav
-accent-purple	#8B5CF6	sekundární akce
-accent-blue	#38BDF8	modré akcenty
-text-primary	#F8FAFC	hlavní text
-text-secondary	#94A3B8	sekundární text
-background	#0F172A	hlavní pozadí
-surface	#18212F	karty
-border	#334155	okraje
+| Token | Value | PouÅ¾itÃ­ |
+|---|---|---|
+| primary | #2563EB | hlavnÃ­ CTA, aktivnÃ­ prvky |
+| primary-dark | #1E40AF | tmavÅ¡Ã­ varianty primary |
+| success | #10B981 | Active Trip, Recommended, pozitivnÃ­ stav |
+| accent-purple | #8B5CF6 | sekundÃ¡rnÃ­ akce, ikony |
+| accent-blue | #38BDF8 | sekundÃ¡rnÃ­ modrÃ© akcenty |
+| text-primary | #0F172A | hlavnÃ­ text |
+| text-secondary | #64748B | sekundÃ¡rnÃ­ text |
+| background | #F8FAFC | hlavnÃ­ pozadÃ­ |
+| surface | #FFFFFF | karty |
+| border | #E5E7EB | jemnÃ© okraje |
 
-Dark Mode nemá bıt pouze invertovaná Light Mode. Karty musí zùstat vizuálnì oddìlené od pozadí.
+**PoznÃ¡mka:** V pÅ¯vodnÃ­m obrÃ¡zku je u barev dvakrÃ¡t uvedeno Accent Purple a nÄ›kolik hex hodnot je kvÅ¯li rozliÅ¡enÃ­ mockupu Å¡patnÄ› ÄitelnÃ½ch. VÃ½Å¡e je to normalizovÃ¡no do jednoznaÄnÃ©ho design-tokenovÃ©ho seznamu.
 
-4. Typography
+## 3. Dark Mode
 
-Font:
+| Token | Value | PouÅ¾itÃ­ |
+|---|---|---|
+| primary | #60A5FA | hlavnÃ­ CTA / primary |
+| primary-dark | #3B82F6 | tmavÅ¡Ã­ primary |
+| success | #10B981 | Active Trip / pozitivnÃ­ stav |
+| accent-purple | #8B5CF6 | sekundÃ¡rnÃ­ akce |
+| accent-blue | #38BDF8 | modrÃ© akcenty |
+| text-primary | #F8FAFC | hlavnÃ­ text |
+| text-secondary | #94A3B8 | sekundÃ¡rnÃ­ text |
+| background | #0F172A | hlavnÃ­ pozadÃ­ |
+| surface | #18212F | karty |
+| border | #334155 | okraje |
 
-Inter
+Dark Mode nemÃ¡ bÃ½t pouze invertovanÃ¡ Light Mode. Karty musÃ­ zÅ¯stat vizuÃ¡lnÄ› oddÄ›lenÃ© od pozadÃ­.
 
-H1
-22px / 28px
-font-weight: 700
-H2
-18px / 24px
-font-weight: 600
-H3
-16px / 20px
-font-weight: 600
-Body
-14px / 20px
-font-weight: 400
-Caption
-12px / 16px
-font-weight: 400
-Button
-14px / 16px
-font-weight: 500
-Doporuèení pro aplikaci
-název tripu › H1/H2 podle kontextu
-název sekce › H2
-název aktivity › H3
-detail aktivity › Body
-pomocné informace › Caption
-tlaèítka › Button
-5. Cards
+## 4. Typography
+
+Font: **Inter**
+
+| Style | Size / Line-height | Weight |
+|---|---|---|
+| H1 | 22px / 28px | 700 |
+| H2 | 18px / 24px | 600 |
+| H3 | 16px / 20px | 600 |
+| Body | 14px / 20px | 400 |
+| Caption | 12px / 16px | 400 |
+| Button | 14px / 16px | 500 |
+
+DoporuÄenÃ­ pro aplikaci:
+- nÃ¡zev tripu â€º H1/H2 podle kontextu
+- nÃ¡zev sekce â€º H2
+- nÃ¡zev aktivity â€º H3
+- detail aktivity â€º Body
+- pomocnÃ© informace â€º Caption
+- tlaÄÃ­tka â€º Button
+
+## 5. Cards
+
 Card radius: 16px
 
-Karty mají:
-
-border-radius: 16px
+Karty majÃ­:
+- `border-radius: 16px`
 
 Light Mode:
-
-background: #FFFFFF
-box-shadow:
-0 4px 16px rgba(15, 23, 42, 0.08)
+- `background: #FFFFFF`
+- `box-shadow: 0 4px 16px rgba(15, 23, 42, 0.08)`
 
 Dark Mode:
+- `background: #18212F`
+- `box-shadow: 0 4px 16px rgba(0, 0, 0, 0.45)`
 
-background: #18212F
-box-shadow:
-0 4px 16px rgba(0, 0, 0, 0.45)
+Border mÅ¯Å¾e bÃ½t pouÅ¾it zejmÃ©na v Dark Mode pro lepÅ¡Ã­ oddÄ›lenÃ­:
+- `border: 1px solid #334155`
 
-Border mùe bıt pouit zejména v Dark Mode pro lepší oddìlení:
+## 6. Buttons
 
-border: 1px solid #334155
-6. Buttons
-Primary button
+### Primary button
 
-Pouití:
+PouÅ¾itÃ­:
+- New Trip
+- Continue Trip
+- Save
+- hlavnÃ­ akce
 
-New Trip
-Continue Trip
-Save
-hlavní akce
-height: 44–48px
-border-radius: 12px
-font-size: 14px
-font-weight: 500
+`height: 44â€“48px`, `border-radius: 12px`, `font-size: 14px`, `font-weight: 500`
 
 Light:
-
-background: #2563EB
-color: #FFFFFF
+- `background: #2563EB`
+- `color: #FFFFFF`
 
 Dark:
+- `background: #3B82F6`
+- `color: #FFFFFF`
 
-background: #3B82F6
-color: #FFFFFF
-Secondary button
+### Secondary button
 
-Pouití:
-
-My Trips
-View whole itinerary
-ménì dùleité akce
+PouÅ¾itÃ­:
+- My Trips
+- View whole itinerary
+- mÃ©nÄ› dÅ¯leÅ¾itÃ© akce
 
 Light:
-
-background: #FFFFFF
-color: #0F172A
-border: 1px solid #E5E7EB
+- `background: #FFFFFF`
+- `color: #0F172A`
+- `border: 1px solid #E5E7EB`
 
 Dark:
+- `background: transparent`
+- `color: #F8FAFC`
+- `border: 1px solid #334155`
 
-background: transparent
-color: #F8FAFC
-border: 1px solid #334155
-Success / positive action
-background: #10B981
-color: #FFFFFF
+### Success / positive action
 
-Pouití napøíklad:
+- `background: #10B981`
+- `color: #FFFFFF`
 
-Active Trip
-Recommended
-Completed
-Confirmed
-7. Icon system
+PouÅ¾itÃ­ napÅ™Ã­klad:
+- Active Trip
+- Recommended
+- Completed
+- Confirmed
 
-Ikony nesmí bıt obrázky.
+## 7. Icon system
 
-Pouít SVG icon system, ideálnì napøíklad lucide-react.
+Ikony nesmÃ­ bÃ½t obrÃ¡zky.
 
-Základní pravidla:
+PouÅ¾Ã­t SVG icon system (inline SVG v tomto projektu â€” Å¾Ã¡dnÃ¡ novÃ¡ npm zÃ¡vislost).
 
-Style: Linear
-Stroke width: 2px
-Stroke linecap: round
-Stroke linejoin: round
-No filled icons except where explicitly required
+ZÃ¡kladnÃ­ pravidla:
+- Style: Linear
+- Stroke width: 2px
+- Stroke linecap: round
+- Stroke linejoin: round
+- No filled icons except where explicitly required
 
-Ikony mají bıt konzistentní napøíè celou aplikací.
+Ikony majÃ­ bÃ½t konzistentnÃ­ napÅ™Ã­Ä celou aplikacÃ­.
 
-Icon mapping
-Navigation
-Home
-› Home
+### Icon mapping
 
-Settings
-› Settings
+**Navigation**
+- Home â€º Home
+- Settings â€º Settings
+- My Trips â€º Briefcase / Luggage
+- New Trip â€º Plus
+- View whole itinerary â€º CalendarDays
 
-My Trips
-› BriefcaseBusiness / Luggage
+**Trip**
+- Travellers â€º UsersRound
+- Active Trip â€º Circle / CheckCircle
+- Trip destination â€º MapPin
+- Trip dates â€º CalendarDays
 
-New Trip
-› Plus
+**Activity**
+- Food / Restaurant â€º Utensils
+- Parking â€º SquareParking (P badge)
+- Statistics â€º BarChart
+- Location â€º MapPin
+- Goal â€º Target
+- Priority â€º Zap
+- Flight â€º Plane
+- Price â€º DollarSign
+- Note â€º NotebookPen (pencil/note)
+- Next Activity â€º ChevronRight
 
-View whole itinerary
-› CalendarDays
-Trip
-Travellers
-› UsersRound
+**Action icons**
+- Recommended â€º Star
+- Expand â€º ChevronDown
+- Collapse â€º ChevronUp
+- More â€º MoreHorizontal
+- Close â€º X
+- Edit â€º Pencil
+- Delete â€º Trash2
 
-Active Trip
-› Circle / CheckCircle
+## 8. Icon colors
 
-Trip destination
-› MapPin
+Ikona nemusÃ­ bÃ½t vÅ¾dy stejnÃ¡ barva jako text.
 
-Trip dates
-› CalendarDays
-Activity
-Food / Restaurant
-› Utensils
+DoporuÄenÃ© mapovÃ¡nÃ­:
+- Primary: #2563EB
+- Purple: #8B5CF6
+- Success: #10B981
+- Blue: #38BDF8
+- Text: #0F172A / #F8FAFC
+- Secondary: #64748B / #94A3B8
 
-Parking
-› SquareParking
+NapÅ™Ã­klad:
+- Food â€º Success / Green
+- Parking â€º Purple
+- Statistics â€º Blue
+- Flight â€º Accent Blue
+- Goal â€º Success
+- Priority â€º Primary
+- Price â€º Success
 
-Statistics
-› ChartNoAxesColumnIncreasing
+## 9. Icon containers
 
-Location
-› MapPin
+Pokud je ikona umÃ­stÄ›na v samostatnÃ©m boxu:
+- `border-radius: 12px`
 
-Goal
-› Target
-
-Priority
-› Zap
-
-Flight
-› Plane
-
-Price
-› DollarSign
-
-Note
-› NotebookPen
-
-Next Activity
-› ChevronRight
-Action icons
-Recommended
-› Star
-
-Expand
-› ChevronDown
-
-Collapse
-› ChevronUp
-
-More
-› MoreHorizontal
-
-Close
-› X
-
-Edit
-› Pencil
-
-Delete
-› Trash2
-8. Icon colors
-
-Ikona nemusí bıt vdy stejná barva jako text.
-
-Doporuèené mapování:
-
-Primary:
-#2563EB
-
-Purple:
-#8B5CF6
-
-Success:
-#10B981
-
-Blue:
-#38BDF8
-
-Text:
-#0F172A / #F8FAFC
-
-Secondary:
-#64748B / #94A3B8
-
-Napøíklad:
-
-Food       › Success / Green
-Parking    › Purple
-Statistics › Blue
-Flight     › Accent Blue
-Goal       › Success
-Priority   › Primary
-Price      › Success
-9. Icon containers
-
-Pokud je ikona umístìna v samostatném boxu:
-
-border-radius: 12px
-
-Napøíklad tlaèítko:
-
-[ ? ]
-Recommended
-
-nebo
-
-[ ?? ]
-Parking
-
-Box:
-
-background: surface
-border: 1px solid border
-border-radius: 12px
+NapÅ™Ã­klad tlaÄÃ­tko s ikonou a popiskem (Recommended / Parking), box:
+- `background: surface`
+- `border: 1px solid border`
+- `border-radius: 12px`
 
 Ikona:
+- 24px
+- `stroke-width: 2px`
 
-24px
-stroke-width: 2px
-10. Current Activity
+## 10. Current Activity
 
-Tohle je podle mì dùleitá èást celého designu.
+Toto je dÅ¯leÅ¾itÃ¡ ÄÃ¡st celÃ©ho designu.
 
-Current Activity má bıt vizuálnì dominantní èást dne.
+**Current Activity mÃ¡ bÃ½t vizuÃ¡lnÄ› dominantnÃ­ ÄÃ¡st dne.**
 
 Struktura:
 
+```
 CURRENT ACTIVITY
 
-07:00    [Food icon]   Snídanì
+07:00    [Food icon]   SnÃ­danÄ›
 
-?? Praha
-?? Goal: Energie pøed cestou
-? Priority: FOOD
-?? Parking: P1
-? Prague International Airport (PRG)
-$ Price: 15–20 USD
-?? Note: Lehèí snídanì pøed odletem
+ğŸ“ Praha
+ğŸ¯ Goal: Energie pÅ™ed cestou
+âš¡ Priority: FOOD
+ğŸ…¿ï¸ Parking: P1
+âœˆ Prague International Airport (PRG)
+$ Price: 15â€“20 USD
+ğŸ“ Note: LehÄÃ­ snÃ­danÄ› pÅ™ed odletem
+```
 
-Vedle detailu mohou bıt akèní shortcuty:
+Vedle detailu (uvnitÅ™ stejnÃ© karty/vÃ½seÄe, ne mimo ni) majÃ­ bÃ½t akÄnÃ­ shortcuty, vertikÃ¡lnÄ› nasklÃ¡danÃ©:
 
--¦¦¦¦¦¦¦¦¦¦¦¦¦¦¬
--      ?      -
-- Recommended  -
--     FOOD     -
-L¦¦¦¦¦¦¦¦¦¦¦¦¦¦-
+```
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚      ğŸ´       â”‚
+â”‚  Recommended  â”‚
+â”‚     FOOD      â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
--¦¦¦¦¦¦¦¦¦¦¦¦¦¦¬
--      ??      -
--   Parking    -
-L¦¦¦¦¦¦¦¦¦¦¦¦¦¦-
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚      ğŸ…¿ï¸       â”‚
+â”‚    Parking    â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
 
--¦¦¦¦¦¦¦¦¦¦¦¦¦¦¬
--      ??      -
--  Statistics  -
-L¦¦¦¦¦¦¦¦¦¦¦¦¦¦-
-11. Next Activity
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚      ğŸ“Š       â”‚
+â”‚  Statistics   â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+```
 
-Next Activity má bıt vizuálnì ménì dominantní ne Current Activity.
+## 11. Next Activity
 
+Next Activity mÃ¡ bÃ½t vizuÃ¡lnÄ› mÃ©nÄ› dominantnÃ­ neÅ¾ Current Activity.
+
+```
 NEXT ACTIVITY
 
 09:35    [Plane]   Odlet z Prahy
-                  Praha
+                   Praha
 
-              ...
+              â€¢â€¢â€¢
            Show more
+```
 
 Current Activity = detail.
+Next Activity = rychlÃ½ nÃ¡hled.
 
-Next Activity = rychlı náhled.
+## 12. Top background
 
-12. Top background
-
-Tady bych zachoval pøesnì to, na èem jsme se shodli:
-
-modré/purple branded background, kterı se pouívá v horní èásti aplikace.
+ModrÃ©/purple branded background, kterÃ½ se pouÅ¾Ã­vÃ¡ v hornÃ­ ÄÃ¡sti aplikace.
 
 Obsah:
 
-Travel Companion        ?
+```
+Travel Companion        âš™
 
 [ + New Trip ] [ My Trips ]
 
 Current Trip
+```
 
-Background mùe mít velmi jemnı dekorativní travel/mountain/city pattern.
+Background mÅ¯Å¾e mÃ­t velmi jemnÃ½ dekorativnÃ­ travel/mountain/city pattern.
 
 Pattern:
+- velmi nÃ­zkÃ¡ opacity
+- nesmÃ­ konkurovat textu
+- pouze dekorace
+- Å¾Ã¡dnÃ½ raster obrÃ¡zek nutnÃ½ pro samotnÃ½ layout â€” CSS/SVG dekorace
 
-velmi nízkı opacity
-nesmí konkurovat textu
-pouze dekorace
-ádnı raster obrázek nutnı pro samotnı layout
-13. Bottom navigation
+## 13. Bottom navigation
 
-Stejnı branded background jako nahoøe.
+StejnÃ½ branded background jako nahoÅ™e.
 
--¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¬
--       ??          ?        -
--      Home       Settings    -
-L¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦¦-
+```
+â”Œâ”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”
+â”‚     ğŸ           âš™                â”‚
+â”‚    Home       Settings           â”‚
+â””â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€ï¿½ï¿½ï¿½â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”€â”˜
+```
+
+(V aktuÃ¡lnÃ­ implementaci aplikace jsou tÅ™i poloÅ¾ky: Home, My Trips, Settings.)
 
 Ikony:
+- Home
+- My Trips
+- Settings
 
-Home
-Settings
+Active: white
+Inactive: white / reduced opacity
 
-Active:
+V Dark Mode zÅ¯stÃ¡vÃ¡ bottom navigation tmavÅ¡Ã­ modrofialovÃ¡.
 
-white
+## 14. Spacing
 
-Inactive:
+DoporuÄuji drÅ¾et 8px spacing system:
 
-white / reduced opacity
+- 4px micro
+- 8px xs
+- 12px sm
+- 16px md
+- 24px lg
+- 32px xl
 
-V Dark Mode zùstává bottom navigation tmavší modrofialová.
+TypickÃ© pouÅ¾itÃ­:
+- Card padding: 16px
+- Section gap: 24px
+- Element gap: 8â€“12px
+- Button gap: 12px
+- Page horizontal padding: 16px
 
-14. Spacing
-
-Doporuèuji dret 8px spacing system:
-
-4px   micro
-8px   xs
-12px  sm
-16px  md
-24px  lg
-32px  xl
-
-Typické pouití:
-
-Card padding: 16px
-Section gap: 24px
-Element gap: 8–12px
-Button gap: 12px
-Page horizontal padding: 16px
-15. Responsive behaviour
+## 15. Responsive behaviour
 
 Mobile-first.
 
 Na telefonu:
+- 1 column
 
-1 column
+Na Å¡irÅ¡Ã­m displeji mÅ¯Å¾e bÃ½t:
+- 2 columns
 
-Na širším displeji mùe bıt:
-
-2 columns
-
-ale Current Activity nesmí bıt kvùli gridu pøíliš stlaèená.
+ale Current Activity nesmÃ­ bÃ½t kvÅ¯li gridu pÅ™Ã­liÅ¡ stlaÄenÃ¡.
 
 Priorita:
+1. Current Trip
+2. Itinerary
+3. Current Activity
+4. Next Activity
+5. Secondary actions
 
-Current Trip
-Itinerary
-Current Activity
-Next Activity
-Secondary actions
+---
 
-
-
-SUMMARY
+## SUMMARY
 
 Implement the Travel Companion mobile UI using a modern premium travel-app design.
 
@@ -455,7 +375,7 @@ Use:
 - mobile-first responsive layout
 - Inter font
 - Light Mode + Dark Mode
-- SVG icons, preferably lucide-react
+- inline SVG icons (no new icon library dependency)
 - linear icons
 - 2px icon stroke
 - round line caps and joins
@@ -507,12 +427,13 @@ Dark shadow:
 0 4px 16px rgba(0, 0, 0, 0.45)
 
 Primary buttons:
-44–48px height
+44â€“48px height
 12px radius
 
 Use the blue/purple branded background for the top header and bottom navigation.
 
-Current Activity must be the visual focal point of the itinerary.
+Current Activity must be the visual focal point of the itinerary â€” its Food/Parking/Statistics action shortcuts must render inside the same card/block as the activity's details, not detached outside of it.
+
 Next Activity should be a compact preview.
 
 Do not use the screenshot as a source of truth for text, data or layout dimensions.
