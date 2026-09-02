@@ -6,6 +6,10 @@ export interface RecommendedVenue {
 
     type?: string;
 
+    mealType?: string;
+
+    subtype?: string;
+
     name: string;
 
     smartChip?: string;
