@@ -1,3 +1,4 @@
 export * from "./ItineraryCard";
 export * from "./ItineraryDayDetail";
+export * from "./ItineraryDayAdditionalDetails";
 export * from "./ItineraryDayCard";

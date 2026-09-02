@@ -228,21 +228,19 @@ Current verified RoadBook test data:
 
 **8 days · 150 activities**
 
+### 6.0.12
+**Status:** DONE  
+Imported recommended venues and flexible day statistics from RoadBook worksheets, with both sections available behind a collapsed per-day details control in the import preview and saved itinerary.
+
 ---
 
 # Current Position
 
 **Current Milestone:** 6.x — Data Import & Itinerary  
-**Completed through:** 6.0.11  
-**Status:** DONE through 6.0.11
+**Completed through:** 6.0.12  
+**Status:** DONE through 6.0.12
 
 Next:
-
-## Feature 6.0.12+
-
-Continue development of the itinerary/import experience from the existing architecture.
-
-Then:
 
 ## 7.x — BlizzCon Ready
 

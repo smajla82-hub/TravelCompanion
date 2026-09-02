@@ -3,6 +3,8 @@ import * as XLSX from "xlsx";
 import type {
     ItineraryDay,
     ItineraryItem,
+    RecommendedVenue,
+    DayStat,
 } from "../../types";
 
 type CellValue = string | number | boolean | Date | null | undefined;
@@ -55,6 +57,140 @@ function findColumnStartingWith(
     );
 }
 
+function findColumnContaining(
+    headers: string[],
+    text: string
+): number {
+    return headers.findIndex(
+        header => header.includes(text)
+    );
+}
+
+function findVenueHeaderRow(
+    rows: ImportRow[]
+): number {
+    return rows.findIndex((row) => {
+        const headers = row.map(getString);
+
+        return (
+            findColumn(headers, "Priorita") !== -1 &&
+            findColumnStartingWith(headers, "Podnik") !== -1
+        );
+    });
+}
+
+function parseVenues(
+    rows: ImportRow[],
+    date: string,
+    headerRowIndex: number
+): RecommendedVenue[] {
+    if (headerRowIndex === -1) {
+        return [];
+    }
+
+    const headers =
+        (rows[headerRowIndex] ?? []).map(getString);
+
+    const columns = {
+        priority: findColumn(headers, "Priorita"),
+        type: findColumn(headers, "Typ"),
+        name: findColumnStartingWith(headers, "Podnik"),
+        place: findColumnStartingWith(headers, "📍"),
+        recommendation:
+            findColumnContaining(headers, "Doporuč"),
+        price: findColumnStartingWith(headers, "💰 Cena"),
+        smartChip: findColumn(headers, "🅿"),
+        reservation: findColumnContaining(headers, "Rez."),
+    };
+
+    if (columns.name === -1) {
+        return [];
+    }
+
+    const venues: RecommendedVenue[] = [];
+
+    for (
+        let rowIndex = headerRowIndex + 1;
+        rowIndex < rows.length;
+        rowIndex++
+    ) {
+        const row = rows[rowIndex] ?? [];
+        const name = getString(row[columns.name]);
+
+        if (!name) {
+            break;
+        }
+
+        const get = (column: number): string => {
+            return column < 0
+                ? ""
+                : getString(row[column]);
+        };
+
+        venues.push({
+            id: `${date}-venue-${venues.length + 1}`,
+            priority: get(columns.priority),
+            type: get(columns.type),
+            name,
+            smartChip:
+                get(columns.smartChip) ||
+                get(columns.place),
+            recommendation: get(columns.recommendation),
+            price: get(columns.price),
+            reservation: get(columns.reservation),
+        });
+    }
+
+    return venues;
+}
+
+function parseStats(
+    rows: ImportRow[]
+): DayStat[] {
+    for (
+        let rowIndex = 0;
+        rowIndex < rows.length;
+        rowIndex++
+    ) {
+        const row = rows[rowIndex] ?? [];
+        const columnIndex = row.findIndex((cell) => {
+            return getString(cell)
+                .toUpperCase()
+                .includes("STATISTIKY");
+        });
+
+        if (columnIndex === -1) {
+            continue;
+        }
+
+        const stats: DayStat[] = [];
+
+        for (
+            let statRowIndex = rowIndex + 1;
+            statRowIndex < rows.length;
+            statRowIndex++
+        ) {
+            const statRow = rows[statRowIndex] ?? [];
+            const label =
+                getString(statRow[columnIndex]);
+            const value =
+                getString(statRow[columnIndex + 1]);
+
+            if (!label && !value) {
+                break;
+            }
+
+            if (label && value) {
+                stats.push({ label, value });
+            }
+        }
+
+        return stats;
+    }
+
+    return [];
+}
+
 function createItem(
     row: ImportRow,
     columns: Record<string, number>,
@@ -100,8 +236,7 @@ function createItem(
 }
 
 function parseDaySheet(
-    sheet: XLSX.WorkSheet,
-    sheetName: string
+    sheet: XLSX.WorkSheet
 ): ItineraryDay | null {
 
     const rows =
@@ -175,11 +310,20 @@ function parseDaySheet(
         items.push(item);
     }
 
+    const venues = parseVenues(
+        rows,
+        date,
+        findVenueHeaderRow(rows)
+    );
+    const stats = parseStats(rows);
+
     return {
         id: `day-${date}`,
         date,
         title,
         items,
+        venues,
+        stats,
     };
 }
 
@@ -210,8 +354,7 @@ export async function importXlsxRoadBook(
 
         const day =
             parseDaySheet(
-                sheet,
-                sheetName
+                sheet
             );
 
         if (day) {

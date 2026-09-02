@@ -1,4 +1,6 @@
 import { Card, Stack } from "../ui";
+import { ItineraryDayAdditionalDetails } from
+    "../itinerary/ItineraryDayAdditionalDetails";
 
 import type {
     ItineraryDay,
@@ -97,6 +99,10 @@ export function RoadBookPreview({
                             ))}
 
                         </Stack>
+
+                        <ItineraryDayAdditionalDetails
+                            day={day}
+                        />
 
                     </Stack>
                 </Card>
