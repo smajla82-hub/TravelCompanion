@@ -94,36 +94,55 @@ export const TripService = {
         date: string,
         item: Omit<ItineraryItem, "id">
     ) {
-        const trip = trips.find(
-            item => item.id === tripId
+        const index = trips.findIndex(
+            trip => trip.id === tripId
         );
 
-        if (!trip) {
+        if (index === -1) {
             return;
         }
 
+        const trip = trips[index];
+
         const itinerary = trip.itinerary ?? [];
-        let day = itinerary.find(
+
+        const day = itinerary.find(
             item => item.date === date
         );
 
-        if (!day) {
-            day = {
-                id: date,
-                date,
-                title: "",
-                items: [],
-            };
-
-            itinerary.push(day);
-            trip.itinerary = itinerary;
-        }
-
-        day.items.push({
+        const newItem: ItineraryItem = {
             ...item,
             id: `${date}-item-${crypto.randomUUID()}`,
             date,
-        });
+        };
+
+        const newItinerary = day
+            ? itinerary.map(
+                current =>
+                    current.date === date
+                        ? {
+                            ...current,
+                            items: [
+                                ...current.items,
+                                newItem,
+                            ],
+                        }
+                        : current
+            )
+            : [
+                ...itinerary,
+                {
+                    id: date,
+                    date,
+                    title: "",
+                    items: [newItem],
+                },
+            ];
+
+        trips[index] = {
+            ...trip,
+            itinerary: newItinerary,
+        };
 
         persistTrips();
     },
@@ -134,11 +153,17 @@ export const TripService = {
         itemId: string,
         updates: Partial<ItineraryItem>
     ) {
-        const trip = trips.find(
-            item => item.id === tripId
+        const index = trips.findIndex(
+            trip => trip.id === tripId
         );
 
-        const day = trip?.itinerary?.find(
+        if (index === -1) {
+            return;
+        }
+
+        const trip = trips[index];
+
+        const day = trip.itinerary?.find(
             item => item.date === date
         );
 
@@ -146,11 +171,26 @@ export const TripService = {
             item => item.id === itemId
         );
 
-        if (!item) {
+        if (!trip.itinerary || !day || !item) {
             return;
         }
 
-        Object.assign(item, updates);
+        const newItems = day.items.map(
+            current =>
+                current.id === itemId
+                    ? { ...current, ...updates }
+                    : current
+        );
+
+        trips[index] = {
+            ...trip,
+            itinerary: trip.itinerary.map(
+                current =>
+                    current.id === day.id
+                        ? { ...day, items: newItems }
+                        : current
+            ),
+        };
 
         persistTrips();
     },
@@ -160,27 +200,41 @@ export const TripService = {
         date: string,
         itemId: string
     ) {
-        const trip = trips.find(
-            item => item.id === tripId
-        );
-
-        const day = trip?.itinerary?.find(
-            item => item.date === date
-        );
-
-        if (!day) {
-            return;
-        }
-
-        const index = day.items.findIndex(
-            item => item.id === itemId
+        const index = trips.findIndex(
+            trip => trip.id === tripId
         );
 
         if (index === -1) {
             return;
         }
 
-        day.items.splice(index, 1);
+        const trip = trips[index];
+
+        const day = trip.itinerary?.find(
+            item => item.date === date
+        );
+
+        if (!trip.itinerary || !day) {
+            return;
+        }
+
+        const newItems = day.items.filter(
+            item => item.id !== itemId
+        );
+
+        if (newItems.length === day.items.length) {
+            return;
+        }
+
+        trips[index] = {
+            ...trip,
+            itinerary: trip.itinerary.map(
+                current =>
+                    current.id === day.id
+                        ? { ...day, items: newItems }
+                        : current
+            ),
+        };
 
         persistTrips();
     },
@@ -190,15 +244,22 @@ export const TripService = {
         date: string,
         orderedItemIds: string[]
     ) {
-        const trip = trips.find(
-            item => item.id === tripId
+        const index = trips.findIndex(
+            trip => trip.id === tripId
         );
 
-        const day = trip?.itinerary?.find(
+        if (index === -1) {
+            return;
+        }
+
+        const trip = trips[index];
+
+        const day = trip.itinerary?.find(
             item => item.date === date
         );
 
         if (
+            !trip.itinerary ||
             !day ||
             orderedItemIds.length !== day.items.length ||
             new Set(orderedItemIds).size !== orderedItemIds.length
@@ -220,7 +281,15 @@ export const TripService = {
             orderedItems.push(item);
         }
 
-        day.items = orderedItems;
+        trips[index] = {
+            ...trip,
+            itinerary: trip.itinerary.map(
+                current =>
+                    current.id === day.id
+                        ? { ...day, items: orderedItems }
+                        : current
+            ),
+        };
 
         persistTrips();
     },

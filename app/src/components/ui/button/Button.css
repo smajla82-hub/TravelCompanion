@@ -39,3 +39,11 @@
 
     border:1px solid var(--color-primary);
 }
+
+.tc-button--compact{
+    width:auto;
+
+    padding:6px 12px;
+
+    font-size:14px;
+}

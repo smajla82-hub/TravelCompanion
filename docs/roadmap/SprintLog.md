@@ -240,13 +240,17 @@ Stopped recommended venues from being duplicated into the main timeline and pres
 **Status:** DONE
 Added in-app itinerary activity creation, editing, deletion and reordering with immediate localStorage persistence.
 
+### 6.0.14.1
+**Status:** DONE
+Fixed itinerary changes requiring a manual page refresh by rewriting the TripService itinerary mutations to an immutable update pattern, and replaced the four inline per-activity buttons with a single compact Manage action opening an itinerary item actions modal.
+
 ---
 
 # Current Position
 
 **Current Milestone:** 6.x — Data Import & Itinerary  
-**Completed through:** 6.0.14
-**Status:** DONE through 6.0.14
+**Completed through:** 6.0.14.1
+**Status:** DONE through 6.0.14.1
 
 Next:
 
