@@ -38,20 +38,20 @@ Feature architecture, UI library, domain layer, dashboard refactoring and modal 
 Trip creation, validation, editing, deletion, Active Trip management and persistence.
 
 ### Milestone 4 — Data Import & Itinerary
-**6.x — IN PROGRESS**
+**6.x — DONE**
 
 Import existing RoadBook/XLSX planning data, map it into the domain model, persist it inside Trips and expose it through the Active Trip itinerary. Includes in-app itinerary editing (add/edit/delete/reorder activities) and the redesigned itinerary day view (real-time current/next activity, per-activity Food/Parking, day-level Statistics).
 
 Completed through **6.0.16**.
 
 ### Milestone 5 — BlizzCon Ready
-**7.x — PLANNED**
+**7.x — IN PROGRESS**
 
 Turn the application into a practical companion for the BlizzCon 2026 trip using the imported real travel data. Based on the user's dashboard mockup, this milestone reworks the app's home/dashboard experience around "what's happening right now" rather than a static list of days, and introduces a dedicated Settings area.
 
 Planned sub-steps:
 
-- **7.1 — Dashboard "Current Activity" view**
+- **7.1 — Dashboard "Current Activity" view** — **DONE**
   - The dashboard shows the Active Trip's **current/next activity** directly (based on the real device date/time), instead of requiring the user to open a day from a list.
   - A new **"View whole Itinerary"** entry point opens the existing full day-list view (the itinerary day cards / day-detail flow built in 6.x) as a separate, explicit view rather than the default dashboard state.
   - **"Continue Trip"** is redefined: instead of scrolling to a section, it returns the user to the Active Trip's current date/time view (e.g. after browsing a different day, editing a different Trip, or navigating elsewhere).
@@ -155,9 +155,9 @@ All work through **6.0.16** has been implemented and functionally tested.
 
 ## 5. Current State
 
-**Current Milestone:** 6.x — Data Import & Itinerary  
-**Current completed Feature:** 6.0.16  
-**Status:** DONE through 6.0.16
+**Current Milestone:** 7.x — BlizzCon Ready  
+**Current completed Feature:** 7.1  
+**Status:** DONE through 7.1
 
 The Trip system currently supports:
 
@@ -191,7 +191,10 @@ The RoadBook/itinerary system currently supports:
 - per-activity Food/Parking buttons and a day-level Statistics button
 - meal-type-aware Food venue filtering with venue subtype details
 - automatic itinerary close when switching the Active Trip
-- Continue Trip scrolling to the itinerary section
+- current and next activity view on the dashboard
+- "View whole Itinerary" day-list entry point
+- date-range edge-case messaging
+- Continue Trip reset to the current-activity view with itinerary scrolling
 
 Verified test data currently imports as:
 
@@ -201,11 +204,10 @@ Verified test data currently imports as:
 
 ## 6. Next Development Order
 
-1. 7.1 — Dashboard "Current Activity" view (current/next activity, "View whole Itinerary", redefined Continue Trip)
-2. 7.2 — Settings (Import RoadBook relocation, Export/Import backup, Dark/Light mode)
-3. 7.5.x — UI/UX Polish (holistic visual/UX redesign)
-4. 8.x — Android/mobile
-5. 9.x+ — Extended travel functionality
+1. 7.2 — Settings (Import RoadBook relocation, Export/Import backup, Dark/Light mode)
+2. 7.5.x — UI/UX Polish (holistic visual/UX redesign)
+3. 8.x — Android/mobile
+4. 9.x+ — Extended travel functionality
 
 The order remains intentional: reliable state and persistence are established before expanding the real-trip experience, the application is validated against real BlizzCon data before a holistic visual redesign is undertaken, and the application should be functionally stable before final mobile packaging.
 

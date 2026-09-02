@@ -252,13 +252,17 @@ Redesigned the itinerary day view: added real-time current/next activity highlig
 **Status:** DONE
 Meal-type-aware Food venue filtering, `mealType` and `subtype` fields on recommended venues, and updated venue-list rendering. Itinerary day details now close automatically when the Active Trip changes, and the Continue Trip button scrolls to the itinerary section.
 
+### 7.1
+**Status:** DONE
+The dashboard now opens on the Active Trip's current and next activity, with a "View whole Itinerary" entry point for the existing day-list and day-detail flow. Trips outside their date range show "Trip starts in X days" or "Trip has ended" messaging with the same itinerary link. Continue Trip now returns to the current-activity view while retaining the itinerary scroll behavior.
+
 ---
 
 # Current Position
 
-**Current Milestone:** 6.x — Data Import & Itinerary  
-**Completed through:** 6.0.16
-**Status:** DONE through 6.0.16
+**Current Milestone:** 7.x — BlizzCon Ready  
+**Completed through:** 7.1
+**Status:** DONE through 7.1
 
 Next:
 

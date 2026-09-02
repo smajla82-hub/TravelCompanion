@@ -21,9 +21,20 @@ export default function DashboardPage() {
         useState(false);
 
     const [, forceRefresh] = useState(0);
+    const [itineraryResetKey, setItineraryResetKey] =
+        useState(0);
 
     function refreshTrips() {
         forceRefresh(v => v + 1);
+    }
+
+    function continueTrip() {
+        setItineraryResetKey(value => value + 1);
+        document
+            .getElementById("itinerary-section")
+            ?.scrollIntoView({
+                behavior: "smooth",
+            });
     }
 
     return (
@@ -41,13 +52,17 @@ export default function DashboardPage() {
                 + New Trip
             </Button>
 
-            <CurrentTripSection />
+            <CurrentTripSection
+                onContinue={continueTrip}
+            />
 
             <TripsSection
                 onTripChanged={refreshTrips}
             />
 
-            <ItinerarySection />
+            <ItinerarySection
+                key={itineraryResetKey}
+            />
 
             <RoadBookImport />
 
