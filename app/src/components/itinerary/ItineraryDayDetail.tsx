@@ -1,12 +1,16 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
-import { Card, Heading, Stack, Button } from "../ui";
+import { Card, Heading, Stack, Button, Modal } from "../ui";
 import { ItineraryDayAdditionalDetails } from
     "./ItineraryDayAdditionalDetails";
 import { ItineraryItemModal } from
     "./ItineraryItemModal";
 import { ItineraryItemActionsModal } from
     "./ItineraryItemActionsModal";
+import { RecommendedVenueList } from
+    "./RecommendedVenueList";
+import { DayStatsList } from
+    "./DayStatsList";
 
 import type {
     ItineraryDay,
@@ -15,6 +19,10 @@ import type {
 import type { ItineraryItemFields } from
     "./ItineraryItemForm";
 import { TripService } from "../../services/TripService";
+import { getItineraryItemTimingStatuses } from
+    "../../utils/getItineraryItemTiming";
+
+const NOW_REFRESH_INTERVAL_MS = 60000;
 
 type ItineraryDayDetailProps = {
     day: ItineraryDay;
@@ -37,6 +45,51 @@ export function ItineraryDayDetail({
 
     const [actionsIndex, setActionsIndex] =
         useState<number | null>(null);
+
+    const [statsOpen, setStatsOpen] =
+        useState(false);
+
+    const [foodItemId, setFoodItemId] =
+        useState<string | null>(null);
+
+    const [parkingItemId, setParkingItemId] =
+        useState<string | null>(null);
+
+    const [now, setNow] = useState(
+        () => new Date()
+    );
+
+    useEffect(() => {
+        const intervalId = setInterval(() => {
+            setNow(new Date());
+        }, NOW_REFRESH_INTERVAL_MS);
+
+        return () => {
+            clearInterval(intervalId);
+        };
+    }, []);
+
+    const timingStatuses =
+        getItineraryItemTimingStatuses(
+            day,
+            day.items,
+            now
+        );
+
+    const parkingItem =
+        parkingItemId
+            ? day.items.find(
+                  item => item.id === parkingItemId
+              )
+            : undefined;
+
+    const parkingLocation =
+        parkingItem?.parking
+            ? day.parkingLocations?.find(
+                  location =>
+                      location.code === parkingItem.parking
+              )
+            : undefined;
 
     function handleSubmit(
         fields: ItineraryItemFields
@@ -123,6 +176,14 @@ export function ItineraryDayDetail({
 
                 <Button
                     type="button"
+                    className="tc-button tc-button--compact"
+                    onClick={() => setStatsOpen(true)}
+                >
+                    Statistics
+                </Button>
+
+                <Button
+                    type="button"
                     onClick={() => {
                         setEditingItem(undefined);
                         setModalOpen(true);
@@ -140,6 +201,10 @@ export function ItineraryDayDetail({
                         <div key={item.id}>
 
                             <strong>
+                                {timingStatuses[item.id] === "current" &&
+                                    "Now — "}
+                                {timingStatuses[item.id] === "next" &&
+                                    "Next — "}
                                 {item.time
                                     ? `${item.time} — `
                                     : ""}
@@ -199,15 +264,41 @@ export function ItineraryDayDetail({
                                 </div>
                             )}
 
-                            <Button
-                                type="button"
-                                className="tc-button tc-button--compact"
-                                onClick={() =>
-                                    setActionsIndex(index)
-                                }
-                            >
-                                Manage
-                            </Button>
+                            <Stack gap="sm">
+                                {item.priority === "FOOD" && (
+                                    <Button
+                                        type="button"
+                                        className="tc-button tc-button--compact"
+                                        onClick={() =>
+                                            setFoodItemId(item.id)
+                                        }
+                                    >
+                                        Food
+                                    </Button>
+                                )}
+
+                                {item.parking && (
+                                    <Button
+                                        type="button"
+                                        className="tc-button tc-button--compact"
+                                        onClick={() =>
+                                            setParkingItemId(item.id)
+                                        }
+                                    >
+                                        Parking
+                                    </Button>
+                                )}
+
+                                <Button
+                                    type="button"
+                                    className="tc-button tc-button--compact"
+                                    onClick={() =>
+                                        setActionsIndex(index)
+                                    }
+                                >
+                                    Manage
+                                </Button>
+                            </Stack>
 
                         </div>
                     ))}
@@ -287,6 +378,79 @@ export function ItineraryDayDetail({
                     }}
                     onSubmit={handleSubmit}
                 />
+
+                <Modal
+                    open={statsOpen}
+                    onClose={() => setStatsOpen(false)}
+                    title="Statistics"
+                >
+                    <DayStatsList
+                        stats={day.stats ?? []}
+                    />
+                </Modal>
+
+                <Modal
+                    open={foodItemId !== null}
+                    onClose={() => setFoodItemId(null)}
+                    title="Recommended venues"
+                >
+                    <RecommendedVenueList
+                        venues={day.venues ?? []}
+                    />
+                </Modal>
+
+                <Modal
+                    open={parkingItemId !== null}
+                    onClose={() => setParkingItemId(null)}
+                    title="Parking"
+                >
+                    {parkingLocation ? (
+                        <div>
+                            <strong>
+                                {parkingLocation.code}:
+                            </strong>
+                            {" "}
+                            {parkingLocation.mapLink ? (
+                                <a
+                                    href={parkingLocation.mapLink}
+                                    target="_blank"
+                                    rel="noreferrer"
+                                >
+                                    {parkingLocation.name}
+                                </a>
+                            ) : (
+                                parkingLocation.name
+                            )}
+                        </div>
+                    ) : (
+                        parkingItem?.parking && (
+                            <div>
+                                <strong>
+                                    {parkingItem.parking}
+                                </strong>
+
+                                {parkingItem.mapLink ? (
+                                    <div>
+                                        <a
+                                            href={parkingItem.mapLink}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        >
+                                            {parkingItem.smartChip ??
+                                                "Open in Google Maps"}
+                                        </a>
+                                    </div>
+                                ) : (
+                                    parkingItem.smartChip && (
+                                        <div>
+                                            {parkingItem.smartChip}
+                                        </div>
+                                    )
+                                )}
+                            </div>
+                        )
+                    )}
+                </Modal>
 
             </Stack>
         </Card>
