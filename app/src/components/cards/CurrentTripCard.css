@@ -5,20 +5,49 @@
 }
 
 .current-trip-card {
+    position: relative;
+    overflow: hidden;
+    min-height: 238px;
+    box-shadow: 0 12px 28px color-mix(in srgb, var(--color-primary) 25%, transparent);
     color: white;
     border: 0;
     background: linear-gradient(135deg, var(--color-purple), var(--color-primary));
 }
+.current-trip-card::after {
+    content: "〰 〰 〰";
+    position: absolute;
+    right: 16px;
+    bottom: 34px;
+    color: rgba(255, 255, 255, .16);
+    font-size: 54px;
+    letter-spacing: -12px;
+    transform: rotate(-8deg);
+    pointer-events: none;
+}
+.current-trip-card .tc-stack { position: relative; z-index: 1; height: 100%; }
+.current-trip-card .trip-header { gap: 12px; }
+.current-trip-card .trip-header h2 { min-width: 0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 22px; }
 .current-trip-card p { color: rgba(255, 255, 255, .88); }
-.current-trip-card .tc-button { background: rgba(255,255,255,.18); color: white; }
+.current-trip-card .tc-button { align-self: center; margin-top: auto; border-color: rgba(255,255,255,.72); color: white; }
 
 .trip-status {
-    padding: 4px 12px;
+    flex-shrink: 0;
+    padding: 8px 16px;
     border-radius: 999px;
 
     background: var(--color-success);
     color: white;
 
-    font-size: 12px;
+    font-size: 14px;
     font-weight: 600;
+}
+
+@media (max-width: 480px) {
+    .current-trip-card {
+        min-height: 250px;
+    }
+
+    .current-trip-card .trip-header h2 {
+        font-size: 18px;
+    }
 }

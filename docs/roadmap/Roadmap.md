@@ -64,7 +64,7 @@ Planned sub-steps:
   - The Settings entry point placement is intentionally minimal/provisional pending 7.5.x UI/UX Polish.
 
 ### Milestone 5.5 — UI/UX Polish
-**7.5.x — PLANNED**
+**7.5.x — DONE (including 7.5.2 refinement)**
 
 A dedicated, holistic visual/UX redesign pass across the whole application (not just the itinerary view), once the functional feature set from 7.x is stable. Expected scope includes:
 - Consistent sizing/spacing of buttons and controls across the entire app (the per-activity action buttons introduced in 6.x are functional but oversized; a systemic sizing pass is deferred here rather than fixed piecemeal).
@@ -73,6 +73,8 @@ A dedicated, holistic visual/UX redesign pass across the whole application (not 
 - General visual consistency, responsive/mobile layout polish.
 
 This milestone intentionally follows 7.x (BlizzCon Ready) so the redesign is informed by a functionally complete, real-data-tested application rather than redesigning around a moving target.
+
+The 7.5.2 refinement completed the centered dashboard/card layout, dedicated My Trips navigation, outlined button treatment and per-activity itinerary action stack. Per-activity-type icons remain deferred to a future feature.
 
 ### Milestone 6 — Mobile / Android
 **8.x — PLANNED**

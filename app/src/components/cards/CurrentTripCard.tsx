@@ -38,6 +38,7 @@ export function CurrentTripCard({
                 </p>
 
                 <Button
+                    variant="outline"
                     onClick={onContinue}
                 >
                     Continue Trip

@@ -8,6 +8,10 @@ It is a human-readable history, not an archive of every Git commit. Git remains 
 **Status:** DONE  
 Implemented the `appka_navrh_look.png` visual redesign: centralized color, typography, radius and shadow tokens; consolidated button styling; destination-aware flags; redesigned dashboard, active trip and itinerary presentation; inline icons; fixed bottom navigation; and expanded dark-mode coverage.
 
+## Feature 7.5.2
+**Status:** DONE  
+Refined the centered dashboard header, removed redundant controls and the Current Trip heading, and balanced the Active Trip card with a refined decorative graphic, larger status badge and bottom-centered Continue Trip action. Added a dedicated My Trips page with three-item Home/My Trips/Settings navigation, switched non-excepted buttons to transparent outlined styling, and moved Food/Parking/Statistics into a per-activity right-side action stack with separators in the full day-detail view.
+
 ---
 
 ## Initial Project Structure

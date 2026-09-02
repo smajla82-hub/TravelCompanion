@@ -11,6 +11,9 @@ import { RecommendedVenueList } from
     "./RecommendedVenueList";
 import { DayStatsList } from
     "./DayStatsList";
+import { ActivityActionStack } from
+    "./ActivityActionStack";
+import "./ItineraryDayDetail.css";
 
 import type {
     ItineraryDay,
@@ -217,14 +220,6 @@ export function ItineraryDayDetail({
 
                 <Button
                     type="button"
-                    className="tc-button tc-button--compact"
-                    onClick={() => setStatsOpen(true)}
-                >
-                    Statistics
-                </Button>
-
-                <Button
-                    type="button"
                     onClick={() => {
                         setEditingItem(undefined);
                         setModalOpen(true);
@@ -239,24 +234,24 @@ export function ItineraryDayDetail({
 
                 <Stack gap="md">
                     {day.items.map((item, index) => (
-                        <div key={item.id}>
+                        <div className="itinerary-activity-row" key={item.id}>
+                            <div className="itinerary-activity-content">
+                                <strong>
+                                    {timingStatuses[item.id] === "current" &&
+                                        "Now — "}
+                                    {timingStatuses[item.id] === "next" &&
+                                        "Next — "}
+                                    {item.time
+                                        ? `${item.time} — `
+                                        : ""}
+                                    {item.title}
+                                </strong>
 
-                            <strong>
-                                {timingStatuses[item.id] === "current" &&
-                                    "Now — "}
-                                {timingStatuses[item.id] === "next" &&
-                                    "Next — "}
-                                {item.time
-                                    ? `${item.time} — `
-                                    : ""}
-                                {item.title}
-                            </strong>
-
-                            {item.location && (
-                                <div>
-                                    {item.location}
-                                </div>
-                            )}
+                                {item.location && (
+                                    <div>
+                                        {item.location}
+                                    </div>
+                                )}
 
                             {item.goal && (
                                 <div>
@@ -299,48 +294,30 @@ export function ItineraryDayDetail({
                                     </div>
                                 )}
 
-                            {item.note && (
-                                <div>
-                                    Note: {item.note}
-                                </div>
-                            )}
-
-                            <Stack gap="sm">
-                                {item.priority === "FOOD" && (
-                                    <Button
-                                        type="button"
-                                        className="tc-button tc-button--compact"
-                                        onClick={() =>
-                                            setFoodItemId(item.id)
-                                        }
-                                    >
-                                        Food
-                                    </Button>
-                                )}
-
-                                {item.parking && (
-                                    <Button
-                                        type="button"
-                                        className="tc-button tc-button--compact"
-                                        onClick={() =>
-                                            setParkingItemId(item.id)
-                                        }
-                                    >
-                                        Parking
-                                    </Button>
+                                {item.note && (
+                                    <div>
+                                        Note: {item.note}
+                                    </div>
                                 )}
 
                                 <Button
                                     type="button"
-                                    className="tc-button tc-button--compact"
+                                    compact
                                     onClick={() =>
                                         setActionsIndex(index)
                                     }
                                 >
                                     Manage
                                 </Button>
-                            </Stack>
-
+                            </div>
+                            <ActivityActionStack
+                                showFood={item.priority === "FOOD"}
+                                showParking={Boolean(item.parking)}
+                                onFood={() => setFoodItemId(item.id)}
+                                onParking={() => setParkingItemId(item.id)}
+                                onStatistics={() => setStatsOpen(true)}
+                            />
+                            <div className="itinerary-activity-separator" />
                         </div>
                     ))}
                 </Stack>

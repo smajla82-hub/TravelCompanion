@@ -1,5 +1,6 @@
 export * from "./ItineraryCard";
 export * from "./ItineraryDayDetail";
+export * from "./ActivityActionStack";
 export * from "./ItineraryDayAdditionalDetails";
 export * from "./ItineraryDayCard";
 export * from "./ItineraryItemModal";
