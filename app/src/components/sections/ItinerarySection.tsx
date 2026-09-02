@@ -1,15 +1,18 @@
 import { useEffect, useRef, useState } from "react";
 
-import { Grid, Heading } from "../ui";
+import { Button, Grid, Heading } from "../ui";
 
 import {
     ItineraryCard,
     ItineraryDayDetail,
+    CurrentActivityView,
 } from "../itinerary";
 
 import { TripService } from "../../services/TripService";
 
 import type { ItineraryDay } from "../../types";
+
+type ItineraryView = "current" | "day-list" | "day-detail";
 
 export function ItinerarySection() {
     const activeTrip =
@@ -20,6 +23,8 @@ export function ItinerarySection() {
 
     const [selectedDay, setSelectedDay] =
         useState<ItineraryDay | null>(null);
+    const [view, setView] =
+        useState<ItineraryView>("current");
 
     const activeTripId = activeTrip?.id;
     const previousActiveTripId =
@@ -31,12 +36,13 @@ export function ItinerarySection() {
             activeTripId
         ) {
             setSelectedDay(null);
+            setView("current");
             previousActiveTripId.current =
                 activeTripId;
         }
     }, [activeTripId]);
 
-    if (selectedDay) {
+    if (view === "day-detail" && selectedDay) {
         return (
             <section id="itinerary-section">
                 <Heading level={2}>
@@ -47,7 +53,7 @@ export function ItinerarySection() {
                     day={selectedDay}
                     tripId={activeTrip?.id ?? ""}
                     onClose={() =>
-                        setSelectedDay(null)
+                        setView("day-list")
                     }
                     onDayChanged={() => {
                         const updatedDay =
@@ -68,21 +74,52 @@ export function ItinerarySection() {
         );
     }
 
+    if (view === "current" && activeTrip) {
+        return (
+            <section id="itinerary-section">
+                <Heading level={2}>
+                    Itinerary
+                </Heading>
+
+                <CurrentActivityView
+                    trip={activeTrip}
+                    onViewWholeItinerary={() =>
+                        setView("day-list")
+                    }
+                    onShowDay={day => {
+                        setSelectedDay(day);
+                        setView("day-detail");
+                    }}
+                />
+            </section>
+        );
+    }
+
     return (
         <section id="itinerary-section">
             <Heading level={2}>
                 Itinerary
             </Heading>
 
+            {activeTrip && (
+                <Button
+                    type="button"
+                    onClick={() => setView("current")}
+                >
+                    Current Activity
+                </Button>
+            )}
+
             <Grid>
-                {itinerary.map((day) => (
+                {itinerary.map(day => (
                     <ItineraryCard
-    key={day.id}
-    day={day}
-    onClick={() =>
-        setSelectedDay(day)
-    }
-/>
+                        key={day.id}
+                        day={day}
+                        onClick={() => {
+                            setSelectedDay(day);
+                            setView("day-detail");
+                        }}
+                    />
                 ))}
             </Grid>
         </section>

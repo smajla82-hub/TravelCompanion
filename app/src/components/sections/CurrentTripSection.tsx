@@ -3,7 +3,13 @@ import { CurrentTripCard } from "../cards";
 
 import { useTrips } from "../../hooks/useTrips";
 
-export function CurrentTripSection() {
+type CurrentTripSectionProps = {
+    onContinue: () => void;
+};
+
+export function CurrentTripSection({
+    onContinue,
+}: CurrentTripSectionProps) {
 
     const {
         activeTrip,
@@ -22,6 +28,7 @@ export function CurrentTripSection() {
 
             <CurrentTripCard
                 trip={activeTrip}
+                onContinue={onContinue}
             />
 
         </>

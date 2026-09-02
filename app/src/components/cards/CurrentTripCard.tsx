@@ -8,10 +8,12 @@ import { formatDate } from "../../utils/formatDate";
 
 type CurrentTripCardProps = {
     trip: Trip;
+    onContinue: () => void;
 };
 
 export function CurrentTripCard({
     trip,
+    onContinue,
 }: CurrentTripCardProps) {
     return (
         <Card>
@@ -35,15 +37,7 @@ export function CurrentTripCard({
                 </p>
 
                 <Button
-                    onClick={() =>
-                        document
-                            .getElementById(
-                                "itinerary-section"
-                            )
-                            ?.scrollIntoView({
-                                behavior: "smooth",
-                            })
-                    }
+                    onClick={onContinue}
                 >
                     Continue Trip
                 </Button>

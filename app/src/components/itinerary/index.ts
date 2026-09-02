@@ -6,3 +6,4 @@ export * from "./ItineraryItemModal";
 export * from "./ItineraryItemActionsModal";
 export * from "./RecommendedVenueList";
 export * from "./DayStatsList";
+export * from "./CurrentActivityView";
