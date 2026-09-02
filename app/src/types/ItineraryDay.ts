@@ -2,6 +2,7 @@ import type { ItineraryItem } from "./ItineraryItem";
 import type { RecommendedVenue } from
     "./RecommendedVenue";
 import type { DayStat } from "./DayStat";
+import type { ParkingLocation } from "./ParkingLocation";
 
 export interface ItineraryDay {
 
@@ -16,5 +17,7 @@ export interface ItineraryDay {
     venues?: RecommendedVenue[];
 
     stats?: DayStat[];
+
+    parkingLocations?: ParkingLocation[];
 
 }

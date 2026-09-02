@@ -14,8 +14,14 @@ export function ItineraryDayAdditionalDetails({
     const [isOpen, setIsOpen] = useState(false);
     const venues = day.venues ?? [];
     const stats = day.stats ?? [];
+    const parkingLocations =
+        day.parkingLocations ?? [];
 
-    if (venues.length === 0 && stats.length === 0) {
+    if (
+        venues.length === 0 &&
+        stats.length === 0 &&
+        parkingLocations.length === 0
+    ) {
         return null;
     }
 
@@ -27,7 +33,7 @@ export function ItineraryDayAdditionalDetails({
             >
                 {isOpen
                     ? "Hide details"
-                    : "Recommended venues & statistics"}
+                    : "Recommended venues, parking & statistics"}
             </Button>
 
             {isOpen && (
@@ -60,7 +66,17 @@ export function ItineraryDayAdditionalDetails({
 
                                             {venue.smartChip && (
                                                 <div>
-                                                    {venue.smartChip}
+                                                    {venue.mapLink ? (
+                                                        <a
+                                                            href={venue.mapLink}
+                                                            target="_blank"
+                                                            rel="noreferrer"
+                                                        >
+                                                            {venue.smartChip}
+                                                        </a>
+                                                    ) : (
+                                                        venue.smartChip
+                                                    )}
                                                 </div>
                                             )}
 
@@ -83,6 +99,46 @@ export function ItineraryDayAdditionalDetails({
                                             )}
                                         </div>
                                     ))}
+                                </Stack>
+                            </div>
+                        )}
+
+                        {parkingLocations.length > 0 && (
+                            <div>
+                                <strong>
+                                    Parking
+                                </strong>
+
+                                <Stack gap="sm">
+                                    {parkingLocations.map(
+                                        (parkingLocation) => (
+                                            <div
+                                                key={parkingLocation.code}
+                                            >
+                                                <strong>
+                                                    {parkingLocation.code}:
+                                                </strong>
+                                                {" "}
+                                                {parkingLocation.mapLink ? (
+                                                    <a
+                                                        href={
+                                                            parkingLocation
+                                                                .mapLink
+                                                        }
+                                                        target="_blank"
+                                                        rel="noreferrer"
+                                                    >
+                                                        {
+                                                            parkingLocation
+                                                                .name
+                                                        }
+                                                    </a>
+                                                ) : (
+                                                    parkingLocation.name
+                                                )}
+                                            </div>
+                                        )
+                                    )}
                                 </Stack>
                             </div>
                         )}

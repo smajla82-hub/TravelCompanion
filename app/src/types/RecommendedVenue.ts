@@ -10,6 +10,8 @@ export interface RecommendedVenue {
 
     smartChip?: string;
 
+    mapLink?: string;
+
     recommendation?: string;
 
     price?: string;

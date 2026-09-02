@@ -5,6 +5,7 @@ import type {
     ItineraryItem,
     RecommendedVenue,
     DayStat,
+    ParkingLocation,
 } from "../../types";
 
 type CellValue = string | number | boolean | Date | null | undefined;
@@ -79,7 +80,41 @@ function findVenueHeaderRow(
     });
 }
 
+function findVenueSectionRow(
+    rows: ImportRow[]
+): number {
+    return rows.findIndex((row) => {
+        return row.some((cell) => {
+            const value = getString(cell);
+
+            return (
+                value === "DOPORUČENÉ PODNIKY" ||
+                value.endsWith("DOPORUČENÉ PODNIKY")
+            );
+        });
+    });
+}
+
+function getCellLink(
+    sheet: XLSX.WorkSheet,
+    rowIndex: number,
+    columnIndex: number
+): string {
+    if (columnIndex < 0) {
+        return "";
+    }
+
+    const address = XLSX.utils.encode_cell({
+        r: rowIndex,
+        c: columnIndex,
+    });
+    const cell = sheet[address];
+
+    return cell?.l?.Target ?? "";
+}
+
 function parseVenues(
+    sheet: XLSX.WorkSheet,
     rows: ImportRow[],
     date: string,
     headerRowIndex: number
@@ -126,6 +161,17 @@ function parseVenues(
                 ? ""
                 : getString(row[column]);
         };
+        const smartChipLink =
+            getCellLink(
+                sheet,
+                rowIndex,
+                columns.smartChip
+            ) ||
+            getCellLink(
+                sheet,
+                rowIndex,
+                columns.place
+            );
 
         venues.push({
             id: `${date}-venue-${venues.length + 1}`,
@@ -135,6 +181,7 @@ function parseVenues(
             smartChip:
                 get(columns.smartChip) ||
                 get(columns.place),
+            mapLink: smartChipLink,
             recommendation: get(columns.recommendation),
             price: get(columns.price),
             reservation: get(columns.reservation),
@@ -142,6 +189,70 @@ function parseVenues(
     }
 
     return venues;
+}
+
+function findParkingHeaderRow(
+    rows: ImportRow[]
+): number {
+    return rows.findIndex((row) => {
+        const headers = row.map(getString);
+
+        return (
+            findColumn(headers, "Označení") !== -1 &&
+            findColumn(headers, "Místo") !== -1 &&
+            findColumnStartingWith(headers, "📍") !== -1
+        );
+    });
+}
+
+function parseParkingLocations(
+    sheet: XLSX.WorkSheet,
+    rows: ImportRow[],
+    headerRowIndex: number
+): ParkingLocation[] {
+    if (headerRowIndex === -1) {
+        return [];
+    }
+
+    const headers =
+        (rows[headerRowIndex] ?? []).map(getString);
+    const columns = {
+        code: findColumn(headers, "Označení"),
+        name: findColumn(headers, "Místo"),
+        smartChip: findColumnStartingWith(headers, "📍"),
+    };
+    const parkingLocations: ParkingLocation[] = [];
+
+    for (
+        let rowIndex = headerRowIndex + 1;
+        rowIndex < rows.length;
+        rowIndex++
+    ) {
+        const row = rows[rowIndex] ?? [];
+        const code = getString(row[columns.code]);
+
+        if (!code) {
+            break;
+        }
+
+        const name = getString(row[columns.name]);
+
+        if (!name) {
+            continue;
+        }
+
+        parkingLocations.push({
+            code,
+            name,
+            mapLink: getCellLink(
+                sheet,
+                rowIndex,
+                columns.smartChip
+            ),
+        });
+    }
+
+    return parkingLocations;
 }
 
 function parseStats(
@@ -192,7 +303,9 @@ function parseStats(
 }
 
 function createItem(
+    sheet: XLSX.WorkSheet,
     row: ImportRow,
+    rowIndex: number,
     columns: Record<string, number>,
     date: string,
     index: number
@@ -224,6 +337,12 @@ function createItem(
         parking: get("parking"),
 
         smartChip: get("smartChip"),
+
+        mapLink: getCellLink(
+            sheet,
+            rowIndex,
+            columns.smartChip
+        ),
 
         price: get("price"),
 
@@ -285,10 +404,16 @@ function parseDaySheet(
     }
 
     const items: ItineraryItem[] = [];
+    const venueSectionRowIndex =
+        findVenueSectionRow(rows);
+    const timelineEndRowIndex =
+        venueSectionRowIndex === -1
+            ? rows.length
+            : venueSectionRowIndex;
 
     for (
         let rowIndex = 5;
-        rowIndex < rows.length;
+        rowIndex < timelineEndRowIndex;
         rowIndex++
     ) {
         const row = rows[rowIndex];
@@ -301,7 +426,9 @@ function parseDaySheet(
         }
 
         const item = createItem(
+            sheet,
             row,
+            rowIndex,
             columns,
             date,
             items.length
@@ -311,11 +438,17 @@ function parseDaySheet(
     }
 
     const venues = parseVenues(
+        sheet,
         rows,
         date,
         findVenueHeaderRow(rows)
     );
     const stats = parseStats(rows);
+    const parkingLocations = parseParkingLocations(
+        sheet,
+        rows,
+        findParkingHeaderRow(rows)
+    );
 
     return {
         id: `day-${date}`,
@@ -324,6 +457,7 @@ function parseDaySheet(
         items,
         venues,
         stats,
+        parkingLocations,
     };
 }
 

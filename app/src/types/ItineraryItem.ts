@@ -18,6 +18,8 @@ export interface ItineraryItem {
 
     smartChip?: string;
 
+    mapLink?: string;
+
     price?: string;
 
     note?: string;
