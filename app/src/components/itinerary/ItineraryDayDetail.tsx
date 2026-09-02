@@ -107,19 +107,30 @@ export function ItineraryDayDetail({
             ? getMealTypeForItem(foodItem)
             : undefined;
 
-    const venues = mealType
-        ? (day.venues ?? []).filter(venue =>
-              matchesMealType(
-                  venue.mealType,
-                  mealType
+    const matchingVenues =
+        mealType
+            ? (day.venues ?? []).filter(venue =>
+                  matchesMealType(
+                      venue.mealType,
+                      mealType
+                  )
               )
-          )
-        : [];
+            : undefined;
 
+    // When the activity's meal type can be determined, only that
+    // meal's venues are relevant, even if none were found in the
+    // RoadBook data (e.g. a hotel breakfast with no external venue).
+    // Only fall back to the day's full venue list when the meal type
+    // itself could not be determined at all.
     const foodVenues =
-        venues.length > 0
-            ? venues
-            : day.venues ?? [];
+        matchingVenues ??
+        day.venues ??
+        [];
+
+    const foodEmptyMessage =
+        mealType
+            ? "No recommended venues for this meal."
+            : "No recommended venues for this day.";
 
     function handleSubmit(
         fields: ItineraryItemFields
@@ -426,6 +437,7 @@ export function ItineraryDayDetail({
                 >
                     <RecommendedVenueList
                         venues={foodVenues}
+                        emptyMessage={foodEmptyMessage}
                     />
                 </Modal>
 
