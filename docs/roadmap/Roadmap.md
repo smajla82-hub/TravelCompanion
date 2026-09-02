@@ -77,9 +77,13 @@ This milestone intentionally follows 7.x (BlizzCon Ready) so the redesign is inf
 The 7.5.2 refinement completed the centered dashboard/card layout, dedicated My Trips navigation, outlined button treatment and per-activity itinerary action stack. Per-activity-type icons remain deferred to a future feature.
 
 ### Milestone 6 — Mobile / Android
-**8.x — PLANNED**
+**8.x — IN PROGRESS**
 
 Make the application practical to use in an Android/mobile environment (PWA installability, service worker, responsive/touch polish).
+
+- **8.1 — PWA installation and GitHub Pages deployment** — **DONE**
+  - The app generates an installable PWA manifest, branded placeholder icons and an app-shell service worker.
+  - GitHub Pages builds and deploys the app at `/TravelCompanion/` for Android-device testing.
 
 ### Milestone 7 — Extended Travel Companion
 **9.x+ — PLANNED**
@@ -158,9 +162,9 @@ All work through **6.0.16** has been implemented and functionally tested.
 
 ## 5. Current State
 
-**Current Milestone:** 7.x — BlizzCon Ready  
-**Current completed Feature:** 7.5.4  
-**Status:** DONE through 7.5.4
+**Current Milestone:** 8.x — Mobile / Android
+**Current completed Feature:** 8.1
+**Status:** 8.1 DONE
 
 The Trip system currently supports:
 
@@ -212,6 +216,8 @@ The RoadBook/itinerary system currently supports:
 - unified Current/Next Activity cards with in-card Food/Parking/Statistics actions
 - refined CSS decorative pattern on the Active Trip gradient card
 - centered, color-differentiated trip start/end messaging and reconciled mobile-first design tokens
+- installable PWA app shell with static-asset precaching and branded Android-ready placeholder icons
+- GitHub Pages deployment workflow at the `/TravelCompanion/` project-site path
 
 Verified test data currently imports as:
 
@@ -221,7 +227,7 @@ Verified test data currently imports as:
 
 ## 6. Next Development Order
 
-1. 8.x — Android/mobile
+1. Continue 8.x — Android/mobile
 2. 9.x+ — Extended travel functionality
 
 The order remains intentional: reliable state and persistence are established before expanding the real-trip experience, the application is validated against real BlizzCon data before a holistic visual redesign is undertaken, and the application should be functionally stable before final mobile packaging.
