@@ -4,15 +4,17 @@ import type { RecommendedVenue } from "../../types";
 
 type RecommendedVenueListProps = {
     venues: RecommendedVenue[];
+    emptyMessage?: string;
 };
 
 export function RecommendedVenueList({
     venues,
+    emptyMessage = "No recommended venues for this day.",
 }: RecommendedVenueListProps) {
     if (venues.length === 0) {
         return (
             <p>
-                No recommended venues for this day.
+                {emptyMessage}
             </p>
         );
     }
@@ -21,31 +23,20 @@ export function RecommendedVenueList({
         <Stack gap="sm">
             {venues.map((venue) => (
                 <div key={venue.id}>
+
+                    {venue.priority && (
+                        <div>
+                            {venue.priority}
+                        </div>
+                    )}
+
                     <strong>
                         {venue.name}
                     </strong>
 
-                    {venue.type && (
-                        <div>
-                            Type: {venue.type}
-                        </div>
-                    )}
-
-                    {venue.mealType && (
-                        <div>
-                            Meal type: {venue.mealType}
-                        </div>
-                    )}
-
                     {venue.subtype && (
                         <div>
-                            Subtype: {venue.subtype}
-                        </div>
-                    )}
-
-                    {venue.priority && (
-                        <div>
-                            Priority: {venue.priority}
+                            {venue.subtype}
                         </div>
                     )}
 
@@ -67,7 +58,7 @@ export function RecommendedVenueList({
 
                     {venue.price && (
                         <div>
-                            Price: {venue.price}
+                            Price/person: {venue.price}
                         </div>
                     )}
 
@@ -82,6 +73,7 @@ export function RecommendedVenueList({
                             {venue.recommendation}
                         </div>
                     )}
+
                 </div>
             ))}
         </Stack>
