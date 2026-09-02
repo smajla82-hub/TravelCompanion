@@ -20,7 +20,7 @@ export function CurrentTripCard({
         <Card className="current-trip-card">
             <Stack gap="md">
                 <div className="trip-header">
-                    <h2>
+                    <h2 title={trip.destination}>
                         {getCountryFlag(trip.country)} {trip.destination}
                     </h2>
 

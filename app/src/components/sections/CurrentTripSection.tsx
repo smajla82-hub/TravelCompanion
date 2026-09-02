@@ -1,4 +1,3 @@
-import { Heading } from "../ui";
 import { CurrentTripCard } from "../cards";
 
 import { useTrips } from "../../hooks/useTrips";
@@ -21,10 +20,6 @@ export function CurrentTripSection({
 
     return (
         <>
-
-            <Heading level={2}>
-                Current Trip
-            </Heading>
 
             <CurrentTripCard
                 trip={activeTrip}
