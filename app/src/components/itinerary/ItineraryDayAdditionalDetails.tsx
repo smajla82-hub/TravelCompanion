@@ -1,6 +1,7 @@
 import { useState } from "react";
 
 import { Button, Card, Stack } from "../ui";
+import { RecommendedVenueList } from "./RecommendedVenueList";
 
 import type { ItineraryDay } from "../../types";
 
@@ -13,13 +14,11 @@ export function ItineraryDayAdditionalDetails({
 }: ItineraryDayAdditionalDetailsProps) {
     const [isOpen, setIsOpen] = useState(false);
     const venues = day.venues ?? [];
-    const stats = day.stats ?? [];
     const parkingLocations =
         day.parkingLocations ?? [];
 
     if (
         venues.length === 0 &&
-        stats.length === 0 &&
         parkingLocations.length === 0
     ) {
         return null;
@@ -33,7 +32,7 @@ export function ItineraryDayAdditionalDetails({
             >
                 {isOpen
                     ? "Hide details"
-                    : "Recommended venues, parking & statistics"}
+                    : "Recommended venues & parking"}
             </Button>
 
             {isOpen && (
@@ -45,61 +44,9 @@ export function ItineraryDayAdditionalDetails({
                                     Recommended venues
                                 </strong>
 
-                                <Stack gap="sm">
-                                    {venues.map((venue) => (
-                                        <div key={venue.id}>
-                                            <strong>
-                                                {venue.name}
-                                            </strong>
-
-                                            {venue.type && (
-                                                <div>
-                                                    Type: {venue.type}
-                                                </div>
-                                            )}
-
-                                            {venue.priority && (
-                                                <div>
-                                                    Priority: {venue.priority}
-                                                </div>
-                                            )}
-
-                                            {venue.smartChip && (
-                                                <div>
-                                                    {venue.mapLink ? (
-                                                        <a
-                                                            href={venue.mapLink}
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                        >
-                                                            {venue.smartChip}
-                                                        </a>
-                                                    ) : (
-                                                        venue.smartChip
-                                                    )}
-                                                </div>
-                                            )}
-
-                                            {venue.price && (
-                                                <div>
-                                                    Price: {venue.price}
-                                                </div>
-                                            )}
-
-                                            {venue.reservation && (
-                                                <div>
-                                                    Reservation: {venue.reservation}
-                                                </div>
-                                            )}
-
-                                            {venue.recommendation && (
-                                                <div>
-                                                    {venue.recommendation}
-                                                </div>
-                                            )}
-                                        </div>
-                                    ))}
-                                </Stack>
+                                <RecommendedVenueList
+                                    venues={venues}
+                                />
                             </div>
                         )}
 
@@ -139,26 +86,6 @@ export function ItineraryDayAdditionalDetails({
                                             </div>
                                         )
                                     )}
-                                </Stack>
-                            </div>
-                        )}
-
-                        {stats.length > 0 && (
-                            <div>
-                                <strong>
-                                    Statistics
-                                </strong>
-
-                                <Stack gap="sm">
-                                    {stats.map((stat) => (
-                                        <div key={stat.label}>
-                                            <strong>
-                                                {stat.label}:
-                                            </strong>
-                                            {" "}
-                                            {stat.value}
-                                        </div>
-                                    ))}
                                 </Stack>
                             </div>
                         )}
