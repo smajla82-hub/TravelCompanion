@@ -9,12 +9,14 @@ body,
 #root {
     width: 100%;
     height: 100%;
-    font-family: Inter, sans-serif;
+    font-family: Inter, system-ui, sans-serif;
 }
 
 body {
     background: var(--color-background);
     color: var(--color-text);
+    font-size: 14px;
+    line-height: 1.45;
 }
 
 a {

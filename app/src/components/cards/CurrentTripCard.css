@@ -4,6 +4,14 @@
     align-items: center;
 }
 
+.current-trip-card {
+    color: white;
+    border: 0;
+    background: linear-gradient(135deg, var(--color-purple), var(--color-primary));
+}
+.current-trip-card p { color: rgba(255, 255, 255, .88); }
+.current-trip-card .tc-button { background: rgba(255,255,255,.18); color: white; }
+
 .trip-status {
     padding: 4px 12px;
     border-radius: 999px;

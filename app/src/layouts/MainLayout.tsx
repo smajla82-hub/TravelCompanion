@@ -1,4 +1,6 @@
-import { Link } from "react-router-dom";
+import { NavLink } from "react-router-dom";
+import { Home, Settings } from "../components/ui/icon";
+import "./MainLayout.css";
 
 type MainLayoutProps = {
     children: React.ReactNode;
@@ -6,23 +8,15 @@ type MainLayoutProps = {
 
 export default function MainLayout({ children }: MainLayoutProps) {
     return (
-        <main
-            style={{
-                padding: "32px",
-                minHeight: "100vh",
-            }}
-        >
+        <main className="tc-main">
             {children}
-
-            <nav
-                style={{
-                    padding: "0 32px 32px",
-                    textAlign: "center",
-                }}
-            >
-                <Link to="/settings">
-                    Settings
-                </Link>
+            <nav className="tc-bottom-nav">
+                <NavLink to="/" end>
+                    <Home /> <span>Home</span>
+                </NavLink>
+                <NavLink to="/settings">
+                    <Settings /> <span>Settings</span>
+                </NavLink>
             </nav>
         </main>
     );

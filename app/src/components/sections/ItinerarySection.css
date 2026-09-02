@@ -1,0 +1,2 @@
+.itinerary-heading { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin: 24px 0 12px; }
+.itinerary-heading h2 { font-size: 18px; }

@@ -5,6 +5,7 @@ import type { Trip } from "../../types/Trip";
 import "./TripCard.css";
 
 import { formatDate } from "../../utils/formatDate";
+import { getCountryFlag } from "../../utils/getCountryFlag";
 
 type TripCardProps = {
     trip: Trip;
@@ -20,7 +21,7 @@ export function TripCard({
         <div onClick={onClick}>
             <Card>
                 <Stack gap="sm">
-                    <h3>{trip.destination}</h3>
+                    <h3>{getCountryFlag(trip.country)} {trip.destination}</h3>
 
                     <p>
                         {formatDate(trip.startDate)} –{" "}

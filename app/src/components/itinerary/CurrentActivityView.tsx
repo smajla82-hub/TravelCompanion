@@ -9,6 +9,7 @@ import type {
 } from "../../types";
 import { getItineraryItemTimingStatuses } from
     "../../utils/getItineraryItemTiming";
+import "./CurrentActivityView.css";
 
 type CurrentActivityViewProps = {
     trip: Trip;
@@ -32,29 +33,30 @@ function ActivitySummary({
     compact?: boolean;
 }) {
     return (
-        <Card variant="outlined">
+        <Card variant="outlined" className={`activity-summary${compact ? " activity-summary--compact" : ""}`}>
             <Stack gap="sm">
-                <strong>
-                    {item.time ? `${item.time} — ` : ""}
-                    {item.title}
-                </strong>
+                <div className="activity-main">
+                    {item.time && <span className="time-badge">{item.time}</span>}
+                    <span className="activity-icon">✦</span>
+                    <strong>{item.title}</strong>
+                </div>
 
-                {item.location && <div>{item.location}</div>}
+                {item.location && <div className="activity-detail">⌖ {item.location}</div>}
 
                 {!compact && item.goal && (
-                    <div>Goal: {item.goal}</div>
+                    <div className="activity-detail">◎ Goal: {item.goal}</div>
                 )}
 
                 {!compact && item.priority && (
-                    <div>Priority: {item.priority}</div>
+                    <div className="activity-detail">ϟ Priority: {item.priority}</div>
                 )}
 
                 {!compact && item.parking && (
-                    <div>Parking: {item.parking}</div>
+                    <div className="activity-detail">P Parking: {item.parking}</div>
                 )}
 
                 {!compact && item.smartChip && (
-                    <div>
+                    <div className="activity-detail">
                         {item.mapLink ? (
                             <a
                                 href={item.mapLink}
@@ -70,11 +72,11 @@ function ActivitySummary({
                 )}
 
                 {!compact && item.price !== undefined && (
-                    <div>Price: {item.price}</div>
+                    <div className="activity-detail">$ Price: {item.price}</div>
                 )}
 
                 {!compact && item.note && (
-                    <div>Note: {item.note}</div>
+                    <div className="activity-detail">✎ Note: {item.note}</div>
                 )}
             </Stack>
         </Card>
@@ -158,7 +160,7 @@ export function CurrentActivityView({
 
     return (
         <section>
-            <Heading level={3}>Current Activity</Heading>
+            <h3 className="activity-label">Current Activity</h3>
             {currentItem ? (
                 <ActivitySummary item={currentItem} />
             ) : (
@@ -167,7 +169,7 @@ export function CurrentActivityView({
 
             {nextItem && (
                 <>
-                    <Heading level={3}>Next Activity</Heading>
+                    <h3 className="activity-label">Next Activity</h3>
                     <ActivitySummary
                         item={nextItem}
                         compact
@@ -179,7 +181,7 @@ export function CurrentActivityView({
                 type="button"
                 onClick={() => onShowDay(day)}
             >
-                ...show more
+                ••• Show more
             </Button>
 
             <Button

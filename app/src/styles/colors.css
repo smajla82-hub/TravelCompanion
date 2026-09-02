@@ -8,18 +8,8 @@
 
 [data-theme="dark"] {
 
-    --color-primary: #7ab7ff;
-    --color-primary-hover: #9cc8ff;
-
-    --color-success: #6fd67a;
-
-    --color-background: #111827;
-
-    --color-surface: #1f2937;
-
-    --color-border: #374151;
-
-    --color-text: #f9fafb;
+    --surface-primary: var(--color-surface);
+    --border-color: var(--color-border);
 
     --surface-primary: var(--color-surface);
     --border-color: var(--color-border);

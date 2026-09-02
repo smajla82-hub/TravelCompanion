@@ -157,8 +157,8 @@ All work through **6.0.16** has been implemented and functionally tested.
 ## 5. Current State
 
 **Current Milestone:** 7.x — BlizzCon Ready  
-**Current completed Feature:** 7.2  
-**Status:** DONE through 7.2
+**Current completed Feature:** 7.5.x  
+**Status:** DONE through 7.5.x
 
 The Trip system currently supports:
 
@@ -201,6 +201,7 @@ The RoadBook/itinerary system currently supports:
 - JSON Export data backup for all Trips
 - JSON Import backup restore with overwrite confirmation
 - persisted Dark/Light mode toggle
+- `appka_navrh_look.png` visual redesign with centralized design tokens, responsive dashboard polish, inline icons, consolidated buttons, fixed navigation and full dark-mode component coverage
 
 Verified test data currently imports as:
 
@@ -210,9 +211,8 @@ Verified test data currently imports as:
 
 ## 6. Next Development Order
 
-1. 7.5.x — UI/UX Polish (holistic visual/UX redesign)
-2. 8.x — Android/mobile
-3. 9.x+ — Extended travel functionality
+1. 8.x — Android/mobile
+2. 9.x+ — Extended travel functionality
 
 The order remains intentional: reliable state and persistence are established before expanding the real-trip experience, the application is validated against real BlizzCon data before a holistic visual redesign is undertaken, and the application should be functionally stable before final mobile packaging.
 
@@ -230,9 +230,7 @@ This is **not** a blocker for the current BlizzCon RoadBook.
 
 ### UI / UX
 
-Final responsive/mobile polish and the holistic visual/UX redesign are deferred to Milestone 7.5, after the application is validated against real BlizzCon data (7.x). The user has provided a dashboard/home mockup guiding the functional dashboard rework in 7.1; a full visual-language pass across the rest of the app follows in 7.5.x.
-
-The Settings link in `MainLayout.tsx` is intentionally a simple provisional entry point, and the first Dark/Light mode pass intentionally covers only the basic global background/text surface. Full navigation placement and comprehensive component-level dark-mode polish are deferred to 7.5.x.
+The `appka_navrh_look.png` redesign is complete, including the permanent bottom navigation placement and comprehensive component-level dark-mode coverage.
 
 ### Backup / data safety
 
