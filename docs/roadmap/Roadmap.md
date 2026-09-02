@@ -42,7 +42,7 @@ Trip creation, validation, editing, deletion, Active Trip management and persist
 
 Import existing RoadBook/XLSX planning data, map it into the domain model, persist it inside Trips and expose it through the Active Trip itinerary.
 
-Completed through **6.0.12**.
+Completed through **6.0.14**.
 
 Next:
 - 7.x — BlizzCon / real travel experience
@@ -122,16 +122,17 @@ Additional travel functionality, including:
 - 6.0.10 — Active Trip itinerary integration
 - 6.0.11 — Itinerary day cards and day-detail interaction
 - 6.0.12 — Recommended venues and day statistics import
+- 6.0.14 — In-app itinerary activity editing
 
-All work through **6.0.12** has been implemented and functionally tested.
+All work through **6.0.14** has been implemented and functionally tested.
 
 ---
 
 ## 5. Current State
 
 **Current Milestone:** 6.x — Data Import & Itinerary  
-**Current completed Feature:** 6.0.12  
-**Status:** DONE through 6.0.12
+**Current completed Feature:** 6.0.14
+**Status:** DONE through 6.0.14
 
 The Trip system currently supports:
 
@@ -160,6 +161,7 @@ The RoadBook/itinerary system currently supports:
 - display of day activities
 - recommended venues and flexible day statistics
 - collapsed day-detail sections in the preview and saved itinerary
+- in-app activity creation, editing, deletion and reordering
 
 Verified test data currently imports as:
 

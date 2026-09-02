@@ -236,13 +236,17 @@ Imported recommended venues and flexible day statistics from RoadBook worksheets
 **Status:** DONE
 Stopped recommended venues from being duplicated into the main timeline and preserved Google Maps links from timeline, venue and parking smart-chip cells.
 
+### 6.0.14
+**Status:** DONE
+Added in-app itinerary activity creation, editing, deletion and reordering with immediate localStorage persistence.
+
 ---
 
 # Current Position
 
 **Current Milestone:** 6.x — Data Import & Itinerary  
-**Completed through:** 6.0.13
-**Status:** DONE through 6.0.13
+**Completed through:** 6.0.14
+**Status:** DONE through 6.0.14
 
 Next:
 

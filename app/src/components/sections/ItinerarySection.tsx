@@ -30,9 +30,24 @@ export function ItinerarySection() {
 
                 <ItineraryDayDetail
                     day={selectedDay}
+                    tripId={activeTrip?.id ?? ""}
                     onClose={() =>
                         setSelectedDay(null)
                     }
+                    onDayChanged={() => {
+                        const updatedDay =
+                            TripService.getActive()
+                                ?.itinerary
+                                ?.find(
+                                    day =>
+                                        day.id ===
+                                        selectedDay.id
+                                );
+
+                        setSelectedDay(
+                            updatedDay ?? null
+                        );
+                    }}
                 />
             </>
         );
