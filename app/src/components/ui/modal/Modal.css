@@ -20,7 +20,8 @@
 
     overflow: auto;
 
-    background: white;
+    background: var(--surface-primary);
+    color: var(--color-text);
 
     border-radius: 16px;
 
@@ -52,6 +53,7 @@
     border: none;
 
     background: transparent;
+    color: var(--color-text);
 
     cursor: pointer;
 

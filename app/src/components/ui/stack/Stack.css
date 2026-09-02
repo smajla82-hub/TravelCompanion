@@ -1,16 +1,16 @@
-.stack{
+.tc-stack{
     display:flex;
     flex-direction:column;
 }
 
-.stack-sm{
+.tc-stack--sm{
     gap:8px;
 }
 
-.stack-md{
+.tc-stack--md{
     gap:16px;
 }
 
-.stack-lg{
+.tc-stack--lg{
     gap:24px;
 }

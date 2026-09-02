@@ -159,8 +159,8 @@ All work through **6.0.16** has been implemented and functionally tested.
 ## 5. Current State
 
 **Current Milestone:** 7.x — BlizzCon Ready  
-**Current completed Feature:** 7.5.x  
-**Status:** DONE through 7.5.x
+**Current completed Feature:** 7.5.3  
+**Status:** DONE through 7.5.3
 
 The Trip system currently supports:
 
@@ -204,6 +204,11 @@ The RoadBook/itinerary system currently supports:
 - JSON Import backup restore with overwrite confirmation
 - persisted Dark/Light mode toggle
 - `appka_navrh_look.png` visual redesign with centralized design tokens, responsive dashboard polish, inline icons, consolidated buttons, fixed navigation and full dark-mode component coverage
+- white-text colored gradient header band matching `appka_navrh_look.png` in both light and dark mode
+- corrected Active Trip card internal layout (bottom-centered Continue Trip button, status-dot badge detail)
+- automatic navigation to Home after setting a Trip active from the My Trips page
+- Food/Parking/Statistics action stack now also visible on the dashboard's Current/Next Activity blocks, with read-only informational modals
+- legible modal text/close button in dark mode
 
 Verified test data currently imports as:
 

@@ -1,5 +1,7 @@
 import { useState } from "react";
 
+import { useNavigate } from "react-router-dom";
+
 import {
     Grid,
     Heading,
@@ -25,6 +27,8 @@ type TripsSectionProps = {
 export function TripsSection({
     onTripChanged,
 }: TripsSectionProps) {
+
+    const navigate = useNavigate();
 
     const { trips } = useTrips();
 
@@ -87,6 +91,7 @@ export function TripsSection({
 
         setSelectedTrip(null);
         onTripChanged?.();
+        navigate("/");
     }
 
     return (
