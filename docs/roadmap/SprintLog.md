@@ -16,6 +16,10 @@ Refined the centered dashboard header, removed redundant controls and the Curren
 **Status:** DONE  
 Fixed a `Stack` component CSS class-name mismatch that silently disabled its flex layout, which was the root cause of the Active Trip card's broken internal spacing; the card now uses an explicit content/button split with `justify-content: space-between` so "Continue Trip" is reliably bottom-centered with a deliberate gap, and the "Active Trip" badge gained a small white status dot. Added a white-text colored gradient header band to the dashboard (matching `appka_navrh_look.png` in both light and dark mode). Fixed the "Itinerary" heading/"View whole itinerary" button spacing by adding `justify-content: space-between` to `.itinerary-heading`. Setting a Trip active from the My Trips page now automatically navigates back to Home via `useNavigate()`. Fixed the bug where `CurrentActivityView` never rendered `ActivityActionStack`, so Food/Parking/Statistics icons and their read-only modals are now wired up for both the "Current Activity" and "Next Activity" blocks, reusing the same meal-type/parking resolution logic as `ItineraryDayDetail`. Fixed a dark-mode bug where `Modal`'s hardcoded white background made light-mode-only text (and the close button) invisible against a dark theme.
 
+### 7.5.4
+**Status:** DONE  
+Moved the Food/Parking/Statistics action stack inside unified Current Activity and Next Activity cards, refined the Active Trip gradient card decoration with a subtle CSS mountain silhouette, and removed the redundant bottom-row "View whole Itinerary" button next to "Show more". Trip start/end edge-case messages are now centered and color-differentiated using success and danger tokens. Audited spacing, typography, card/button sizing, shadows and responsive layout against `docs/ux/UserJourney.md`, including correcting accent blue to `#38BDF8` and dark surface/text tokens.
+
 ---
 
 ## Initial Project Structure
@@ -277,8 +281,8 @@ Added a dedicated `/settings` page for app-wide settings and data safety feature
 # Current Position
 
 **Current Milestone:** 7.x — BlizzCon Ready  
-**Completed through:** 7.2
-**Status:** DONE through 7.2
+**Completed through:** 7.5.4
+**Status:** DONE through 7.5.4
 
 Next:
 

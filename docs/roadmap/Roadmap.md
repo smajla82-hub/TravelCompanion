@@ -159,8 +159,8 @@ All work through **6.0.16** has been implemented and functionally tested.
 ## 5. Current State
 
 **Current Milestone:** 7.x — BlizzCon Ready  
-**Current completed Feature:** 7.5.3  
-**Status:** DONE through 7.5.3
+**Current completed Feature:** 7.5.4  
+**Status:** DONE through 7.5.4
 
 The Trip system currently supports:
 
@@ -209,6 +209,9 @@ The RoadBook/itinerary system currently supports:
 - automatic navigation to Home after setting a Trip active from the My Trips page
 - Food/Parking/Statistics action stack now also visible on the dashboard's Current/Next Activity blocks, with read-only informational modals
 - legible modal text/close button in dark mode
+- unified Current/Next Activity cards with in-card Food/Parking/Statistics actions
+- refined CSS decorative pattern on the Active Trip gradient card
+- centered, color-differentiated trip start/end messaging and reconciled mobile-first design tokens
 
 Verified test data currently imports as:
 
