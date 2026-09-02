@@ -21,6 +21,10 @@ import type { ItineraryItemFields } from
 import { TripService } from "../../services/TripService";
 import { getItineraryItemTimingStatuses } from
     "../../utils/getItineraryItemTiming";
+import {
+    getMealTypeForItem,
+    matchesMealType,
+} from "../../utils/getMealTypeForItem";
 
 const NOW_REFRESH_INTERVAL_MS = 60000;
 
@@ -90,6 +94,32 @@ export function ItineraryDayDetail({
                       location.code === parkingItem.parking
               )
             : undefined;
+
+    const foodItem =
+        foodItemId
+            ? day.items.find(
+                  item => item.id === foodItemId
+              )
+            : undefined;
+
+    const mealType =
+        foodItem
+            ? getMealTypeForItem(foodItem)
+            : undefined;
+
+    const venues = mealType
+        ? (day.venues ?? []).filter(venue =>
+              matchesMealType(
+                  venue.mealType,
+                  mealType
+              )
+          )
+        : [];
+
+    const foodVenues =
+        venues.length > 0
+            ? venues
+            : day.venues ?? [];
 
     function handleSubmit(
         fields: ItineraryItemFields
@@ -395,7 +425,7 @@ export function ItineraryDayDetail({
                     title="Recommended venues"
                 >
                     <RecommendedVenueList
-                        venues={day.venues ?? []}
+                        venues={foodVenues}
                     />
                 </Modal>
 

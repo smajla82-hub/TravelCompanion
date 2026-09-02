@@ -248,13 +248,17 @@ Fixed itinerary changes requiring a manual page refresh by rewriting the TripSer
 **Status:** DONE
 Redesigned the itinerary day view: added real-time current/next activity highlighting (comparing each timed activity against the device clock, only for the day matching today's date), per-activity Food and Parking buttons opening focused modals (Food shows the day's recommended venues; Parking shows the matching `ParkingLocation` or a best-effort fallback from the activity's own fields), and a single day-level Statistics button next to the day heading. The full scrollable activity list and the existing Manage button/`ItineraryItemActionsModal` (Edit/Delete/Move up/Move down) are unchanged. Extracted `RecommendedVenueList` and `DayStatsList` subcomponents shared between the day detail view and the existing "Recommended venues & parking" fallback panel, which no longer duplicates the Statistics section.
 
+### 6.0.16
+**Status:** DONE
+Meal-type-aware Food venue filtering, `mealType` and `subtype` fields on recommended venues, and updated venue-list rendering. Itinerary day details now close automatically when the Active Trip changes, and the Continue Trip button scrolls to the itinerary section.
+
 ---
 
 # Current Position
 
 **Current Milestone:** 6.x — Data Import & Itinerary  
-**Completed through:** 6.0.15
-**Status:** DONE through 6.0.15
+**Completed through:** 6.0.16
+**Status:** DONE through 6.0.16
 
 Next:
 

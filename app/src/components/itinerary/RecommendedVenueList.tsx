@@ -31,6 +31,18 @@ export function RecommendedVenueList({
                         </div>
                     )}
 
+                    {venue.mealType && (
+                        <div>
+                            Meal type: {venue.mealType}
+                        </div>
+                    )}
+
+                    {venue.subtype && (
+                        <div>
+                            Subtype: {venue.subtype}
+                        </div>
+                    )}
+
                     {venue.priority && (
                         <div>
                             Priority: {venue.priority}

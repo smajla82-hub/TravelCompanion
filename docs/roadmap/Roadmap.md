@@ -137,16 +137,17 @@ Additional travel functionality, including:
 - 6.0.14 — In-app itinerary editing (add/edit/delete/reorder activities)
 - 6.0.14.1 — Immutable itinerary updates (realtime UI refresh) and consolidated per-item "Manage" action
 - 6.0.15 — Itinerary day view redesign: real-time current/next activity, per-activity Food/Parking, day-level Statistics
+- 6.0.16 — Meal-type-aware Food filtering, Active Trip switching and Continue Trip fixes
 
-All work through **6.0.15** has been implemented and functionally tested.
+All work through **6.0.16** has been implemented and functionally tested.
 
 ---
 
 ## 5. Current State
 
 **Current Milestone:** 6.x — Data Import & Itinerary  
-**Current completed Feature:** 6.0.15  
-**Status:** DONE through 6.0.15
+**Current completed Feature:** 6.0.16
+**Status:** DONE through 6.0.16
 
 The Trip system currently supports:
 
@@ -178,6 +179,9 @@ The RoadBook/itinerary system currently supports:
 - in-app add/edit/delete/reorder of itinerary activities, with immediate (no manual refresh) UI updates
 - real-time current/next activity highlighting for the active day
 - per-activity Food/Parking buttons and a day-level Statistics button
+- meal-type-aware Food venue filtering with venue subtype details
+- automatic itinerary close when switching the Active Trip
+- Continue Trip scrolling to the itinerary section
 
 Verified test data currently imports as:
 
@@ -187,11 +191,10 @@ Verified test data currently imports as:
 
 ## 6. Next Development Order
 
-1. 6.0.16 — small fixes: auto-close itinerary on Active Trip switch, Continue Trip button behavior, recommended-venue meal-type tagging
-2. 7.x — BlizzCon / real travel experience
-3. 7.5.x — UI/UX Polish (holistic visual/UX redesign)
-4. 8.x — Android/mobile
-5. 9.x+ — Extended travel functionality
+1. 7.x — BlizzCon / real travel experience
+2. 7.5.x — UI/UX Polish (holistic visual/UX redesign)
+3. 8.x — Android/mobile
+4. 9.x+ — Extended travel functionality
 
 The order remains intentional: reliable state and persistence are established before expanding the real-trip experience, the application is validated against real BlizzCon data before a holistic visual redesign is undertaken, and the application should be functionally stable before final mobile packaging.
 

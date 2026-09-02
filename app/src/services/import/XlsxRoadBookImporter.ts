@@ -128,7 +128,7 @@ function parseVenues(
 
     const columns = {
         priority: findColumn(headers, "Priorita"),
-        type: findColumn(headers, "Typ"),
+        mealType: findColumn(headers, "Typ"),
         name: findColumnStartingWith(headers, "Podnik"),
         place: findColumnStartingWith(headers, "📍"),
         recommendation:
@@ -136,6 +136,7 @@ function parseVenues(
         price: findColumnStartingWith(headers, "💰 Cena"),
         smartChip: findColumn(headers, "🅿"),
         reservation: findColumnContaining(headers, "Rez."),
+        subtype: findColumn(headers, "Poznámka"),
     };
 
     if (columns.name === -1) {
@@ -176,7 +177,9 @@ function parseVenues(
         venues.push({
             id: `${date}-venue-${venues.length + 1}`,
             priority: get(columns.priority),
-            type: get(columns.type),
+            type: get(columns.mealType),
+            mealType: get(columns.mealType),
+            subtype: get(columns.subtype),
             name,
             smartChip:
                 get(columns.smartChip) ||

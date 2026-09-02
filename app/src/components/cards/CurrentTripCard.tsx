@@ -34,7 +34,17 @@ export function CurrentTripCard({
                     👥 {trip.travellers} travellers
                 </p>
 
-                <Button>
+                <Button
+                    onClick={() =>
+                        document
+                            .getElementById(
+                                "itinerary-section"
+                            )
+                            ?.scrollIntoView({
+                                behavior: "smooth",
+                            })
+                    }
+                >
                     Continue Trip
                 </Button>
             </Stack>

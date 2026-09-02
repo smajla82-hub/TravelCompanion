@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 
 import { Grid, Heading } from "../ui";
 
@@ -21,9 +21,24 @@ export function ItinerarySection() {
     const [selectedDay, setSelectedDay] =
         useState<ItineraryDay | null>(null);
 
+    const activeTripId = activeTrip?.id;
+    const previousActiveTripId =
+        useRef(activeTripId);
+
+    useEffect(() => {
+        if (
+            previousActiveTripId.current !==
+            activeTripId
+        ) {
+            setSelectedDay(null);
+            previousActiveTripId.current =
+                activeTripId;
+        }
+    }, [activeTripId]);
+
     if (selectedDay) {
         return (
-            <>
+            <section id="itinerary-section">
                 <Heading level={2}>
                     Itinerary
                 </Heading>
@@ -49,12 +64,12 @@ export function ItinerarySection() {
                         );
                     }}
                 />
-            </>
+            </section>
         );
     }
 
     return (
-        <>
+        <section id="itinerary-section">
             <Heading level={2}>
                 Itinerary
             </Heading>
@@ -70,6 +85,6 @@ export function ItinerarySection() {
 />
                 ))}
             </Grid>
-        </>
+        </section>
     );
 }
