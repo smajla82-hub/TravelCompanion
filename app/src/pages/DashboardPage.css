@@ -4,7 +4,7 @@
     align-items: center;
 
     margin: -32px -32px 20px;
-    padding: 24px 32px;
+    padding: max(24px, env(safe-area-inset-top)) 32px 24px;
 
     background: linear-gradient(135deg, var(--color-purple), var(--color-primary));
     border-radius: 0 0 var(--tc-radius-card) var(--tc-radius-card);

@@ -276,13 +276,25 @@ The dashboard now opens on the Active Trip's current and next activity, with a "
 **Status:** DONE
 Added a dedicated `/settings` page for app-wide settings and data safety features. Import RoadBook was moved from the dashboard into Settings, while keeping the existing XLSX import component unchanged. Settings now supports Export data as a JSON backup of all Trips, Import backup from a JSON file with a "This will overwrite all current data. Continue?" confirmation dialog before replacing current data, and a persisted Dark/Light mode toggle.
 
+### 8.1
+**Status:** DONE
+
+Added PWA installation support and a GitHub Pages deployment workflow:
+
+- `vite-plugin-pwa` generates the `manifest.webmanifest` and Workbox service worker. The worker precaches only the static app shell (HTML, JavaScript, CSS and icons); it does not add runtime caching or navigation interception, so external Google Maps links continue opening normally.
+- Branded blue (`#2563eb`) and purple (`#8b5cf6`) placeholder PNG icons were added in 192×192, 512×512 and Apple touch 180×180 dimensions. To replace them later, provide a square 512×512 PNG logo, ideally with a transparent or solid background; the three icon sizes can then be regenerated from it.
+- The mobile audit corrected the viewport and theme-color metadata, added top/bottom safe-area insets to the dashboard header and fixed bottom navigation, and ensured compact, action-stack and navigation controls have a minimum 44×44px touch target.
+- `.github/workflows/deploy-pages.yml` builds the `app/` directory with pnpm and deploys it to GitHub Pages. One repository-owner setup step remains: enable Pages with **Source: GitHub Actions** in repository Settings → Pages.
+
+After deployment, open `https://smajla82-hub.github.io/TravelCompanion/` in Chrome on Android and use the browser menu’s **Add to Home screen** / **Install app** option to verify installation.
+
 ---
 
 # Current Position
 
-**Current Milestone:** 7.x — BlizzCon Ready  
-**Completed through:** 7.5.4
-**Status:** DONE through 7.5.4
+**Current Milestone:** 8.x — Android / Mobile
+**Completed through:** 8.1
+**Status:** 8.1 DONE
 
 Next:
 
