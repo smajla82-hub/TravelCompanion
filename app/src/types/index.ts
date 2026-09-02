@@ -5,3 +5,4 @@ export * from "./ItineraryItem";
 export * from "./ItineraryDay";
 export * from "./RecommendedVenue";
 export * from "./DayStat";
+export * from "./ParkingLocation";

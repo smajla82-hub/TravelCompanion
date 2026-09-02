@@ -232,13 +232,17 @@ Current verified RoadBook test data:
 **Status:** DONE  
 Imported recommended venues and flexible day statistics from RoadBook worksheets, with both sections available behind a collapsed per-day details control in the import preview and saved itinerary.
 
+### 6.0.13
+**Status:** DONE
+Stopped recommended venues from being duplicated into the main timeline and preserved Google Maps links from timeline, venue and parking smart-chip cells.
+
 ---
 
 # Current Position
 
 **Current Milestone:** 6.x — Data Import & Itinerary  
-**Completed through:** 6.0.12  
-**Status:** DONE through 6.0.12
+**Completed through:** 6.0.13
+**Status:** DONE through 6.0.13
 
 Next:
 

@@ -65,7 +65,17 @@ export function ItineraryDayDetail({
 
                             {item.smartChip && (
                                 <div>
-                                    {item.smartChip}
+                                    {item.mapLink ? (
+                                        <a
+                                            href={item.mapLink}
+                                            target="_blank"
+                                            rel="noreferrer"
+                                        >
+                                            {item.smartChip}
+                                        </a>
+                                    ) : (
+                                        item.smartChip
+                                    )}
                                 </div>
                             )}
 
