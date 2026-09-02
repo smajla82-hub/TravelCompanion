@@ -40,22 +40,33 @@ Trip creation, validation, editing, deletion, Active Trip management and persist
 ### Milestone 4 — Data Import & Itinerary
 **6.x — IN PROGRESS**
 
-Import existing RoadBook/XLSX planning data, map it into the domain model, persist it inside Trips and expose it through the Active Trip itinerary.
+Import existing RoadBook/XLSX planning data, map it into the domain model, persist it inside Trips and expose it through the Active Trip itinerary. Includes in-app itinerary editing (add/edit/delete/reorder activities) and the redesigned itinerary day view (real-time current/next activity, per-activity Food/Parking, day-level Statistics).
 
 Completed through **6.0.15**.
 
 Next:
-- 7.x — BlizzCon / real travel experience
+- 6.0.16 — small fixes from user testing (auto-close itinerary on Active Trip switch, Continue Trip button behavior, recommended-venue meal-type tagging)
 
 ### Milestone 5 — BlizzCon Ready
 **7.x — PLANNED**
 
 Turn the application into a practical companion for the BlizzCon 2026 trip using the imported real travel data.
 
+### Milestone 5.5 — UI/UX Polish
+**7.5.x — PLANNED**
+
+A dedicated, holistic visual/UX redesign pass across the whole application (not just the itinerary view), once the functional feature set is stable. Expected scope includes:
+- Consistent sizing/spacing of buttons and controls across the entire app (the per-activity action buttons introduced in 6.x are functional but oversized; a systemic sizing pass is deferred here rather than fixed piecemeal).
+- Correcting cosmetic/demo remnants (e.g. the hardcoded Italian flag shown on every Trip card regardless of actual country).
+- Revisiting placement/necessity of dashboard elements (e.g. the "Continue Trip" button) once the overall dashboard layout is redesigned.
+- General visual consistency, responsive/mobile layout polish.
+
+This milestone intentionally follows 7.x (BlizzCon Ready) so the redesign is informed by a functionally complete, real-data-tested application rather than redesigning around a moving target.
+
 ### Milestone 6 — Mobile / Android
 **8.x — PLANNED**
 
-Make the application practical to use in an Android/mobile environment.
+Make the application practical to use in an Android/mobile environment (PWA installability, service worker, responsive/touch polish).
 
 ### Milestone 7 — Extended Travel Companion
 **9.x+ — PLANNED**
@@ -122,8 +133,10 @@ Additional travel functionality, including:
 - 6.0.10 — Active Trip itinerary integration
 - 6.0.11 — Itinerary day cards and day-detail interaction
 - 6.0.12 — Recommended venues and day statistics import
-- 6.0.14 — In-app itinerary activity editing
-- 6.0.15 — Itinerary day view redesign (real-time current/next highlighting, per-activity Food/Parking, day-level Statistics)
+- 6.0.13 — Fixed duplicated recommended venues in the timeline; preserved Google Maps smart-chip links
+- 6.0.14 — In-app itinerary editing (add/edit/delete/reorder activities)
+- 6.0.14.1 — Immutable itinerary updates (realtime UI refresh) and consolidated per-item "Manage" action
+- 6.0.15 — Itinerary day view redesign: real-time current/next activity, per-activity Food/Parking, day-level Statistics
 
 All work through **6.0.15** has been implemented and functionally tested.
 
@@ -132,7 +145,7 @@ All work through **6.0.15** has been implemented and functionally tested.
 ## 5. Current State
 
 **Current Milestone:** 6.x — Data Import & Itinerary  
-**Current completed Feature:** 6.0.15
+**Current completed Feature:** 6.0.15  
 **Status:** DONE through 6.0.15
 
 The Trip system currently supports:
@@ -160,12 +173,11 @@ The RoadBook/itinerary system currently supports:
 - day cards
 - day-detail opening/closing
 - display of day activities
-- recommended venues and flexible day statistics
-- collapsed day-detail sections in the preview and saved itinerary
-- in-app activity creation, editing, deletion and reordering
-- real-time current/next activity highlighting for today's day
-- per-activity Food and Parking buttons with focused modals
-- day-level Statistics button next to the day heading
+- recommended venues, parking locations and flexible day statistics
+- Google Maps links preserved from smart-chip cells
+- in-app add/edit/delete/reorder of itinerary activities, with immediate (no manual refresh) UI updates
+- real-time current/next activity highlighting for the active day
+- per-activity Food/Parking buttons and a day-level Statistics button
 
 Verified test data currently imports as:
 
@@ -175,11 +187,13 @@ Verified test data currently imports as:
 
 ## 6. Next Development Order
 
-1. 7.x — BlizzCon / real travel experience
-2. 8.x — Android/mobile
-3. 9.x+ — Extended travel functionality
+1. 6.0.16 — small fixes: auto-close itinerary on Active Trip switch, Continue Trip button behavior, recommended-venue meal-type tagging
+2. 7.x — BlizzCon / real travel experience
+3. 7.5.x — UI/UX Polish (holistic visual/UX redesign)
+4. 8.x — Android/mobile
+5. 9.x+ — Extended travel functionality
 
-The order remains intentional: reliable state and persistence are established before expanding the real-trip experience, and the application should be functionally stable before final mobile packaging.
+The order remains intentional: reliable state and persistence are established before expanding the real-trip experience, the application is validated against real BlizzCon data before a holistic visual redesign is undertaken, and the application should be functionally stable before final mobile packaging.
 
 ---
 
@@ -187,7 +201,7 @@ The order remains intentional: reliable state and persistence are established be
 
 ### XLSX template
 
-The current importer intentionally follows the existing RoadBook workbook structure and its current column names.
+The current importer intentionally follows the existing RoadBook workbook structure and its current column names. The user is evolving the RoadBook workbook itself (e.g. standardizing the "Typ" column in DOPORUČENÉ PODNIKY to a consistent meal-time value — Breakfast/Lunch/Dinner/CoffeeBreak — with the previous free-text subtype, e.g. Burger/Mexican/Café, moved to a new "Poznámka" column), which the importer will be updated to follow as these data-shape changes land.
 
 A future version should define a stable, English-language import template so future RoadBooks can be prepared independently of the original workbook language.
 
@@ -195,7 +209,7 @@ This is **not** a blocker for the current BlizzCon RoadBook.
 
 ### UI / UX
 
-Final responsive/mobile polish is deferred until the functional data flow is sufficiently complete.
+Final responsive/mobile polish and the holistic visual/UX redesign are deferred to Milestone 7.5, after the application is validated against real BlizzCon data (7.x).
 
 ### Extended travel platform
 
