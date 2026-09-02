@@ -9,6 +9,11 @@ import type {
 const STORAGE_KEY =
     "travel-companion.trips";
 
+type ImportBackupResult = {
+    success: boolean;
+    error?: string;
+};
+
 function loadTrips() {
     const stored =
         localStorage.getItem(STORAGE_KEY);
@@ -46,6 +51,53 @@ export const TripService = {
 
     getAll(): Trip[] {
         return trips;
+    },
+
+    exportBackup(): string {
+        return JSON.stringify(
+            {
+                version: 1,
+                exportedAt: new Date().toISOString(),
+                trips: this.getAll(),
+            },
+            null,
+            2
+        );
+    },
+
+    importBackup(json: string): ImportBackupResult {
+        let parsed: {
+            trips?: unknown;
+        };
+
+        try {
+            parsed =
+                JSON.parse(json);
+        } catch {
+            return {
+                success: false,
+                error: "Invalid backup file.",
+            };
+        }
+
+        if (!Array.isArray(parsed.trips)) {
+            return {
+                success: false,
+                error: "Invalid backup file.",
+            };
+        }
+
+        trips.splice(
+            0,
+            trips.length,
+            ...parsed.trips as Trip[]
+        );
+
+        persistTrips();
+
+        return {
+            success: true,
+        };
     },
 
     getActive(): Trip | undefined {

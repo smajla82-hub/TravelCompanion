@@ -256,13 +256,17 @@ Meal-type-aware Food venue filtering, `mealType` and `subtype` fields on recomme
 **Status:** DONE
 The dashboard now opens on the Active Trip's current and next activity, with a "View whole Itinerary" entry point for the existing day-list and day-detail flow. Trips outside their date range show "Trip starts in X days" or "Trip has ended" messaging with the same itinerary link. Continue Trip now returns to the current-activity view while retaining the itinerary scroll behavior.
 
+### 7.2
+**Status:** DONE
+Added a dedicated `/settings` page for app-wide settings and data safety features. Import RoadBook was moved from the dashboard into Settings, while keeping the existing XLSX import component unchanged. Settings now supports Export data as a JSON backup of all Trips, Import backup from a JSON file with a "This will overwrite all current data. Continue?" confirmation dialog before replacing current data, and a persisted Dark/Light mode toggle.
+
 ---
 
 # Current Position
 
 **Current Milestone:** 7.x — BlizzCon Ready  
-**Completed through:** 7.1
-**Status:** DONE through 7.1
+**Completed through:** 7.2
+**Status:** DONE through 7.2
 
 Next:
 

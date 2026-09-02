@@ -13,7 +13,6 @@ import {
 } from "../components/sections";
 
 import { NewTripModal } from "../components/trips";
-import { RoadBookImport } from "../components/import";
 
 export default function DashboardPage() {
 
@@ -63,8 +62,6 @@ export default function DashboardPage() {
             <ItinerarySection
                 key={itineraryResetKey}
             />
-
-            <RoadBookImport />
 
             <NewTripModal
                 open={newTripOpen}

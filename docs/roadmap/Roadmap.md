@@ -58,9 +58,10 @@ Planned sub-steps:
   - Edge cases: if the Active Trip's date range hasn't started yet, show a "Trip starts in X days" message; if it has already ended, show a "Trip has ended" message — both linking to "View whole Itinerary".
   - No Trip is required to be Active at all — the dashboard must also handle the no-Active-Trip state gracefully (as it does today).
 
-- **7.2 — Settings**
+- **7.2 — Settings** — **DONE**
   - A new **Settings** entry (bottom of the app, replacing the current dashboard-level "Import RoadBook" entry point).
   - Settings houses: **Import RoadBook** (moved here from its current dashboard placement), **Export data** (JSON backup of all Trips/itineraries), **Import backup** (restore from a previously exported JSON backup — distinct from the XLSX RoadBook import), and a **Dark/Light mode** toggle, with room for further app-wide preferences as they're identified.
+  - The Settings entry point placement is intentionally minimal/provisional pending 7.5.x UI/UX Polish.
 
 ### Milestone 5.5 — UI/UX Polish
 **7.5.x — PLANNED**
@@ -156,8 +157,8 @@ All work through **6.0.16** has been implemented and functionally tested.
 ## 5. Current State
 
 **Current Milestone:** 7.x — BlizzCon Ready  
-**Current completed Feature:** 7.1  
-**Status:** DONE through 7.1
+**Current completed Feature:** 7.2  
+**Status:** DONE through 7.2
 
 The Trip system currently supports:
 
@@ -195,6 +196,11 @@ The RoadBook/itinerary system currently supports:
 - "View whole Itinerary" day-list entry point
 - date-range edge-case messaging
 - Continue Trip reset to the current-activity view with itinerary scrolling
+- dedicated `/settings` page
+- Import RoadBook relocated from the dashboard to Settings
+- JSON Export data backup for all Trips
+- JSON Import backup restore with overwrite confirmation
+- persisted Dark/Light mode toggle
 
 Verified test data currently imports as:
 
@@ -204,10 +210,9 @@ Verified test data currently imports as:
 
 ## 6. Next Development Order
 
-1. 7.2 — Settings (Import RoadBook relocation, Export/Import backup, Dark/Light mode)
-2. 7.5.x — UI/UX Polish (holistic visual/UX redesign)
-3. 8.x — Android/mobile
-4. 9.x+ — Extended travel functionality
+1. 7.5.x — UI/UX Polish (holistic visual/UX redesign)
+2. 8.x — Android/mobile
+3. 9.x+ — Extended travel functionality
 
 The order remains intentional: reliable state and persistence are established before expanding the real-trip experience, the application is validated against real BlizzCon data before a holistic visual redesign is undertaken, and the application should be functionally stable before final mobile packaging.
 
@@ -226,6 +231,8 @@ This is **not** a blocker for the current BlizzCon RoadBook.
 ### UI / UX
 
 Final responsive/mobile polish and the holistic visual/UX redesign are deferred to Milestone 7.5, after the application is validated against real BlizzCon data (7.x). The user has provided a dashboard/home mockup guiding the functional dashboard rework in 7.1; a full visual-language pass across the rest of the app follows in 7.5.x.
+
+The Settings link in `MainLayout.tsx` is intentionally a simple provisional entry point, and the first Dark/Light mode pass intentionally covers only the basic global background/text surface. Full navigation placement and comprehensive component-level dark-mode polish are deferred to 7.5.x.
 
 ### Backup / data safety
 
