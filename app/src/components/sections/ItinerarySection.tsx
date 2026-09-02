@@ -11,6 +11,7 @@ import {
 import { TripService } from "../../services/TripService";
 
 import type { ItineraryDay } from "../../types";
+import "./ItinerarySection.css";
 
 type ItineraryView = "current" | "day-list" | "day-detail";
 
@@ -45,9 +46,7 @@ export function ItinerarySection() {
     if (view === "day-detail" && selectedDay) {
         return (
             <section id="itinerary-section">
-                <Heading level={2}>
-                    Itinerary
-                </Heading>
+                <div className="itinerary-heading"><Heading level={2}>Itinerary</Heading><Button variant="pill" compact type="button" onClick={() => setView("day-list")}>📅 View whole itinerary</Button></div>
 
                 <ItineraryDayDetail
                     day={selectedDay}
@@ -77,9 +76,7 @@ export function ItinerarySection() {
     if (view === "current" && activeTrip) {
         return (
             <section id="itinerary-section">
-                <Heading level={2}>
-                    Itinerary
-                </Heading>
+                <div className="itinerary-heading"><Heading level={2}>Itinerary</Heading><Button variant="pill" compact type="button" onClick={() => setView("day-list")}>📅 View whole itinerary</Button></div>
 
                 <CurrentActivityView
                     trip={activeTrip}
@@ -97,9 +94,7 @@ export function ItinerarySection() {
 
     return (
         <section id="itinerary-section">
-            <Heading level={2}>
-                Itinerary
-            </Heading>
+            <div className="itinerary-heading"><Heading level={2}>Itinerary</Heading><Button variant="pill" compact type="button" onClick={() => setView("current")}>📅 View whole itinerary</Button></div>
 
             {activeTrip && (
                 <Button

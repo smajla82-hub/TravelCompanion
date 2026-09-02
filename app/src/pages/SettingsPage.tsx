@@ -14,6 +14,8 @@ import { ThemeService } from "../services/ThemeService";
 import { TripService } from "../services/TripService";
 
 import type { Theme } from "../services/ThemeService";
+import { Link } from "react-router-dom";
+import "./SettingsPage.css";
 
 export default function SettingsPage() {
 
@@ -136,6 +138,7 @@ export default function SettingsPage() {
                 <Heading level={1}>
                     Settings
                 </Heading>
+                <Link to="/" className="settings-back">← Back to Home</Link>
 
                 <RoadBookImport
                     key={roadBookImportKey}

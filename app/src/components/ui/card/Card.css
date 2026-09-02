@@ -1,9 +1,9 @@
 .tc-card {
   background: var(--surface-primary);
   border: 1px solid var(--border-color);
-  border-radius: 16px;
+  border-radius: var(--tc-radius-card);
   padding: var(--space-lg);
-  box-shadow: var(--shadow-card);
+  box-shadow: var(--tc-shadow-card);
 
 }
 

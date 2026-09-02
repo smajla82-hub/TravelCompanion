@@ -4,6 +4,10 @@ This file records the completed development history of the Travel Companion appl
 
 It is a human-readable history, not an archive of every Git commit. Git remains authoritative for exact commit history.
 
+## Sprint 7.5.x
+**Status:** DONE  
+Implemented the `appka_navrh_look.png` visual redesign: centralized color, typography, radius and shadow tokens; consolidated button styling; destination-aware flags; redesigned dashboard, active trip and itinerary presentation; inline icons; fixed bottom navigation; and expanded dark-mode coverage.
+
 ---
 
 ## Initial Project Structure
