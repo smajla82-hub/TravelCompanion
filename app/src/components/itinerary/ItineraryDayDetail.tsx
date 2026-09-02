@@ -5,6 +5,8 @@ import { ItineraryDayAdditionalDetails } from
     "./ItineraryDayAdditionalDetails";
 import { ItineraryItemModal } from
     "./ItineraryItemModal";
+import { ItineraryItemActionsModal } from
+    "./ItineraryItemActionsModal";
 
 import type {
     ItineraryDay,
@@ -32,6 +34,9 @@ export function ItineraryDayDetail({
 
     const [editingItem, setEditingItem] =
         useState<ItineraryItem | undefined>();
+
+    const [actionsIndex, setActionsIndex] =
+        useState<number | null>(null);
 
     function handleSubmit(
         fields: ItineraryItemFields
@@ -194,48 +199,15 @@ export function ItineraryDayDetail({
                                 </div>
                             )}
 
-                            <Stack gap="sm">
-                                <Button
-                                    type="button"
-                                    onClick={() =>
-                                        handleEdit(item)
-                                    }
-                                >
-                                    Edit
-                                </Button>
-
-                                <Button
-                                    type="button"
-                                    onClick={() =>
-                                        handleDelete(item.id)
-                                    }
-                                >
-                                    Delete
-                                </Button>
-
-                                <Button
-                                    type="button"
-                                    disabled={index === 0}
-                                    onClick={() =>
-                                        handleMove(index, -1)
-                                    }
-                                >
-                                    Move up
-                                </Button>
-
-                                <Button
-                                    type="button"
-                                    disabled={
-                                        index ===
-                                        day.items.length - 1
-                                    }
-                                    onClick={() =>
-                                        handleMove(index, 1)
-                                    }
-                                >
-                                    Move down
-                                </Button>
-                            </Stack>
+                            <Button
+                                type="button"
+                                className="tc-button tc-button--compact"
+                                onClick={() =>
+                                    setActionsIndex(index)
+                                }
+                            >
+                                Manage
+                            </Button>
 
                         </div>
                     ))}
@@ -251,6 +223,60 @@ export function ItineraryDayDetail({
                 >
                     Back to Itinerary
                 </Button>
+
+                <ItineraryItemActionsModal
+                    open={actionsIndex !== null}
+                    item={
+                        actionsIndex !== null
+                            ? day.items[actionsIndex]
+                            : undefined
+                    }
+                    index={actionsIndex ?? 0}
+                    itemCount={day.items.length}
+                    onClose={() =>
+                        setActionsIndex(null)
+                    }
+                    onEdit={() => {
+                        if (actionsIndex === null) {
+                            return;
+                        }
+
+                        handleEdit(
+                            day.items[actionsIndex]
+                        );
+
+                        setActionsIndex(null);
+                    }}
+                    onDelete={() => {
+                        if (actionsIndex === null) {
+                            return;
+                        }
+
+                        handleDelete(
+                            day.items[actionsIndex].id
+                        );
+
+                        setActionsIndex(null);
+                    }}
+                    onMoveUp={() => {
+                        if (actionsIndex === null) {
+                            return;
+                        }
+
+                        handleMove(actionsIndex, -1);
+
+                        setActionsIndex(null);
+                    }}
+                    onMoveDown={() => {
+                        if (actionsIndex === null) {
+                            return;
+                        }
+
+                        handleMove(actionsIndex, 1);
+
+                        setActionsIndex(null);
+                    }}
+                />
 
                 <ItineraryItemModal
                     open={modalOpen}
