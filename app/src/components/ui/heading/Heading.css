@@ -1,12 +1,17 @@
 h1 {
-    font-size: var(--font-size-2xl);
-    margin-bottom: var(--space-xl);
+    font-size: 22px;
+    line-height: 28px;
+    font-weight: 700;
 }
 
 h2 {
-    font-size: var(--font-size-xl);
+    font-size: 18px;
+    line-height: 24px;
+    font-weight: 600;
 }
 
 h3 {
-    font-size: var(--font-size-lg);
+    font-size: 16px;
+    line-height: 20px;
+    font-weight: 600;
 }

@@ -41,7 +41,7 @@ function ActivitySummary({
     compact?: boolean;
 }) {
     return (
-        <Card variant="outlined" className={`activity-summary${compact ? " activity-summary--compact" : ""}`}>
+        <div className={`activity-summary${compact ? " activity-summary--compact" : ""}`}>
             <Stack gap="sm">
                 <div className="activity-main">
                     {item.time && <span className="time-badge">{item.time}</span>}
@@ -87,7 +87,7 @@ function ActivitySummary({
                     <div className="activity-detail">✎ Note: {item.note}</div>
                 )}
             </Stack>
-        </Card>
+        </div>
     );
 }
 
@@ -128,11 +128,11 @@ export function CurrentActivityView({
         );
 
         return (
-            <section>
+            <section className="activity-edge-state activity-edge-state--upcoming">
                 <Heading level={3}>
                     Trip starts in {daysUntilStart} days
                 </Heading>
-                <Button onClick={onViewWholeItinerary}>
+                <Button variant="outline" onClick={onViewWholeItinerary}>
                     View whole Itinerary
                 </Button>
             </section>
@@ -141,9 +141,9 @@ export function CurrentActivityView({
 
     if (today > endDate) {
         return (
-            <section>
+            <section className="activity-edge-state activity-edge-state--ended">
                 <Heading level={3}>Trip has ended</Heading>
-                <Button onClick={onViewWholeItinerary}>
+                <Button variant="outline" onClick={onViewWholeItinerary}>
                     View whole Itinerary
                 </Button>
             </section>
@@ -226,17 +226,19 @@ export function CurrentActivityView({
         <section>
             <h3 className="activity-label">Current Activity</h3>
             {currentItem ? (
-                <div className="current-activity-row">
-                    <ActivitySummary item={currentItem} />
+                <Card className="current-activity-card">
+                    <div className="current-activity-row">
+                        <ActivitySummary item={currentItem} />
 
-                    <ActivityActionStack
-                        showFood={currentItem.priority === "FOOD"}
-                        showParking={Boolean(currentItem.parking)}
-                        onFood={() => setFoodItemId(currentItem.id)}
-                        onParking={() => setParkingItemId(currentItem.id)}
-                        onStatistics={() => setStatsOpen(true)}
-                    />
-                </div>
+                        <ActivityActionStack
+                            showFood={currentItem.priority === "FOOD"}
+                            showParking={Boolean(currentItem.parking)}
+                            onFood={() => setFoodItemId(currentItem.id)}
+                            onParking={() => setParkingItemId(currentItem.id)}
+                            onStatistics={() => setStatsOpen(true)}
+                        />
+                    </div>
+                </Card>
             ) : (
                 <p>No current activity.</p>
             )}
@@ -244,20 +246,22 @@ export function CurrentActivityView({
             {nextItem && (
                 <>
                     <h3 className="activity-label">Next Activity</h3>
-                    <div className="current-activity-row current-activity-row--compact">
-                        <ActivitySummary
-                            item={nextItem}
-                            compact
-                        />
+                    <Card className="current-activity-card current-activity-card--compact">
+                        <div className="current-activity-row current-activity-row--compact">
+                            <ActivitySummary
+                                item={nextItem}
+                                compact
+                            />
 
-                        <ActivityActionStack
-                            showFood={nextItem.priority === "FOOD"}
-                            showParking={Boolean(nextItem.parking)}
-                            onFood={() => setFoodItemId(nextItem.id)}
-                            onParking={() => setParkingItemId(nextItem.id)}
-                            onStatistics={() => setStatsOpen(true)}
-                        />
-                    </div>
+                            <ActivityActionStack
+                                showFood={nextItem.priority === "FOOD"}
+                                showParking={Boolean(nextItem.parking)}
+                                onFood={() => setFoodItemId(nextItem.id)}
+                                onParking={() => setParkingItemId(nextItem.id)}
+                                onStatistics={() => setStatsOpen(true)}
+                            />
+                        </div>
+                    </Card>
                 </>
             )}
 
@@ -266,13 +270,6 @@ export function CurrentActivityView({
                 onClick={() => onShowDay(day)}
             >
                 ••• Show more
-            </Button>
-
-            <Button
-                type="button"
-                onClick={onViewWholeItinerary}
-            >
-                View whole Itinerary
             </Button>
 
             <Modal

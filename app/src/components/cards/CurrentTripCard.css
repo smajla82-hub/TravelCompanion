@@ -14,14 +14,14 @@
     background: linear-gradient(135deg, var(--color-purple), var(--color-primary));
 }
 .current-trip-card::after {
-    content: "〰 〰 〰";
+    content: "";
     position: absolute;
-    right: 16px;
-    bottom: 34px;
-    color: rgba(255, 255, 255, .16);
-    font-size: 54px;
-    letter-spacing: -12px;
-    transform: rotate(-8deg);
+    right: -8px;
+    bottom: -2px;
+    width: 230px;
+    height: 108px;
+    background: rgba(255, 255, 255, .13);
+    clip-path: polygon(0 100%, 0 76%, 12% 62%, 20% 73%, 32% 38%, 43% 70%, 56% 48%, 68% 76%, 79% 55%, 90% 73%, 100% 58%, 100% 100%);
     pointer-events: none;
 }
 .current-trip-card .tc-stack {
