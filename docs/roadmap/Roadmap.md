@@ -2,9 +2,11 @@
 
 ## 1. Project Vision
 
-Travel Companion is a travel-planning application built around the Trip as the primary container for travel-related information.
+Travel Companion is a travel-planning application built around the **Trip** as the primary container for travel-related information.
 
-The immediate practical goal is a usable application for the BlizzCon 2026 trip, including import of existing planning data and operation in an Android/mobile environment.
+The immediate practical goal is a usable application for the **BlizzCon 2026 trip**, including import of existing planning data, reliable persistence and operation in an Android/mobile environment.
+
+The long-term goal is a modular travel platform rather than a single-purpose itinerary viewer.
 
 ---
 
@@ -12,8 +14,9 @@ The immediate practical goal is a usable application for the BlizzCon 2026 trip,
 
 - **Roadmap.md = map** — current state, milestones and direction.
 - **SprintLog.md = history** — completed development history.
-- Documentation is updated after completion of a major Feature/Milestone, not after every sub-step.
-- Empty documentation files are completed when the corresponding part of the application has something meaningful to document.
+- **Handoff.md = continuity** — minimum context required to continue development.
+- Documentation is updated after completion of a major Feature/Milestone, not after every implementation step.
+- Git remains authoritative for exact commit history and repository state.
 
 ---
 
@@ -30,23 +33,24 @@ React application foundation, first functional dashboard, initial UI components 
 Feature architecture, UI library, domain layer, dashboard refactoring and modal infrastructure.
 
 ### Milestone 3 — Trip Management
-**5.x — IN PROGRESS**
+**5.x — DONE**
 
-Trip creation, validation, editing, deletion and stabilization of Trip state.
+Trip creation, validation, editing, deletion, Active Trip management and persistence.
+
+### Milestone 4 — Data Import & Itinerary
+**6.x — IN PROGRESS**
+
+Import existing RoadBook/XLSX planning data, map it into the domain model, persist it inside Trips and expose it through the Active Trip itinerary.
+
+Completed through **6.0.11**.
 
 Next:
-- 5.8 — Active Trip management
-- 5.9 — Persistence
-
-### Milestone 4 — Data Import
-**6.x — PLANNED**
-
-Import existing travel data, define the import format and map imported data into the domain model.
+- 6.0.12 and subsequent itinerary/import work
 
 ### Milestone 5 — BlizzCon Ready
 **7.x — PLANNED**
 
-Turn the application into a practical companion for the BlizzCon 2026 trip using real travel data.
+Turn the application into a practical companion for the BlizzCon 2026 trip using the imported real travel data.
 
 ### Milestone 6 — Mobile / Android
 **8.x — PLANNED**
@@ -107,52 +111,91 @@ Additional travel functionality, including:
 - 5.5 — Edit Existing Trip
 - 5.6 — Edit Existing Trip
 - 5.7.5–5.7.8 — Trip state stabilization
+- 5.8 — Active Trip Management
+- 5.9 — Persistence
+
+### 6.x — Data Import & Itinerary
+
+- 6.0.1–6.0.5 — RoadBook/XLSX import foundation
+- 6.0.6–6.0.8 — XLSX parsing, import UI and RoadBook preview
+- 6.0.9 — RoadBook persistence into a selected Trip
+- 6.0.10 — Active Trip itinerary integration
+- 6.0.11 — Itinerary day cards and day-detail interaction
+
+All work through **6.0.11** has been implemented and functionally tested.
 
 ---
 
 ## 5. Current State
 
-**Current Feature:** 5.7  
-**Status:** DONE
+**Current Milestone:** 6.x — Data Import & Itinerary  
+**Current completed Feature:** 6.0.11  
+**Status:** DONE through 6.0.11
 
-The Trip management foundation currently supports:
+The Trip system currently supports:
+
 - multiple Trips
 - Trip creation
 - form validation
 - editing
 - deletion
 - Trip detail view
-- active Trip state foundation
-- modal-based interaction
+- Active Trip selection
+- persistent Trip state
+- persisted RoadBook data
 
-Known next functional target:
+The RoadBook/itinerary system currently supports:
 
-**5.8 — Active Trip Management**
+- XLSX upload
+- multi-day RoadBook parsing
+- conversion to `ItineraryDay[]`
+- conversion of activity rows to `ItineraryItem[]`
+- import preview
+- saving RoadBook to a selected Trip
+- persistence across refresh
+- Active Trip-driven itinerary display
+- day cards
+- day-detail opening/closing
+- display of day activities
 
-Then:
+Verified test data currently imports as:
 
-**5.9 — Persistence**
-
-Then:
-
-**Import → BlizzCon data → Android/mobile**
+**8 days · 150 activities**
 
 ---
 
 ## 6. Next Development Order
 
-1. 5.8 — Active Trip Management
-2. 5.9 — Persistence
-3. 6.x — Import
-4. 7.x — BlizzCon / real travel data
-5. 8.x — Android/mobile
-6. 9.x+ — Extended travel functionality
+1. 6.0.12+ — continue itinerary/import functionality
+2. 7.x — BlizzCon / real travel experience
+3. 8.x — Android/mobile
+4. 9.x+ — Extended travel functionality
 
-The order is intentional: reliable state and persistence come before importing real data, and the core application should be stable before final mobile packaging.
+The order remains intentional: reliable state and persistence are established before expanding the real-trip experience, and the application should be functionally stable before final mobile packaging.
 
 ---
 
-## 7. Documentation Structure
+## 7. Deferred Decisions / Future Work
+
+### XLSX template
+
+The current importer intentionally follows the existing RoadBook workbook structure and its current column names.
+
+A future version should define a stable, English-language import template so future RoadBooks can be prepared independently of the original workbook language.
+
+This is **not** a blocker for the current BlizzCon RoadBook.
+
+### UI / UX
+
+Final responsive/mobile polish is deferred until the functional data flow is sufficiently complete.
+
+### Extended travel platform
+
+Budget, checklist, currency, timeline, equipment, knowledge base and related modules remain later milestones.
+
+---
+
+## 8. Documentation Structure
 
 - `architecture/` — architecture and technical structure
 - `decisions/` — important architectural/implementation decisions
@@ -160,7 +203,7 @@ The order is intentional: reliable state and persistence come before importing r
 - `flows/` — important application/user workflows
 - `glossary/` — domain terminology
 - `presentation/` — major application views and presentation concepts
-- `roadmap/` — roadmap and development history
+- `roadmap/` — roadmap, SprintLog and Handoff
 - `standards/` — development standards and conventions
 - `ux/` — UX decisions and principles
 
@@ -168,14 +211,16 @@ Documentation is expanded when implementation reaches the corresponding area.
 
 ---
 
-## 8. Handoff Principle
+## 9. Handoff Principle
 
 A new developer or AI agent should be able to understand:
+
 1. what the project is,
 2. what has been completed,
-3. what the current Feature is,
+3. what the current milestone is,
 4. what the next Feature is,
 5. where relevant documentation lives,
-6. which parts are planned rather than implemented.
+6. which parts are planned rather than implemented,
+7. the current Trip → Itinerary architecture.
 
 Repository documentation is part of project continuity.

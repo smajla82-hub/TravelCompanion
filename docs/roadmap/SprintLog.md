@@ -165,30 +165,145 @@ Verified:
 - Trip detail interaction
 - stabilization of active Trip state
 
-The itinerary currently contains separate data that is not yet synchronized with Trip deletion. This is known and is not treated as a completed itinerary-management feature.
+## Feature 5.8
+**Status:** DONE  
+Active Trip Management.
+
+The application gained explicit Active Trip behavior and the dashboard/itinerary flow was moved toward the selected Active Trip.
+
+## Feature 5.9
+**Status:** DONE  
+Persistence.
+
+Trip state and related changes were verified across application refreshes. Persistence became the basis for the subsequent RoadBook import work.
+
+---
+
+# 6.x — Data Import & Itinerary
+
+## Feature 6.0
+**Status:** DONE through 6.0.11  
+RoadBook / XLSX import and itinerary integration.
+
+### 6.0.1–6.0.5
+**Status:** DONE  
+Established the RoadBook import foundation and mapping of XLSX data into the application domain.
+
+### 6.0.6–6.0.8
+**Status:** DONE  
+Implemented XLSX parsing, import UI and RoadBook preview.
+
+Verified import of the current RoadBook workbook.
+
+### 6.0.9
+**Status:** DONE  
+RoadBook persistence.
+
+The imported RoadBook can be assigned to a selected Trip and stored in that Trip's itinerary.
+
+Persistence was verified by changing Active Trips and refreshing the application.
+
+### 6.0.10
+**Status:** DONE  
+Active Trip itinerary integration.
+
+The itinerary shown by the dashboard is now derived from the Active Trip rather than from the previous global/demo itinerary.
+
+### 6.0.11
+**Status:** DONE  
+Itinerary day cards and day-detail interaction.
+
+Implemented:
+
+- day-level itinerary cards
+- day metadata display
+- activity count per day
+- opening a selected day's detail
+- displaying the activities belonging to that day
+- closing the detail view and returning to the day list
+
+A previous issue where the day title inherited the first activity title was corrected so the actual day title is displayed.
+
+Current verified RoadBook test data:
+
+**8 days · 150 activities**
 
 ---
 
 # Current Position
 
-**Current Feature:** 5.7  
-**Status:** DONE
+**Current Milestone:** 6.x — Data Import & Itinerary  
+**Completed through:** 6.0.11  
+**Status:** DONE through 6.0.11
 
 Next:
 
-## Feature 5.8 — Active Trip Management
+## Feature 6.0.12+
+
+Continue development of the itinerary/import experience from the existing architecture.
 
 Then:
 
-## Feature 5.9 — Persistence
-
-Then:
-
-## 6.x — Import
-
-## 7.x — BlizzCon
+## 7.x — BlizzCon Ready
 
 ## 8.x — Android / Mobile
+
+## 9.x+ — Extended Travel Companion
+
+---
+
+# Important Architectural State
+
+The current itinerary architecture is:
+
+```text
+Trip
+ └── itinerary
+      └── ItineraryDay[]
+           └── items: ItineraryItem[]
+```
+
+The dashboard itinerary flow is:
+
+```text
+ItinerarySection
+      ↓
+TripService.getActive()
+      ↓
+Active Trip
+      ↓
+activeTrip.itinerary
+      ↓
+ItineraryDay[]
+      ↓
+ItineraryDayCard / ItineraryDayDetail
+```
+
+The RoadBook flow is:
+
+```text
+XLSX
+ ↓
+XlsxRoadBookImporter
+ ↓
+ItineraryDay[]
+ ↓
+RoadBookImport
+ ↓
+selected Trip
+ ↓
+Trip.itinerary
+```
+
+---
+
+# Deferred Work
+
+The current XLSX importer follows the existing RoadBook workbook's column names.
+
+A future standardized English import template should be introduced when the import format is generalized for future trips. This is intentionally deferred and does not block the current BlizzCon workflow.
+
+Final mobile/responsive polish and extended travel modules remain future work.
 
 ---
 
@@ -197,3 +312,5 @@ Then:
 Update the Sprint Log after a major Feature is completed.
 
 Do not add an entry for every small implementation step unless it is important enough to explain the project's history.
+
+Roadmap describes direction; SprintLog records meaningful completed work; Handoff captures the current continuity state.
