@@ -1,6 +1,6 @@
 .tc-main { min-height: 100vh; padding: 24px 20px 96px; }
-.tc-bottom-nav { position: fixed; z-index: 10; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; gap: 64px; padding: 10px; background: color-mix(in srgb, var(--color-surface) 94%, var(--color-primary)); border-top: 1px solid var(--color-border); box-shadow: 0 -4px 16px rgba(15, 23, 42, .08); }
-.tc-bottom-nav a { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 72px; color: var(--color-text-secondary); text-decoration: none; font-size: 12px; }
+.tc-bottom-nav { position: fixed; z-index: 10; bottom: 0; left: 0; right: 0; display: flex; justify-content: center; gap: 24px; padding: 10px; background: color-mix(in srgb, var(--color-surface) 94%, var(--color-primary)); border-top: 1px solid var(--color-border); box-shadow: 0 -4px 16px rgba(15, 23, 42, .08); }
+.tc-bottom-nav a { position: relative; display: flex; flex-direction: column; align-items: center; gap: 3px; min-width: 88px; color: var(--color-text-secondary); text-decoration: none; font-size: 12px; }
 .tc-bottom-nav svg { width: 20px; height: 20px; }
 .tc-bottom-nav a.active { color: var(--color-primary); }
 .tc-bottom-nav a.active::after { content: ""; width: 24px; height: 3px; border-radius: 99px; background: currentColor; }

@@ -2,13 +2,12 @@
     width: auto;
     padding: 10px 16px;
 
-    border:none;
+    border:1px solid var(--color-border);
 
     border-radius: var(--tc-radius-button);
 
-    background:var(--color-primary);
-
-    color:white;
+    background:transparent;
+    color:var(--color-text);
 
     font-size: 14px;
     font-weight: 500;
@@ -26,13 +25,10 @@
     transform:scale(.98);
 }
 
-.tc-button--primary{
-    background:var(--color-primary);
-    color:white;
-}
+.tc-button--primary{ background: transparent; color: var(--color-text); }
 
 .tc-button--pill { border-radius: var(--tc-radius-pill); }
-.tc-button--success { background: var(--color-success); color: white; }
+.tc-button--success { background: var(--color-success); color: white; border-color: var(--color-success); }
 .tc-button--outline { background: transparent; color: var(--color-text); border: 1px solid var(--color-border); }
 .tc-button--secondary{
     background:var(--color-surface);
