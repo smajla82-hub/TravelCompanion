@@ -42,23 +42,33 @@ Trip creation, validation, editing, deletion, Active Trip management and persist
 
 Import existing RoadBook/XLSX planning data, map it into the domain model, persist it inside Trips and expose it through the Active Trip itinerary. Includes in-app itinerary editing (add/edit/delete/reorder activities) and the redesigned itinerary day view (real-time current/next activity, per-activity Food/Parking, day-level Statistics).
 
-Completed through **6.0.15**.
-
-Next:
-- 6.0.16 — small fixes from user testing (auto-close itinerary on Active Trip switch, Continue Trip button behavior, recommended-venue meal-type tagging)
+Completed through **6.0.16**.
 
 ### Milestone 5 — BlizzCon Ready
 **7.x — PLANNED**
 
-Turn the application into a practical companion for the BlizzCon 2026 trip using the imported real travel data.
+Turn the application into a practical companion for the BlizzCon 2026 trip using the imported real travel data. Based on the user's dashboard mockup, this milestone reworks the app's home/dashboard experience around "what's happening right now" rather than a static list of days, and introduces a dedicated Settings area.
+
+Planned sub-steps:
+
+- **7.1 — Dashboard "Current Activity" view**
+  - The dashboard shows the Active Trip's **current/next activity** directly (based on the real device date/time), instead of requiring the user to open a day from a list.
+  - A new **"View whole Itinerary"** entry point opens the existing full day-list view (the itinerary day cards / day-detail flow built in 6.x) as a separate, explicit view rather than the default dashboard state.
+  - **"Continue Trip"** is redefined: instead of scrolling to a section, it returns the user to the Active Trip's current date/time view (e.g. after browsing a different day, editing a different Trip, or navigating elsewhere).
+  - Edge cases: if the Active Trip's date range hasn't started yet, show a "Trip starts in X days" message; if it has already ended, show a "Trip has ended" message — both linking to "View whole Itinerary".
+  - No Trip is required to be Active at all — the dashboard must also handle the no-Active-Trip state gracefully (as it does today).
+
+- **7.2 — Settings**
+  - A new **Settings** entry (bottom of the app, replacing the current dashboard-level "Import RoadBook" entry point).
+  - Settings houses: **Import RoadBook** (moved here from its current dashboard placement), **Export data** (JSON backup of all Trips/itineraries), **Import backup** (restore from a previously exported JSON backup — distinct from the XLSX RoadBook import), and a **Dark/Light mode** toggle, with room for further app-wide preferences as they're identified.
 
 ### Milestone 5.5 — UI/UX Polish
 **7.5.x — PLANNED**
 
-A dedicated, holistic visual/UX redesign pass across the whole application (not just the itinerary view), once the functional feature set is stable. Expected scope includes:
+A dedicated, holistic visual/UX redesign pass across the whole application (not just the itinerary view), once the functional feature set from 7.x is stable. Expected scope includes:
 - Consistent sizing/spacing of buttons and controls across the entire app (the per-activity action buttons introduced in 6.x are functional but oversized; a systemic sizing pass is deferred here rather than fixed piecemeal).
 - Correcting cosmetic/demo remnants (e.g. the hardcoded Italian flag shown on every Trip card regardless of actual country).
-- Revisiting placement/necessity of dashboard elements (e.g. the "Continue Trip" button) once the overall dashboard layout is redesigned.
+- Full application of the user's dashboard/home redesign mockup (introduced in 7.x functionally) to the rest of the app's visual language.
 - General visual consistency, responsive/mobile layout polish.
 
 This milestone intentionally follows 7.x (BlizzCon Ready) so the redesign is informed by a functionally complete, real-data-tested application rather than redesigning around a moving target.
@@ -146,7 +156,7 @@ All work through **6.0.16** has been implemented and functionally tested.
 ## 5. Current State
 
 **Current Milestone:** 6.x — Data Import & Itinerary  
-**Current completed Feature:** 6.0.16
+**Current completed Feature:** 6.0.16  
 **Status:** DONE through 6.0.16
 
 The Trip system currently supports:
@@ -191,10 +201,11 @@ Verified test data currently imports as:
 
 ## 6. Next Development Order
 
-1. 7.x — BlizzCon / real travel experience
-2. 7.5.x — UI/UX Polish (holistic visual/UX redesign)
-3. 8.x — Android/mobile
-4. 9.x+ — Extended travel functionality
+1. 7.1 — Dashboard "Current Activity" view (current/next activity, "View whole Itinerary", redefined Continue Trip)
+2. 7.2 — Settings (Import RoadBook relocation, Export/Import backup, Dark/Light mode)
+3. 7.5.x — UI/UX Polish (holistic visual/UX redesign)
+4. 8.x — Android/mobile
+5. 9.x+ — Extended travel functionality
 
 The order remains intentional: reliable state and persistence are established before expanding the real-trip experience, the application is validated against real BlizzCon data before a holistic visual redesign is undertaken, and the application should be functionally stable before final mobile packaging.
 
@@ -212,7 +223,11 @@ This is **not** a blocker for the current BlizzCon RoadBook.
 
 ### UI / UX
 
-Final responsive/mobile polish and the holistic visual/UX redesign are deferred to Milestone 7.5, after the application is validated against real BlizzCon data (7.x).
+Final responsive/mobile polish and the holistic visual/UX redesign are deferred to Milestone 7.5, after the application is validated against real BlizzCon data (7.x). The user has provided a dashboard/home mockup guiding the functional dashboard rework in 7.1; a full visual-language pass across the rest of the app follows in 7.5.x.
+
+### Backup / data safety
+
+Since the application stores all Trip/itinerary data in browser `localStorage` only, Export/Import backup (7.2) is treated as a near-term priority rather than a "nice to have" — it mitigates the real risk of data loss (browser cache clearing, device change, reinstall) before/during actual real-world trip use.
 
 ### Extended travel platform
 
