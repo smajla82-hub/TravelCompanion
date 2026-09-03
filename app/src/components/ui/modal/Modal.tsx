@@ -5,6 +5,8 @@ import {
     type ReactNode,
 } from "react";
 
+import { Icon } from "../icon/Icon";
+
 type ModalProps = {
     open: boolean;
     title?: string;
@@ -75,7 +77,7 @@ export function Modal({
                     onClick={onClose}
                     aria-label="Close"
                 >
-                    ×
+                    <Icon name="x" width={20} height={20} />
                 </button>
 
                 {title && (

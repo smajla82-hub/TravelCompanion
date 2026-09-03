@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Button, Container } from "../components/ui";
+import { Button, Container, Icon } from "../components/ui";
 import { TripsSection } from "../components/sections";
 import { NewTripModal } from "../components/trips";
 import "./MyTripsPage.css";
@@ -16,7 +16,7 @@ export default function MyTripsPage() {
                     variant="success"
                     onClick={() => setNewTripOpen(true)}
                 >
-                    + New Trip
+                    <Icon name="plus" width={16} height={16} /> New Trip
                 </Button>
             </div>
 

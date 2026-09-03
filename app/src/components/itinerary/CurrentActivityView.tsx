@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Button, Card, Heading, Modal, Stack } from "../ui";
+import { Button, Card, Heading, Icon, Modal, Stack } from "../ui";
 
 import { ActivityActionStack } from "./ActivityActionStack";
 import { RecommendedVenueList } from "./RecommendedVenueList";
@@ -45,22 +45,32 @@ function ActivitySummary({
             <Stack gap="sm">
                 <div className="activity-main">
                     {item.time && <span className="time-badge">{item.time}</span>}
-                    <span className="activity-icon">✦</span>
+                    <span className="activity-icon"><Icon name="star" width={16} height={16} /></span>
                     <strong>{item.title}</strong>
                 </div>
 
-                {item.location && <div className="activity-detail">⌖ {item.location}</div>}
+                {item.location && (
+                    <div className="activity-detail">
+                        <Icon name="mapPin" width={16} height={16} /> {item.location}
+                    </div>
+                )}
 
                 {!compact && item.goal && (
-                    <div className="activity-detail">◎ Goal: {item.goal}</div>
+                    <div className="activity-detail">
+                        <Icon name="target" width={16} height={16} /> Goal: {item.goal}
+                    </div>
                 )}
 
                 {!compact && item.priority && (
-                    <div className="activity-detail">ϟ Priority: {item.priority}</div>
+                    <div className="activity-detail">
+                        <Icon name="zap" width={16} height={16} /> Priority: {item.priority}
+                    </div>
                 )}
 
                 {!compact && item.parking && (
-                    <div className="activity-detail">P Parking: {item.parking}</div>
+                    <div className="activity-detail">
+                        <Icon name="squareParking" width={16} height={16} /> Parking: {item.parking}
+                    </div>
                 )}
 
                 {!compact && item.smartChip && (
@@ -80,11 +90,15 @@ function ActivitySummary({
                 )}
 
                 {!compact && item.price !== undefined && (
-                    <div className="activity-detail">$ Price: {item.price}</div>
+                    <div className="activity-detail">
+                        <Icon name="dollarSign" width={16} height={16} /> Price: {item.price}
+                    </div>
                 )}
 
                 {!compact && item.note && (
-                    <div className="activity-detail">✎ Note: {item.note}</div>
+                    <div className="activity-detail">
+                        <Icon name="notebookPen" width={16} height={16} /> Note: {item.note}
+                    </div>
                 )}
             </Stack>
         </div>
@@ -269,7 +283,7 @@ export function CurrentActivityView({
                 type="button"
                 onClick={() => onShowDay(day)}
             >
-                ••• Show more
+                <Icon name="moreHorizontal" width={16} height={16} /> Show more
             </Button>
 
             <Modal

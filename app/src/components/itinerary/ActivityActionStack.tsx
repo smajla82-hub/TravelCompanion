@@ -1,4 +1,4 @@
-import { Button } from "../ui";
+import { Button, Icon } from "../ui";
 import "./ActivityActionStack.css";
 
 type ActivityActionStackProps = {
@@ -25,7 +25,7 @@ export function ActivityActionStack({
                     aria-label="Recommended food"
                     onClick={onFood}
                 >
-                    🍴
+                    <Icon name="utensils" />
                 </Button>
             )}
             {showParking && (
@@ -35,7 +35,7 @@ export function ActivityActionStack({
                     aria-label="Parking"
                     onClick={onParking}
                 >
-                    P
+                    <Icon name="squareParking" />
                 </Button>
             )}
             <Button
@@ -44,7 +44,7 @@ export function ActivityActionStack({
                 aria-label="Statistics"
                 onClick={onStatistics}
             >
-                ◔
+                <Icon name="barChart" />
             </Button>
         </div>
     );

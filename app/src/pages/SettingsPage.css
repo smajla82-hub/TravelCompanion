@@ -1,1 +1,1 @@
-.settings-back { color: var(--color-primary); text-decoration: none; font-size: 14px; }
+.settings-back { display: inline-flex; align-items: center; gap: 4px; color: var(--color-primary); text-decoration: none; font-size: 14px; }

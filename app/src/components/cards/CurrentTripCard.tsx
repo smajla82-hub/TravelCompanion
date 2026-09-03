@@ -1,4 +1,4 @@
-import { Card, Button, Stack } from "../ui";
+import { Card, Button, Icon, Stack } from "../ui";
 
 import "./CurrentTripCard.css";
 
@@ -36,7 +36,7 @@ export function CurrentTripCard({
                     </p>
 
                     <p>
-                        👥 {trip.travellers} travellers
+                        <Icon name="usersRound" width={16} height={16} /> {trip.travellers} travellers
                     </p>
                 </div>
 
