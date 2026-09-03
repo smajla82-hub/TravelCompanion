@@ -1,10 +1,12 @@
-import { Card, Stack } from "../ui";
+import { Card, Stack, Icon } from "../ui";
 import { ItineraryDayAdditionalDetails } from
     "../itinerary/ItineraryDayAdditionalDetails";
 
 import type {
     ItineraryDay,
 } from "../../types";
+import { getActivityTypeDefinition } from
+    "../../domain/activity/ActivityTypeRegistry";
 
 type RoadBookPreviewProps = {
     days: ItineraryDay[];
@@ -46,6 +48,16 @@ export function RoadBookPreview({
                                 <div key={item.id}>
 
                                     <strong>
+                                        <Icon
+                                            name={
+                                                getActivityTypeDefinition(
+                                                    item.activityType
+                                                ).icon
+                                            }
+                                            width={16}
+                                            height={16}
+                                        />
+                                        {" "}
                                         {item.time
                                             ? `${item.time} — `
                                             : ""}
@@ -55,12 +67,6 @@ export function RoadBookPreview({
                                     {item.location && (
                                         <div>
                                             {item.location}
-                                        </div>
-                                    )}
-
-                                    {item.goal && (
-                                        <div>
-                                            Goal: {item.goal}
                                         </div>
                                     )}
 

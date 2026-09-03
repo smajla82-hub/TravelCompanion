@@ -4,6 +4,11 @@ import "../trips/NewTripModal.css";
 import { useState } from "react";
 
 import type { ItineraryItem } from "../../types";
+import {
+  ACTIVITY_TYPE_REGISTRY,
+  ACTIVITY_TYPE_IDS,
+  normalizeActivityType,
+} from "../../domain/activity/ActivityTypeRegistry";
 
 export type ItineraryItemFields = Omit<ItineraryItem, "id" | "date">;
 
@@ -17,7 +22,9 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
   const [title, setTitle] = useState(item?.title ?? "");
   const [description, setDescription] = useState(item?.description ?? "");
   const [location, setLocation] = useState(item?.location ?? "");
-  const [goal, setGoal] = useState(item?.goal ?? "");
+  const [activityType, setActivityType] = useState(
+    normalizeActivityType(item?.activityType)
+  );
   const [priority, setPriority] = useState(item?.priority ?? "");
   const [parking, setParking] = useState(item?.parking ?? "");
   const [smartChip, setSmartChip] = useState(item?.smartChip ?? "");
@@ -47,7 +54,8 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
       title,
       description,
       location,
-      goal,
+      goal: item?.goal,
+      activityType,
       priority,
       parking,
       smartChip,
@@ -93,12 +101,19 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
           />
         </label>
         <label>
-          Goal
-          <input
-            type="text"
-            value={goal}
-            onChange={(event) => setGoal(event.target.value)}
-          />
+          Activity Type
+          <select
+            value={activityType}
+            onChange={(event) =>
+              setActivityType(normalizeActivityType(event.target.value))
+            }
+          >
+            {ACTIVITY_TYPE_IDS.map((id) => (
+              <option key={id} value={id}>
+                {ACTIVITY_TYPE_REGISTRY[id].label}
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           Priority

@@ -7,6 +7,8 @@ import type {
     DayStat,
     ParkingLocation,
 } from "../../types";
+import { normalizeActivityType } from
+    "../../domain/activity/ActivityTypeRegistry";
 
 type CellValue = string | number | boolean | Date | null | undefined;
 
@@ -333,7 +335,7 @@ function createItem(
 
         location: get("location"),
 
-        goal: get("goal"),
+        activityType: normalizeActivityType(get("activityType")),
 
         priority: get("priority"),
 
@@ -389,7 +391,7 @@ function parseDaySheet(
         time: findColumn(headers, "Čas"),
         activity: findColumn(headers, "Aktivita"),
         location: findColumn(headers, "Lokalita"),
-        goal: findColumn(headers, "Cíl"),
+        activityType: findColumn(headers, "Activity Type"),
         priority: findColumn(headers, "Priorita"),
         parking: findColumn(headers, "🅿"),
         smartChip:
