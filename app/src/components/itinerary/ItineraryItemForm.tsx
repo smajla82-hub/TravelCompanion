@@ -9,6 +9,21 @@ import {
   ACTIVITY_TYPE_IDS,
   normalizeActivityType,
 } from "../../domain/activity/ActivityTypeRegistry";
+import { normalizeActivityTitle } from
+  "../../domain/activity/normalizeActivityTitle";
+
+const PRIORITY_OPTIONS = [
+  "MUST",
+  "FOOD",
+  "DRIVE",
+  "OPTIONAL",
+  "PHOTO",
+  "SUNSET",
+  "HOTEL",
+  "BREAK",
+];
+
+const PARKING_OPTIONS = ["", "P1", "P2", "P3", "P4", "P5", "P6", "P7", "P8"];
 
 export type ItineraryItemFields = Omit<ItineraryItem, "id" | "date">;
 
@@ -51,7 +66,7 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
 
     onSubmit({
       time,
-      title,
+      title: normalizeActivityTitle(title),
       description,
       location,
       goal: item?.goal,
@@ -71,7 +86,7 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
         <label>
           Time
           <input
-            type="text"
+            type="time"
             value={time}
             onChange={(event) => setTime(event.target.value)}
           />
@@ -117,19 +132,28 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
         </label>
         <label>
           Priority
-          <input
-            type="text"
+          <select
             value={priority}
             onChange={(event) => setPriority(event.target.value)}
-          />
+          >
+            <option value="">None</option>
+            {PRIORITY_OPTIONS.map((value) => (
+              <option key={value} value={value}>{value}</option>
+            ))}
+          </select>
         </label>
         <label>
           Parking
-          <input
-            type="text"
+          <select
             value={parking}
             onChange={(event) => setParking(event.target.value)}
-          />
+          >
+            {PARKING_OPTIONS.map((value) => (
+              <option key={value} value={value}>
+                {value || "None"}
+              </option>
+            ))}
+          </select>
         </label>
         <label>
           Smart Chip

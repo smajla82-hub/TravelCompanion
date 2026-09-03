@@ -30,6 +30,8 @@ import {
 } from "../../utils/getMealTypeForItem";
 import { getActivityTypeDefinition } from
     "../../domain/activity/ActivityTypeRegistry";
+import { normalizeActivityTitle } from
+    "../../domain/activity/normalizeActivityTitle";
 
 const NOW_REFRESH_INTERVAL_MS = 60000;
 
@@ -239,15 +241,17 @@ export function ItineraryDayDetail({
                         <div className="itinerary-activity-row" key={item.id}>
                             <div className="itinerary-activity-content">
                                 <strong>
-                                    <Icon
-                                        name={
-                                            getActivityTypeDefinition(
-                                                item.activityType
-                                            ).icon
-                                        }
-                                        width={16}
-                                        height={16}
-                                    />
+                                    <span className="itinerary-activity-icon">
+                                        <Icon
+                                            name={
+                                                getActivityTypeDefinition(
+                                                    item.activityType
+                                                ).icon
+                                            }
+                                            width={16}
+                                            height={16}
+                                        />
+                                    </span>
                                     {" "}
                                     {timingStatuses[item.id] === "current" &&
                                         "Now — "}
@@ -256,7 +260,7 @@ export function ItineraryDayDetail({
                                     {item.time
                                         ? `${item.time} — `
                                         : ""}
-                                    {item.title}
+                                    {normalizeActivityTitle(item.title)}
                                 </strong>
 
                                 {item.location && (

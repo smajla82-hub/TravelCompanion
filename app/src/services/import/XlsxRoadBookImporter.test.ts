@@ -63,7 +63,7 @@ describe("importXlsxRoadBook", () => {
 
         const item = days[0].items[0];
 
-        expect(item.title).toBe("🏖️ Main Beach");
+        expect(item.title).toBe("Main Beach");
         expect(item.activityType).toBe("nature");
         expect(item.priority).toBe("MUST");
     });
