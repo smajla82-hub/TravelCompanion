@@ -26,7 +26,19 @@ export type IconName =
     | "star"
     | "barChart"
     | "squareParking"
-    | "utensils";
+    | "utensils"
+    | "car"
+    | "mountainSnow"
+    | "trees"
+    | "footprints"
+    | "landmark"
+    | "shoppingBag"
+    | "bedDouble"
+    | "key"
+    | "luggage"
+    | "idCard"
+    | "moon"
+    | "circleEllipsis";
 
 const icons: Record<IconName, ReactNode> = {
     home: <path d="M3 10.5 12 3l9 7.5M5 9v11h14V9M9 20v-6h6v6" />,
@@ -155,6 +167,97 @@ const icons: Record<IconName, ReactNode> = {
             <path d="M3 2v7c0 1.1.9 2 2 2h4a2 2 0 0 0 2-2V2" />
             <path d="M7 2v20" />
             <path d="M21 15V2a5 5 0 0 0-5 5v6c0 1.1.9 2 2 2h3Zm0 0v7" />
+        </>
+    ),
+    car: (
+        <>
+            <path d="M19 17h2v-4l-2-5H5L3 13v4h2" />
+            <circle cx="7" cy="17" r="2" />
+            <circle cx="17" cy="17" r="2" />
+            <path d="M5 17h8" />
+        </>
+    ),
+    mountainSnow: (
+        <>
+            <path d="m8 3 4 8 5-5 5 15H2Z" />
+            <path d="m4.14 15.08 2.86-2 2.13 2.14L11 12l1.5 2.5" />
+        </>
+    ),
+    trees: (
+        <>
+            <path d="M10 10v.2A3 3 0 0 1 8.9 16v0H5v0h-.1A3 3 0 0 1 4 10.2V10a3 3 0 0 1 3-3h0a3 3 0 0 1 3 3Z" />
+            <path d="M7 16v6" />
+            <path d="M17.6 9c.2-.4.4-.9.4-1.5a3.5 3.5 0 0 0-6.7-1.5" />
+            <path d="M15 8.5c0 2.3-1.9 4.5-3 5.5h6c-1.1-1-3-3.2-3-5.5Z" />
+            <path d="M15 14v8" />
+        </>
+    ),
+    footprints: (
+        <>
+            <path d="M4 16v-2.4a3.6 3.6 0 0 1 7.2 0V16" />
+            <path d="M4 21v-3" />
+            <path d="M13 8v-2.4a3.6 3.6 0 0 1 7.2 0V8" />
+            <path d="M13 21v-8.5" />
+            <path d="M20.2 8H13" />
+            <path d="M11.2 13.6H4" />
+        </>
+    ),
+    landmark: (
+        <>
+            <path d="M3 22h18" />
+            <path d="M6 18v-7" />
+            <path d="M10 18v-7" />
+            <path d="M14 18v-7" />
+            <path d="M18 18v-7" />
+            <path d="M2 11 12 4l10 7" />
+        </>
+    ),
+    shoppingBag: (
+        <>
+            <path d="M6 2 3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4Z" />
+            <path d="M3 6h18" />
+            <path d="M16 10a4 4 0 0 1-8 0" />
+        </>
+    ),
+    bedDouble: (
+        <>
+            <path d="M2 20v-8a2 2 0 0 1 2-2h16a2 2 0 0 1 2 2v8" />
+            <path d="M2 17h20" />
+            <path d="M6 10V6a2 2 0 0 1 2-2h8a2 2 0 0 1 2 2v4" />
+        </>
+    ),
+    key: (
+        <>
+            <circle cx="7.5" cy="15.5" r="5.5" />
+            <path d="m21 2-9.6 9.6" />
+            <path d="m15.5 7.5 3 3L22 7l-3-3" />
+        </>
+    ),
+    luggage: (
+        <>
+            <path d="M6 20a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h12a2 2 0 0 1 2 2v10a2 2 0 0 1-2 2Z" />
+            <path d="M9 6V4a2 2 0 0 1 2-2h2a2 2 0 0 1 2 2v2" />
+            <path d="M10 20v2" />
+            <path d="M14 20v2" />
+            <path d="M12 6v14" />
+        </>
+    ),
+    idCard: (
+        <>
+            <rect width="18" height="14" x="3" y="5" rx="2" />
+            <circle cx="9" cy="10" r="2" />
+            <path d="M15 9h4" />
+            <path d="M15 13h4" />
+            <path d="M6.5 16a2.5 2.5 0 0 1 5 0" />
+        </>
+    ),
+    moon: <path d="M12 3a6 6 0 0 0 9 9 9 9 0 1 1-9-9Z" />,
+    circleEllipsis: (
+        <>
+            <circle cx="12" cy="12" r="10" />
+            <path d="M17 12h.01" />
+            <path d="M12 12h.01" />
+            <path d="M7 12h.01" />
         </>
     ),
 };

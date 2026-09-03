@@ -10,7 +10,11 @@ export interface ItineraryItem {
 
     location?: string;
 
+    /** @deprecated Superseded by `activityType`. Kept for backward compatibility with older persisted data. */
     goal?: string;
+
+    /** Canonical Activity Type ID (see ActivityTypeRegistry). Missing/unknown values fall back to "other". */
+    activityType?: string;
 
     priority?: string;
 

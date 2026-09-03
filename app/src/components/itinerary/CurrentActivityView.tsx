@@ -17,6 +17,8 @@ import {
     getMealTypeForItem,
     matchesMealType,
 } from "../../utils/getMealTypeForItem";
+import { getActivityTypeDefinition } from
+    "../../domain/activity/ActivityTypeRegistry";
 import "./CurrentActivityView.css";
 
 type CurrentActivityViewProps = {
@@ -40,24 +42,29 @@ function ActivitySummary({
     item: ItineraryItem;
     compact?: boolean;
 }) {
+    const activityTypeDefinition = getActivityTypeDefinition(
+        item.activityType
+    );
+
     return (
         <div className={`activity-summary${compact ? " activity-summary--compact" : ""}`}>
             <Stack gap="sm">
                 <div className="activity-main">
                     {item.time && <span className="time-badge">{item.time}</span>}
-                    <span className="activity-icon"><Icon name="star" width={16} height={16} /></span>
+                    <span className="activity-icon">
+                        <Icon
+                            name={activityTypeDefinition.icon}
+                            width={16}
+                            height={16}
+                            aria-label={activityTypeDefinition.label}
+                        />
+                    </span>
                     <strong>{item.title}</strong>
                 </div>
 
                 {item.location && (
                     <div className="activity-detail">
                         <Icon name="mapPin" width={16} height={16} /> {item.location}
-                    </div>
-                )}
-
-                {!compact && item.goal && (
-                    <div className="activity-detail">
-                        <Icon name="target" width={16} height={16} /> Goal: {item.goal}
                     </div>
                 )}
 

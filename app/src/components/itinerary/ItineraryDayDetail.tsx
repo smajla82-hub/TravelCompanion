@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 
-import { Card, Heading, Stack, Button, Modal } from "../ui";
+import { Card, Heading, Stack, Button, Modal, Icon } from "../ui";
 import { ItineraryDayAdditionalDetails } from
     "./ItineraryDayAdditionalDetails";
 import { ItineraryItemModal } from
@@ -28,6 +28,8 @@ import {
     getMealTypeForItem,
     matchesMealType,
 } from "../../utils/getMealTypeForItem";
+import { getActivityTypeDefinition } from
+    "../../domain/activity/ActivityTypeRegistry";
 
 const NOW_REFRESH_INTERVAL_MS = 60000;
 
@@ -237,6 +239,16 @@ export function ItineraryDayDetail({
                         <div className="itinerary-activity-row" key={item.id}>
                             <div className="itinerary-activity-content">
                                 <strong>
+                                    <Icon
+                                        name={
+                                            getActivityTypeDefinition(
+                                                item.activityType
+                                            ).icon
+                                        }
+                                        width={16}
+                                        height={16}
+                                    />
+                                    {" "}
                                     {timingStatuses[item.id] === "current" &&
                                         "Now — "}
                                     {timingStatuses[item.id] === "next" &&
@@ -252,12 +264,6 @@ export function ItineraryDayDetail({
                                         {item.location}
                                     </div>
                                 )}
-
-                            {item.goal && (
-                                <div>
-                                    Goal: {item.goal}
-                                </div>
-                            )}
 
                             {item.priority && (
                                 <div>
