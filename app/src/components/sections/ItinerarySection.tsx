@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState } from "react";
 
-import { Button, Grid, Heading } from "../ui";
+import { Button, Grid, Heading, Icon } from "../ui";
 
 import {
     ItineraryCard,
@@ -46,7 +46,7 @@ export function ItinerarySection() {
     if (view === "day-detail" && selectedDay) {
         return (
             <section id="itinerary-section">
-                <div className="itinerary-heading"><Heading level={2}>Itinerary</Heading><Button variant="pill" compact type="button" onClick={() => setView("day-list")}>📅 View whole itinerary</Button></div>
+                <div className="itinerary-heading"><Heading level={2}>Itinerary</Heading><Button variant="pill" compact type="button" onClick={() => setView("day-list")}><Icon name="calendarDays" width={16} height={16} /> View whole itinerary</Button></div>
 
                 <ItineraryDayDetail
                     day={selectedDay}
@@ -76,7 +76,7 @@ export function ItinerarySection() {
     if (view === "current" && activeTrip) {
         return (
             <section id="itinerary-section">
-                <div className="itinerary-heading"><Heading level={2}>Itinerary</Heading><Button variant="pill" compact type="button" onClick={() => setView("day-list")}>📅 View whole itinerary</Button></div>
+                <div className="itinerary-heading"><Heading level={2}>Itinerary</Heading><Button variant="pill" compact type="button" onClick={() => setView("day-list")}><Icon name="calendarDays" width={16} height={16} /> View whole itinerary</Button></div>
 
                 <CurrentActivityView
                     trip={activeTrip}
@@ -94,7 +94,7 @@ export function ItinerarySection() {
 
     return (
         <section id="itinerary-section">
-            <div className="itinerary-heading"><Heading level={2}>Itinerary</Heading><Button variant="pill" compact type="button" onClick={() => setView("current")}>📅 View whole itinerary</Button></div>
+            <div className="itinerary-heading"><Heading level={2}>Itinerary</Heading><Button variant="pill" compact type="button" onClick={() => setView("current")}><Icon name="calendarDays" width={16} height={16} /> View whole itinerary</Button></div>
 
             {activeTrip && (
                 <Button

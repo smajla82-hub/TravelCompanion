@@ -38,6 +38,7 @@
 .current-trip-card .trip-header { gap: 12px; }
 .current-trip-card .trip-header h2 { min-width: 0; flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; font-size: 22px; }
 .current-trip-card p { color: rgba(255, 255, 255, .88); }
+.current-trip-card p svg { vertical-align: -3px; margin-right: 2px; }
 .current-trip-card .tc-button {
     align-self: center;
     margin-top: 12px;

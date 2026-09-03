@@ -1,4 +1,7 @@
 import { NavLink } from "react-router-dom";
+
+import { Icon } from "../components/ui";
+
 import "./MainLayout.css";
 
 type MainLayoutProps = {
@@ -11,13 +14,16 @@ export default function MainLayout({ children }: MainLayoutProps) {
             {children}
             <nav className="tc-bottom-nav">
                 <NavLink to="/" end>
-                    <span>🏠 Home</span>
+                    <Icon name="home" />
+                    <span>Home</span>
                 </NavLink>
                 <NavLink to="/trips">
-                    <span>🧳 My Trips</span>
+                    <Icon name="briefcase" />
+                    <span>My Trips</span>
                 </NavLink>
                 <NavLink to="/settings">
-                    <span>⚙️ Settings</span>
+                    <Icon name="settings" />
+                    <span>Settings</span>
                 </NavLink>
             </nav>
         </main>

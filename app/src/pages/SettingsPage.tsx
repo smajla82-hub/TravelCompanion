@@ -7,6 +7,7 @@ import {
     Card,
     Container,
     Heading,
+    Icon,
     Stack,
 } from "../components/ui";
 
@@ -138,7 +139,9 @@ export default function SettingsPage() {
                 <Heading level={1}>
                     Settings
                 </Heading>
-                <Link to="/" className="settings-back">← Back to Home</Link>
+                <Link to="/" className="settings-back">
+                    <Icon name="chevronLeft" width={16} height={16} /> Back to Home
+                </Link>
 
                 <RoadBookImport
                     key={roadBookImportKey}
