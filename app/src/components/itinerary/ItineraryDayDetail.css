@@ -14,7 +14,7 @@
     min-width: 0;
 }
 
-.itinerary-activity-content strong > .tc-icon {
+.itinerary-activity-icon {
     display: inline-flex;
     align-items: center;
     justify-content: center;
