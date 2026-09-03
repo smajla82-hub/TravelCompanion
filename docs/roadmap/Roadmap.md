@@ -17,6 +17,7 @@ The long-term goal is a modular travel platform rather than a single-purpose iti
 - **Handoff.md = continuity** — minimum context required to continue development.
 - Documentation is updated after completion of a major Feature/Milestone, not after every implementation step.
 - Git remains authoritative for exact commit history and repository state.
+- **Mobile verification rule (introduced after 8.1):** any UI/UX change must be verified on desktop first, then re-verified on a real mobile device (via the GitHub Pages deployment) before it is considered DONE. Desktop-only verification is no longer sufficient for UI/UX-affecting work.
 
 ---
 
@@ -40,53 +41,97 @@ Trip creation, validation, editing, deletion, Active Trip management and persist
 ### Milestone 4 — Data Import & Itinerary
 **6.x — DONE**
 
-Import existing RoadBook/XLSX planning data, map it into the domain model, persist it inside Trips and expose it through the Active Trip itinerary. Includes in-app itinerary editing (add/edit/delete/reorder activities) and the redesigned itinerary day view (real-time current/next activity, per-activity Food/Parking, day-level Statistics).
+Import existing RoadBook/XLSX planning data, map it into the domain model, persist it inside Trips and expose it through the Active Trip itinerary. Includes in-app itinerary editing (add/edit/delete/reorder), real-time current/next activity highlighting and per-activity Food/Parking/Statistics.
 
 Completed through **6.0.16**.
 
 ### Milestone 5 — BlizzCon Ready
 **7.x — IN PROGRESS**
 
-Turn the application into a practical companion for the BlizzCon 2026 trip using the imported real travel data. Based on the user's dashboard mockup, this milestone reworks the app's home/dashboard experience around "what's happening right now" rather than a static list of days, and introduces a dedicated Settings area.
+Turn the application into a practical companion for the BlizzCon 2026 trip using the imported real travel data. Based on the user's dashboard mockup, this milestone reworks the app's home/dashboard experience around the Active Trip.
 
 Planned sub-steps:
 
 - **7.1 — Dashboard "Current Activity" view** — **DONE**
   - The dashboard shows the Active Trip's **current/next activity** directly (based on the real device date/time), instead of requiring the user to open a day from a list.
-  - A new **"View whole Itinerary"** entry point opens the existing full day-list view (the itinerary day cards / day-detail flow built in 6.x) as a separate, explicit view rather than the default dashboard state.
-  - **"Continue Trip"** is redefined: instead of scrolling to a section, it returns the user to the Active Trip's current date/time view (e.g. after browsing a different day, editing a different Trip, or navigating elsewhere).
+  - A new **"View whole Itinerary"** entry point opens the existing full day-list view (the itinerary day cards / day-detail flow built in 6.x) as a separate, explicit view rather than the default.
+  - **"Continue Trip"** is redefined: instead of scrolling to a section, it returns the user to the Active Trip's current date/time view (e.g. after browsing a different day, editing a different Trip, etc.).
   - Edge cases: if the Active Trip's date range hasn't started yet, show a "Trip starts in X days" message; if it has already ended, show a "Trip has ended" message — both linking to "View whole Itinerary".
   - No Trip is required to be Active at all — the dashboard must also handle the no-Active-Trip state gracefully (as it does today).
 
 - **7.2 — Settings** — **DONE**
   - A new **Settings** entry (bottom of the app, replacing the current dashboard-level "Import RoadBook" entry point).
-  - Settings houses: **Import RoadBook** (moved here from its current dashboard placement), **Export data** (JSON backup of all Trips/itineraries), **Import backup** (restore from a previously exported JSON backup — distinct from the XLSX RoadBook import), and a **Dark/Light mode** toggle, with room for further app-wide preferences as they're identified.
+  - Settings houses: **Import RoadBook** (moved here from its current dashboard placement), **Export data** (JSON backup of all Trips/itineraries), **Import backup** (restore from a previously exported JSON backup, with overwrite confirmation).
   - The Settings entry point placement is intentionally minimal/provisional pending 7.5.x UI/UX Polish.
 
 ### Milestone 5.5 — UI/UX Polish
-**7.5.x — DONE (including 7.5.2 refinement)**
+**7.5.x — DONE (including 7.5.2, 7.5.3, 7.5.4 refinements)**
 
-A dedicated, holistic visual/UX redesign pass across the whole application (not just the itinerary view), once the functional feature set from 7.x is stable. Expected scope includes:
-- Consistent sizing/spacing of buttons and controls across the entire app (the per-activity action buttons introduced in 6.x are functional but oversized; a systemic sizing pass is deferred here rather than fixed piecemeal).
+A dedicated, holistic visual/UX redesign pass across the whole application (not just the itinerary view), once the functional feature set from 7.x is stable. Completed scope included:
+- Consistent sizing/spacing of buttons and controls across the entire app.
 - Correcting cosmetic/demo remnants (e.g. the hardcoded Italian flag shown on every Trip card regardless of actual country).
-- Full application of the user's dashboard/home redesign mockup (introduced in 7.x functionally) to the rest of the app's visual language.
+- Full application of the user's dashboard/home redesign mockup (`appka_navrh_look.png`) to the rest of the app's visual language, including a centralized design-token stylesheet, dedicated My Trips page, unified Current/Next Activity cards with in-card Food/Parking/Statistics actions, refined decorative gradient-card graphic, color-differentiated trip start/end messaging, and reconciled mobile-first tokens against `docs/ux/UserJourney.md`.
 - General visual consistency, responsive/mobile layout polish.
 
-This milestone intentionally follows 7.x (BlizzCon Ready) so the redesign is informed by a functionally complete, real-data-tested application rather than redesigning around a moving target.
+`docs/ux/UserJourney.md` was corrected (broken diacritics/icon glyphs) and is treated as the authoritative UX/design-token reference for all future UI work.
 
-The 7.5.2 refinement completed the centered dashboard/card layout, dedicated My Trips navigation, outlined button treatment and per-activity itinerary action stack. Per-activity-type icons remain deferred to a future feature.
+**Note:** this milestone covered the *structural/functional* redesign pass (layout unification, design tokens, spacing). The *final visual finish* (activity-type icon set, typography refinement, and other purely cosmetic polish informed by the user's own visual design work) is intentionally tracked separately as **Milestone 6.5 (9.x — Final UI Look — Polish)** below, once the user's updated visual reference material is ready.
 
 ### Milestone 6 — Mobile / Android
-**8.x — IN PROGRESS**
+**8.x — DONE (through 8.1)**
 
-Make the application practical to use in an Android/mobile environment (PWA installability, service worker, responsive/touch polish).
+Make the application practical to use in an Android/mobile environment (PWA installability, service worker, responsive/touch polish, real-device verification).
 
-- **8.1 — PWA installation and GitHub Pages deployment** — **DONE**
-  - The app generates an installable PWA manifest, branded placeholder icons and an app-shell service worker.
-  - GitHub Pages builds and deploys the app at `/TravelCompanion/` for Android-device testing.
+- **8.1 — PWA installability & GitHub Pages deployment** — **DONE**
+  - PWA manifest, placeholder branded icons, `vite-plugin-pwa`-based service worker (app-shell precaching only), mobile/touch audit (touch target sizing, viewport meta, safe-area insets, theme-color), and a GitHub Actions workflow deploying the app to GitHub Pages.
+  - **Verified end-to-end on a real Android device** (both `localhost` during development and the deployed GitHub Pages URL): installation to the home screen, standalone/full-screen launch, and a full functional pass across Trip creation, itinerary browsing, Food/Parking/Statistics modals, Dark/Light mode and Export/Import — no issues found.
 
-### Milestone 7 — Extended Travel Companion
-**9.x+ — PLANNED**
+### Milestone 6.5 — Final UI Look — Polish
+**9.x — PLANNED**
+
+A final, dedicated cosmetic-finish pass, sequenced after Mobile/Android (8.x) is functionally verified but before Shared Persistence & Accounts (10.x), since accounts/sync work should build on top of a visually finished app rather than a moving visual target. Scope depends on the user's own visual design work, expected to include:
+
+- **9.1 — Activity-type icon set** — dedicated icons per activity type (breakfast, dinner, flight departure/arrival, etc.), replacing the current generic/placeholder icon used across all activity types (deferred from 7.x/7.5.x).
+- **9.2 — Typography refinement** — final font-weight/size pass across headings, body text and labels per the user's updated visual reference.
+- **9.3 — General cosmetic polish** — any remaining spacing, color or component-level visual refinements identified once the user's updated `docs/ux/UserJourney.md`/mockup material is provided, verified per the Development Model's mobile-verification rule (desktop first, then real Android device).
+
+This milestone will be planned in detail once the user provides the corresponding visual reference material (icons, typography, any other look-and-feel updates).
+
+### Milestone 7 — Shared Persistence & Accounts
+**10.x — PLANNED**
+
+Introduce user accounts and shared/synced Trip data across multiple devices and travelers, replacing the current browser-`localStorage`-only persistence model. This is a distinct architectural shift from the mobile/UI work in 7.x/7.5.x/8.x/9.x and is intentionally sequenced as its own milestone because it introduces a server-side component, authentication and multi-device data consistency concerns that do not exist today.
+
+**Backend architecture decision:** confirmed — see `docs/decisions/ADR-003-Backend-Architecture.md`. The user will self-host a Node.js/Express API backed by SQLite, on their own Linux server with a static public IP, fronted by Caddy (reverse proxy + automatic Let's Encrypt TLS) and a free DuckDNS dynamic-DNS hostname, with the existing `pm2` process manager on that server used to run the API process.
+
+Proposed scope:
+
+- **10.1 — Architecture decision & backend foundation** — **NEXT UP**
+  - Provision the DuckDNS hostname and verify it resolves to the server's static IP.
+  - Set up Caddy as a reverse proxy in front of the new API, using the DuckDNS hostname to obtain and auto-renew a Let's Encrypt TLS certificate, so the GitHub-Pages-hosted (HTTPS) frontend can call the backend over HTTPS without mixed-content blocking.
+  - Scaffold a minimal Node.js/Express (or Fastify) API with a SQLite database (accessed via a lightweight query layer/ORM — exact choice to be confirmed when this feature is scoped in detail), managed as a `pm2` process on the user's server.
+  - Define the initial REST API surface needed to replace direct `localStorage` reads/writes: Trip CRUD, itinerary CRUD, Active Trip selection, at minimum.
+  - Record the finalized decision and its consequences in `docs/decisions/ADR-003-Backend-Architecture.md` (already created; refine further once implementation details are confirmed).
+
+- **10.2 — Authentication**
+  - Simple email + password account creation and login, issuing a session/JWT token used by the frontend for subsequent API calls. No OAuth/social login required for the initial version.
+  - Basic account-level data isolation: each user's Trips belong to their account.
+
+- **10.3 — Shared Trip access**
+  - Mechanism for a Trip to be shared/visible across multiple accounts (e.g. co-travelers), since a Trip may be jointly planned/edited by more than one person. Exact sharing model (invite-by-email, shareable link, explicit collaborator list) to be defined during this feature's planning.
+
+- **10.4 — Sync & conflict handling**
+  - Define and implement the initial (deliberately simple) conflict-resolution strategy for concurrent/offline edits to the same Trip from multiple devices — the current working assumption is a **last-write-wins** strategy based on server-recorded timestamps for the initial version, with more sophisticated per-field merging or explicit conflict-resolution UI deferred as future work.
+  - The app must continue to support fully offline usage (current `localStorage`-first behavior) with sync occurring opportunistically when connectivity is available, rather than requiring a constant server connection.
+
+- **10.5 — Data migration**
+  - One-time migration/import path for a user's existing local-only `localStorage` Trips/itineraries into their newly created account, so no existing BlizzCon planning data is lost when accounts are introduced.
+
+- **10.6 — Operations**
+  - Document the operational runbook for the self-hosted server component (the user already runs `pm2` on the server): process start/restart, SQLite backup strategy, Caddy/TLS renewal monitoring, and basic uptime expectations.
+
+### Milestone 8 — Extended Travel Companion
+**11.x+ — PLANNED**
 
 Additional travel functionality, including:
 - Budget
@@ -96,6 +141,8 @@ Additional travel functionality, including:
 - Equipment
 - Knowledge Base
 - other travel-related features
+
+Expected to build on top of the shared persistence/accounts foundation (10.x) once it exists.
 
 ---
 
@@ -164,7 +211,7 @@ All work through **6.0.16** has been implemented and functionally tested.
 
 **Current Milestone:** 8.x — Mobile / Android
 **Current completed Feature:** 8.1
-**Status:** 8.1 DONE
+**Status:** DONE through 8.1 (real-device verified). Next planned milestone: 9.x — Final UI Look — Polish, followed by 10.x — Shared Persistence & Accounts.
 
 The Trip system currently supports:
 
@@ -200,7 +247,7 @@ The RoadBook/itinerary system currently supports:
 - automatic itinerary close when switching the Active Trip
 - current and next activity view on the dashboard
 - "View whole Itinerary" day-list entry point
-- date-range edge-case messaging
+- date-range edge-case messaging (color-differentiated, centered)
 - Continue Trip reset to the current-activity view with itinerary scrolling
 - dedicated `/settings` page
 - Import RoadBook relocated from the dashboard to Settings
@@ -216,8 +263,9 @@ The RoadBook/itinerary system currently supports:
 - unified Current/Next Activity cards with in-card Food/Parking/Statistics actions
 - refined CSS decorative pattern on the Active Trip gradient card
 - centered, color-differentiated trip start/end messaging and reconciled mobile-first design tokens
-- installable PWA app shell with static-asset precaching and branded Android-ready placeholder icons
-- GitHub Pages deployment workflow at the `/TravelCompanion/` project-site path
+- installable PWA (manifest, branded placeholder icons, app-shell service worker) deployed to GitHub Pages
+- mobile/touch audit fixes: touch target sizing, viewport/theme-color meta, Android safe-area insets
+- **end-to-end verified on a real Android device** (both local dev server and the deployed GitHub Pages build) across Trip creation, itinerary browsing, Food/Parking/Statistics modals, Dark/Light mode and Export/Import — no issues found
 
 Verified test data currently imports as:
 
@@ -227,10 +275,11 @@ Verified test data currently imports as:
 
 ## 6. Next Development Order
 
-1. Continue 8.x — Android/mobile
-2. 9.x+ — Extended travel functionality
+1. 9.x — Final UI Look — Polish (activity-type icons, typography, remaining cosmetic refinement, pending the user's updated visual reference material)
+2. 10.x — Shared Persistence & Accounts (backend architecture confirmed — see `docs/decisions/ADR-003-Backend-Architecture.md`; starting with 10.1)
+3. 11.x+ — Extended travel functionality
 
-The order remains intentional: reliable state and persistence are established before expanding the real-trip experience, the application is validated against real BlizzCon data before a holistic visual redesign is undertaken, and the application should be functionally stable before final mobile packaging.
+The order remains intentional: the mobile experience was validated on a real device, the visual design is finished before committing to the larger architectural shift of introducing a server-side component, accounts and multi-device sync, and that shared-persistence foundation is in place before the future Extended Travel Companion modules are built on top of it.
 
 ---
 
@@ -238,23 +287,25 @@ The order remains intentional: reliable state and persistence are established be
 
 ### XLSX template
 
-The current importer intentionally follows the existing RoadBook workbook structure and its current column names. The user is evolving the RoadBook workbook itself (e.g. standardizing the "Typ" column in DOPORUČENÉ PODNIKY to a consistent meal-time value — Breakfast/Lunch/Dinner/CoffeeBreak — with the previous free-text subtype, e.g. Burger/Mexican/Café, moved to a new "Poznámka" column), which the importer will be updated to follow as these data-shape changes land.
-
-A future version should define a stable, English-language import template so future RoadBooks can be prepared independently of the original workbook language.
+The current importer intentionally follows the existing RoadBook workbook structure and its current column names. The user is evolving the RoadBook workbook itself (e.g. standardizing the "Typ" column). A future version should define a stable, English-language import template so future RoadBooks can be prepared independently of the original workbook language.
 
 This is **not** a blocker for the current BlizzCon RoadBook.
 
 ### UI / UX
 
-The `appka_navrh_look.png` redesign is complete, including the permanent bottom navigation placement and comprehensive component-level dark-mode coverage.
+The `appka_navrh_look.png` redesign's structural/functional pass is complete, including the permanent bottom navigation placement and comprehensive component-level dark-mode coverage. The remaining cosmetic finish (activity-type icons, typography, final polish) is tracked as Milestone 6.5 (9.x), pending the user's updated visual reference material, and is expected to be treated as binding guidance for future UI Features in the same way `docs/ux/UserJourney.md` has been.
 
 ### Backup / data safety
 
-Since the application stores all Trip/itinerary data in browser `localStorage` only, Export/Import backup (7.2) is treated as a near-term priority rather than a "nice to have" — it mitigates the real risk of data loss (browser cache clearing, device change, reinstall) before/during actual real-world trip use.
+Since the application currently stores all Trip/itinerary data in browser `localStorage` only, Export/Import backup (7.2) remains an important safety net even after Milestone 7 (Shared Persistence & Accounts) is introduced, particularly for fully-offline usage.
+
+### Shared persistence / accounts (Milestone 7 / 10.x)
+
+Backend hosting approach confirmed: a self-hosted Node.js/Express API backed by SQLite, running on the user's own Linux server with a static public IP, fronted by Caddy (reverse proxy + automatic Let's Encrypt TLS) and a free DuckDNS dynamic-DNS hostname, run as a `pm2`-managed process. See `docs/decisions/ADR-003-Backend-Architecture.md` for the full decision record.
 
 ### Extended travel platform
 
-Budget, checklist, currency, timeline, equipment, knowledge base and related modules remain later milestones.
+Budget, checklist, currency, timeline, equipment, knowledge base and related modules remain later milestones (11.x+), expected to build on the shared persistence/accounts foundation.
 
 ---
 
