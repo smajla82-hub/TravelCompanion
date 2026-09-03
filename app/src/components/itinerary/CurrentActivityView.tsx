@@ -19,6 +19,8 @@ import {
 } from "../../utils/getMealTypeForItem";
 import { getActivityTypeDefinition } from
     "../../domain/activity/ActivityTypeRegistry";
+import { normalizeActivityTitle } from
+    "../../domain/activity/normalizeActivityTitle";
 import "./CurrentActivityView.css";
 
 type CurrentActivityViewProps = {
@@ -59,7 +61,7 @@ function ActivitySummary({
                             aria-label={activityTypeDefinition.label}
                         />
                     </span>
-                    <strong>{item.title}</strong>
+                    <strong>{normalizeActivityTitle(item.title)}</strong>
                 </div>
 
                 {item.location && (

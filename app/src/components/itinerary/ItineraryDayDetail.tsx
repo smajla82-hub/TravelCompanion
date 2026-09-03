@@ -30,6 +30,8 @@ import {
 } from "../../utils/getMealTypeForItem";
 import { getActivityTypeDefinition } from
     "../../domain/activity/ActivityTypeRegistry";
+import { normalizeActivityTitle } from
+    "../../domain/activity/normalizeActivityTitle";
 
 const NOW_REFRESH_INTERVAL_MS = 60000;
 
@@ -256,7 +258,7 @@ export function ItineraryDayDetail({
                                     {item.time
                                         ? `${item.time} — `
                                         : ""}
-                                    {item.title}
+                                    {normalizeActivityTitle(item.title)}
                                 </strong>
 
                                 {item.location && (

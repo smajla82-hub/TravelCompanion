@@ -5,6 +5,12 @@ import type {
     ItineraryItem,
     Trip,
 } from "../types";
+import { normalizeActivityType } from
+    "../domain/activity/ActivityTypeRegistry";
+import { normalizeActivityTitle } from
+    "../domain/activity/normalizeActivityTitle";
+import { sortItineraryItems } from
+    "./itinerary/sortItineraryItems";
 
 const STORAGE_KEY =
     "travel-companion.trips";
@@ -166,6 +172,8 @@ export const TripService = {
             ...item,
             id: `${date}-item-${crypto.randomUUID()}`,
             date,
+            title: normalizeActivityTitle(item.title),
+            activityType: normalizeActivityType(item.activityType),
         };
 
         const newItinerary = day
@@ -174,10 +182,10 @@ export const TripService = {
                     current.date === date
                         ? {
                             ...current,
-                            items: [
+                            items: sortItineraryItems([
                                 ...current.items,
                                 newItem,
-                            ],
+                            ]),
                         }
                         : current
             )
@@ -187,7 +195,7 @@ export const TripService = {
                     id: date,
                     date,
                     title: "",
-                    items: [newItem],
+                    items: sortItineraryItems([newItem]),
                 },
             ];
 
@@ -227,12 +235,21 @@ export const TripService = {
             return;
         }
 
-        const newItems = day.items.map(
+        const newItems = sortItineraryItems(day.items.map(
             current =>
                 current.id === itemId
-                    ? { ...current, ...updates }
+                    ? {
+                        ...current,
+                        ...updates,
+                        title: updates.title === undefined
+                            ? current.title
+                            : normalizeActivityTitle(updates.title),
+                        activityType: normalizeActivityType(
+                            updates.activityType ?? current.activityType
+                        ),
+                    }
                     : current
-        );
+        ));
 
         trips[index] = {
             ...trip,
