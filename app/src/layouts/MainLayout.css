@@ -1,4 +1,4 @@
-.tc-main { min-height: 100vh; padding: 24px 16px 104px; }
+.tc-main { min-height: 100vh; padding: 24px 0 104px; }
 
 .tc-bottom-nav {
     position: fixed;
@@ -27,7 +27,7 @@
 
     background-image: var(--tc-bottom-nav-artwork);
     background-repeat: no-repeat;
-    background-position: top center;
+    background-position: center 65%;
     background-size: cover;
     opacity: 0.55;
     mix-blend-mode: multiply;

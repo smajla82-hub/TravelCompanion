@@ -3,8 +3,8 @@
  * the Trip Hero Card and the Bottom Navigation so all three read as
  * one coherent, intentional visual language (Sprint 9.7 / 9.7b).
  *
- * The travel motif is the supplied WEBP artwork (top-background.webp,
- * hero-background.webp, bottom-nav-background.webp), layered on top of
+ * The travel motif is the supplied WEBP artwork (top-background800x800.webp,
+ * hero-background1200x600.webp, bottom-nav-background1200x300.webp), layered on top of
  * the branded gradient at low opacity via `mix-blend-mode: multiply`.
  * That blend mode makes the artwork's white background disappear into
  * whatever it sits on top of, leaving only the subtle silhouette lines

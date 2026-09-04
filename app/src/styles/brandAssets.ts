@@ -9,6 +9,6 @@
 
 const BASE_URL = import.meta.env.BASE_URL;
 
-export const TOP_BACKGROUND_URL = `${BASE_URL}assets/top-background.webp`;
-export const HERO_BACKGROUND_URL = `${BASE_URL}assets/hero-background.webp`;
-export const BOTTOM_NAV_BACKGROUND_URL = `${BASE_URL}assets/bottom-nav-background.webp`;
+export const TOP_BACKGROUND_URL = `${BASE_URL}assets/top-background800x800.webp`;
+export const HERO_BACKGROUND_URL = `${BASE_URL}assets/hero-background1200x600.webp`;
+export const BOTTOM_NAV_BACKGROUND_URL = `${BASE_URL}assets/bottom-nav-background1200x300.webp`;

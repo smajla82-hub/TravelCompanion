@@ -23,24 +23,29 @@
     );
 }
 
+/*
+ * Full-bleed artwork watermark: spans the whole card (rather than a
+ * cropped bottom strip) so there is no hard rectangular edge reading as
+ * a stray top stripe/border, and the wide 1200x600 artwork is shown
+ * without unnecessary cropping.
+ */
 .current-trip-card::after {
     content: "";
     position: absolute;
-    inset: auto 0 0 0;
-    height: 96px;
+    inset: 0;
 
     background-image: var(--tc-hero-artwork);
     background-repeat: no-repeat;
-    background-position: bottom right;
+    background-position: center;
     background-size: cover;
 
-    opacity: 0.55;
+    opacity: 0.35;
     mix-blend-mode: multiply;
     pointer-events: none;
 }
 
 [data-theme="dark"] .current-trip-card::after {
-    opacity: 0.7;
+    opacity: 0.5;
 }
 
 .current-trip-card .tc-stack {
@@ -118,6 +123,8 @@
 
     font-size: 12px;
     font-weight: 600;
+
+    animation: tc-status-breathe 5s ease-in-out infinite;
 }
 
 .status-dot {
@@ -126,16 +133,29 @@
     border-radius: 50%;
     background: #ffffff;
 
-    animation: tc-status-breathe 5s ease-in-out infinite;
+    animation: tc-status-dot-breathe 5s ease-in-out infinite;
 }
 
 /*
- * Subtle "breathing" pulse: the dot rests for most of the 5s cycle
+ * Subtle "breathing" pulse: the badge rests for most of the 5s cycle
  * (0%-80%) and only animates through the 80%-100% window, so the
- * visible motion lasts roughly 1s per cycle and reads as a slow
- * breath rather than a rapid blink.
+ * visible motion lasts roughly 1s per cycle and reads as a slow breath
+ * rather than a rapid blink. The accent shifts toward orange mid-breath
+ * so the pulse stays distinguishable from the badge's resting green.
  */
 @keyframes tc-status-breathe {
+    0%, 80%, 100% {
+        background: var(--color-success);
+        box-shadow: 0 0 0 color-mix(in srgb, var(--color-orange) 0%, transparent);
+    }
+
+    90% {
+        background: color-mix(in srgb, var(--color-orange) 55%, var(--color-success));
+        box-shadow: 0 0 10px color-mix(in srgb, var(--color-orange) 45%, transparent);
+    }
+}
+
+@keyframes tc-status-dot-breathe {
     0%, 80%, 100% {
         opacity: 1;
         transform: scale(1);
@@ -148,6 +168,7 @@
 }
 
 @media (prefers-reduced-motion: reduce) {
+    .trip-status,
     .status-dot {
         animation: none;
     }
