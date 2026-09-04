@@ -1,6 +1,33 @@
-.itinerary-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 24px 0 12px; }
-.itinerary-heading h2 { font-size: 18px; }
+.itinerary-heading {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-wrap: wrap;
+    gap: 16px;
+
+    margin: var(--space-lg) 0 var(--space-md);
+    padding: 14px 16px;
+
+    background: color-mix(in srgb, var(--color-primary) 6%, var(--color-surface));
+    border: 1px solid color-mix(in srgb, var(--color-purple) 16%, var(--color-border));
+    border-radius: var(--radius-lg);
+}
+
+.itinerary-heading h2 {
+    font-size: 18px;
+    margin: 0;
+}
+
 .itinerary-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
+
 @media (max-width: 480px) {
-    .itinerary-heading { align-items: flex-start; flex-wrap: wrap; gap: 8px; }
+    .itinerary-heading {
+        align-items: stretch;
+        flex-direction: column;
+        gap: 10px;
+    }
+
+    .itinerary-heading .tc-button {
+        align-self: flex-start;
+    }
 }

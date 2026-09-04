@@ -6,16 +6,24 @@ import type { ItineraryDay } from "../../types";
 
 type Props = {
     day: ItineraryDay;
+    isActive?: boolean;
     onClick?: () => void;
 };
 
 export function ItineraryCard({
     day,
+    isActive = false,
     onClick,
 }: Props) {
     return (
         <div onClick={onClick}>
-            <Card>
+            <Card
+                className={
+                    isActive
+                        ? "itinerary-card--active"
+                        : undefined
+                }
+            >
                 <Stack gap="sm">
                     <h3>
                         {day.date} — {day.title}
