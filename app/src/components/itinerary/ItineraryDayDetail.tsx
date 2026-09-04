@@ -146,6 +146,10 @@ export function ItineraryDayDetail({
         ? getRemainingItineraryItems(day, day.items, now)
         : day.items;
 
+    const itemIndexById = new Map(
+        day.items.map((item, index) => [item.id, index])
+    );
+
     const allActivitiesFinished =
         showRemainingOnly &&
         day.items.length > 0 &&
@@ -255,7 +259,7 @@ export function ItineraryDayDetail({
                 ) : (
                     <Stack gap="md">
                         {visibleItems.map(item => {
-                            const index = day.items.indexOf(item);
+                            const index = itemIndexById.get(item.id) ?? 0;
 
                             return (
                                 <div className="itinerary-activity-row" key={item.id}>

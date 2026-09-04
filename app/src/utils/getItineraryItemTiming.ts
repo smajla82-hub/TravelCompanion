@@ -138,7 +138,9 @@ export function getItineraryItemTimingStatuses(
  * There is no separate duration/end-time model: the timing statuses
  * always keep exactly one activity as "current" for the rest of the
  * day, even long after it started. Once nothing is left scheduled
- * after it (no "next"/"upcoming" activity), the day is effectively
+ * after it (no "next"/"upcoming" activity — "next" is the single
+ * activity immediately following the current one, "upcoming" covers
+ * any further-out activities after that), the day is effectively
  * over, so that trailing "current" activity is treated as finished
  * too — this is what allows the "all activities finished" empty state
  * to ever be reached.
