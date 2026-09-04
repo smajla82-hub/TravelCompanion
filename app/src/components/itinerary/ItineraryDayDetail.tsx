@@ -267,7 +267,10 @@ export function ItineraryDayDetail({
                 ) : (
                     <Stack gap="md">
                         {visibleItems.map(item => {
-                            const index = itemIndexById.get(item.id) ?? 0;
+                            // `visibleItems` is always a subset of
+                            // `day.items`, so the id is guaranteed to be
+                            // present here.
+                            const index = itemIndexById.get(item.id)!;
 
                             return (
                                 <div className="itinerary-activity-row" key={item.id}>

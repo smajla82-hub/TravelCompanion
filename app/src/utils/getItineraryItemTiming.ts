@@ -167,6 +167,11 @@ export function getRemainingItineraryItems<
         status => status === "next" || status === "upcoming"
     );
 
+    // `hasUpcomingActivity` is computed once and reused below for
+    // whichever item is "current". This relies on
+    // `getItineraryItemTimingStatuses` never assigning "current" to
+    // more than one item per day.
+
     return items.filter(item => {
         const status = statuses[item.id];
 
