@@ -4,3 +4,14 @@
     width: 100%;
     align-items: start;
 }
+
+/*
+ * Grid items get an automatic minimum width based on their content
+ * (min-content) unless overridden. Long, unbreakable text inside a
+ * card can therefore force a grid track — and the whole grid — wider
+ * than its intended width. Resetting min-width to 0 lets the track's
+ * own `minmax(0, 1fr)` sizing take effect instead.
+ */
+.tc-grid > * {
+    min-width: 0;
+}

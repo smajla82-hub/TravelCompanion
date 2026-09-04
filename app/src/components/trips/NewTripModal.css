@@ -31,3 +31,21 @@
     border-color:var(--color-primary);
 
 }
+
+.tc-trip-form .tc-char-counter{
+
+    align-self:flex-end;
+
+    font-size:12px;
+
+    font-weight:400;
+
+    color:var(--color-text-secondary);
+
+}
+
+.tc-trip-form .tc-char-counter--exceeded{
+
+    color:var(--color-danger);
+
+}

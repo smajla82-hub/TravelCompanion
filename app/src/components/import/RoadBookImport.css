@@ -1,0 +1,12 @@
+.tc-import-warnings {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    padding-left: 20px;
+    list-style: disc;
+}
+
+.tc-import-warnings li {
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}

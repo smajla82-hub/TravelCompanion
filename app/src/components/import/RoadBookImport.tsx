@@ -5,9 +5,14 @@ import {
     Card,
     Stack,
 } from "../ui";
+import "./RoadBookImport.css";
 
-import { importXlsxRoadBook } from
-    "../../services/import/XlsxRoadBookImporter";
+import {
+    importXlsxRoadBook,
+    formatImportWarningLine,
+    getImportWarningsSummary,
+    type ImportWarning,
+} from "../../services/import/XlsxRoadBookImporter";
 
 import { TripService } from
     "../../services/TripService";
@@ -29,6 +34,9 @@ export function RoadBookImport() {
 
     const [days, setDays] =
         useState<ItineraryDay[]>([]);
+
+    const [warnings, setWarnings] =
+        useState<ImportWarning[]>([]);
 
     const [error, setError] =
         useState("");
@@ -52,13 +60,15 @@ export function RoadBookImport() {
         setError("");
         setSaved(false);
         setDays([]);
+        setWarnings([]);
         setFileName(file.name);
 
         try {
             const imported =
                 await importXlsxRoadBook(file);
 
-            setDays(imported);
+            setDays(imported.days);
+            setWarnings(imported.warnings);
         } catch {
             setError(
                 "Unable to import the selected XLSX file."
@@ -90,6 +100,7 @@ export function RoadBookImport() {
 
     function handleClear() {
         setDays([]);
+        setWarnings([]);
         setFileName("");
         setError("");
         setSaved(false);
@@ -166,6 +177,28 @@ export function RoadBookImport() {
                     <p>
                         {error}
                     </p>
+                )}
+
+                {warnings.length > 0 && (
+                    <Card variant="outlined">
+                        <Stack gap="sm">
+                            <strong>
+                                Import completed with warnings.
+                            </strong>
+
+                            <p>
+                                {getImportWarningsSummary(warnings.length)}
+                            </p>
+
+                            <ul className="tc-import-warnings">
+                                {warnings.map((warning, index) => (
+                                    <li key={index}>
+                                        {formatImportWarningLine(warning)}
+                                    </li>
+                                ))}
+                            </ul>
+                        </Stack>
+                    </Card>
                 )}
 
                 {saved && (

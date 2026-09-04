@@ -5,6 +5,12 @@ import "./NewTripModal.css";
 
 import type { Trip } from "../../types";
 import { TripService } from "../../services/TripService";
+import {
+    counterClassName,
+    exceedsTextLimit,
+    formatCharacterCounter,
+    TEXT_LIMIT_LABELS,
+} from "../../domain/validation/textLimits";
 
 type NewTripModalProps = {
     open: boolean;
@@ -51,6 +57,13 @@ export function NewTripModal({
 
         if (!destination || !country) {
             alert("Destination and country are required.");
+            return;
+        }
+
+        if (exceedsTextLimit(destination, "tripName")) {
+            alert(
+                `${TEXT_LIMIT_LABELS.tripName} exceeds the maximum allowed length (${formatCharacterCounter(destination, "tripName")}).`
+            );
             return;
         }
 
@@ -119,6 +132,10 @@ export function NewTripModal({
                         }
                         placeholder="Lago di Garda"
                     />
+
+                    <span className={counterClassName(destination, "tripName")}>
+                        {formatCharacterCounter(destination, "tripName")}
+                    </span>
                 </label>
 
                 <label>

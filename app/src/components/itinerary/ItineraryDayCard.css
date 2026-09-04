@@ -1,0 +1,10 @@
+.itinerary-day-card__button {
+    width: 100%;
+    min-width: 0;
+}
+
+.itinerary-day-card__button h3 {
+    min-width: 0;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
