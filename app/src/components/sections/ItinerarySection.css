@@ -1,5 +1,6 @@
 .itinerary-heading { display: flex; align-items: center; justify-content: space-between; gap: 16px; margin: 24px 0 12px; }
 .itinerary-heading h2 { font-size: 18px; }
+.itinerary-controls { display: flex; flex-wrap: wrap; gap: 8px; margin-bottom: 16px; }
 @media (max-width: 480px) {
     .itinerary-heading { align-items: flex-start; flex-wrap: wrap; gap: 8px; }
 }

@@ -9,8 +9,6 @@ import {
   ACTIVITY_TYPE_IDS,
   normalizeActivityType,
 } from "../../domain/activity/ActivityTypeRegistry";
-import { normalizeActivityTitle } from
-  "../../domain/activity/normalizeActivityTitle";
 
 const PRIORITY_OPTIONS = [
   "MUST",
@@ -66,7 +64,7 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
 
     onSubmit({
       time,
-      title: normalizeActivityTitle(title),
+      title,
       description,
       location,
       goal: item?.goal,
