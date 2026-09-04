@@ -12,30 +12,35 @@
     background: var(--color-surface);
     border: 1px solid color-mix(in srgb, var(--color-purple) 18%, var(--color-border));
     border-radius: var(--radius-xl);
-    box-shadow: 0 16px 32px color-mix(in srgb, var(--color-text) 22%, transparent);
+    box-shadow: 0 16px 36px color-mix(in srgb, var(--color-text) 20%, transparent);
 }
 
-.current-trip-card::before {
-    content: "";
-    position: absolute;
-    inset: 0 0 auto 0;
-    height: 6px;
-    background: var(--tc-brand-gradient);
+[data-theme="dark"] .current-trip-card {
+    background: linear-gradient(
+        160deg,
+        color-mix(in srgb, var(--color-purple) 14%, var(--color-surface)) 0%,
+        var(--color-surface) 60%
+    );
 }
 
 .current-trip-card::after {
     content: "";
     position: absolute;
-    right: -8px;
-    bottom: -2px;
-    width: 230px;
-    height: 88px;
-    color: var(--color-purple);
-    background-image: var(--tc-brand-skyline-soft);
+    inset: auto 0 0 0;
+    height: 96px;
+
+    background-image: var(--tc-hero-artwork);
     background-repeat: no-repeat;
     background-position: bottom right;
-    background-size: 230px 88px;
+    background-size: cover;
+
+    opacity: 0.55;
+    mix-blend-mode: multiply;
     pointer-events: none;
+}
+
+[data-theme="dark"] .current-trip-card::after {
+    opacity: 0.7;
 }
 
 .current-trip-card .tc-stack {
@@ -53,14 +58,41 @@
 
 .current-trip-card .trip-header { gap: 12px; }
 .current-trip-card .trip-header h2 {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+
     min-width: 0;
     flex: 1;
-    white-space: nowrap;
     overflow: hidden;
-    text-overflow: ellipsis;
+
     font-size: 20px;
     color: var(--color-text);
 }
+
+.current-trip-card .trip-header h2 span:last-child {
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.trip-flag {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    flex-shrink: 0;
+
+    width: 30px;
+    height: 30px;
+    border-radius: 50%;
+
+    background: color-mix(in srgb, var(--color-purple) 12%, var(--color-surface));
+    box-shadow: inset 0 0 0 1px color-mix(in srgb, var(--color-purple) 20%, var(--color-border));
+
+    font-size: 16px;
+    line-height: 1;
+}
+
 .current-trip-card p { color: var(--color-text-secondary); }
 .current-trip-card p svg { vertical-align: -3px; margin-right: 2px; }
 .current-trip-card .tc-button {
@@ -75,24 +107,44 @@
 .trip-status {
     display: flex;
     align-items: center;
-    gap: 8px;
+    gap: 5px;
 
     flex-shrink: 0;
-    padding: 8px 16px;
+    padding: 4px 10px;
     border-radius: var(--tc-radius-pill);
 
     background: var(--color-success);
     color: white;
 
-    font-size: 14px;
+    font-size: 12px;
     font-weight: 600;
 }
 
 .status-dot {
-    width: 8px;
-    height: 8px;
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
     background: #ffffff;
+
+    animation: tc-status-breathe 5s ease-in-out infinite;
+}
+
+@keyframes tc-status-breathe {
+    0%, 80%, 100% {
+        opacity: 1;
+        transform: scale(1);
+    }
+
+    90% {
+        opacity: 0.55;
+        transform: scale(1.35);
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .status-dot {
+        animation: none;
+    }
 }
 
 @media (max-width: 480px) {
