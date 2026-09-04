@@ -3,6 +3,7 @@ export * from "./ItineraryDayDetail";
 export * from "./ActivityActionStack";
 export * from "./ItineraryDayAdditionalDetails";
 export * from "./ItineraryDayCard";
+export * from "./ItineraryDayModal";
 export * from "./ItineraryItemModal";
 export * from "./ItineraryItemActionsModal";
 export * from "./RecommendedVenueList";

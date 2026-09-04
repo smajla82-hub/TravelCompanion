@@ -43,7 +43,7 @@ function buildRows(
 }
 
 describe("importXlsxRoadBook", () => {
-    it("reads Activity Type directly from the corresponding column", async () => {
+    it("reads Activity Type directly from the corresponding column without changing the title", async () => {
         const file = buildWorkbookFile(
             buildRows([
                 [
@@ -63,7 +63,7 @@ describe("importXlsxRoadBook", () => {
 
         const item = days[0].items[0];
 
-        expect(item.title).toBe("Main Beach");
+        expect(item.title).toBe("🏖️ Main Beach");
         expect(item.activityType).toBe("nature");
         expect(item.priority).toBe("MUST");
     });
@@ -132,5 +132,23 @@ describe("importXlsxRoadBook", () => {
         const days = await importXlsxRoadBook(file);
 
         expect(days[0].items[0].goal).toBeUndefined();
+    });
+
+    it("preserves user-entered emojis in activity titles", async () => {
+        const file = buildWorkbookFile(
+            buildRows([
+                ["7:00", "🍳 Snídaně", "", "food", "FOOD"],
+                ["9:00", "✈️ Odlet z Prahy", "", "flight", "MUST"],
+                ["11:00", "🚗 Převzetí auta", "", "car_rental", "MUST"],
+            ])
+        );
+
+        const days = await importXlsxRoadBook(file);
+
+        expect(days[0].items.map(item => item.title)).toEqual([
+            "🍳 Snídaně",
+            "✈️ Odlet z Prahy",
+            "🚗 Převzetí auta",
+        ]);
     });
 });

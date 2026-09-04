@@ -1,6 +1,6 @@
-import { useEffect, useState } from "react";
+import { useState } from "react";
 
-import { Card, Heading, Stack, Button, Modal, Icon } from "../ui";
+import { Card, Heading, Stack, Button, Modal } from "../ui";
 import { ItineraryDayAdditionalDetails } from
     "./ItineraryDayAdditionalDetails";
 import { ItineraryItemModal } from
@@ -13,6 +13,8 @@ import { DayStatsList } from
     "./DayStatsList";
 import { ActivityActionStack } from
     "./ActivityActionStack";
+import { ActivitySummary } from
+    "./ActivitySummary";
 import "./ItineraryDayDetail.css";
 
 import type {
@@ -22,18 +24,10 @@ import type {
 import type { ItineraryItemFields } from
     "./ItineraryItemForm";
 import { TripService } from "../../services/TripService";
-import { getItineraryItemTimingStatuses } from
-    "../../utils/getItineraryItemTiming";
 import {
     getMealTypeForItem,
     matchesMealType,
 } from "../../utils/getMealTypeForItem";
-import { getActivityTypeDefinition } from
-    "../../domain/activity/ActivityTypeRegistry";
-import { normalizeActivityTitle } from
-    "../../domain/activity/normalizeActivityTitle";
-
-const NOW_REFRESH_INTERVAL_MS = 60000;
 
 type ItineraryDayDetailProps = {
     day: ItineraryDay;
@@ -65,27 +59,6 @@ export function ItineraryDayDetail({
 
     const [parkingItemId, setParkingItemId] =
         useState<string | null>(null);
-
-    const [now, setNow] = useState(
-        () => new Date()
-    );
-
-    useEffect(() => {
-        const intervalId = setInterval(() => {
-            setNow(new Date());
-        }, NOW_REFRESH_INTERVAL_MS);
-
-        return () => {
-            clearInterval(intervalId);
-        };
-    }, []);
-
-    const timingStatuses =
-        getItineraryItemTimingStatuses(
-            day,
-            day.items,
-            now
-        );
 
     const parkingItem =
         parkingItemId
@@ -240,75 +213,7 @@ export function ItineraryDayDetail({
                     {day.items.map((item, index) => (
                         <div className="itinerary-activity-row" key={item.id}>
                             <div className="itinerary-activity-content">
-                                <strong>
-                                    <span className="itinerary-activity-icon">
-                                        <Icon
-                                            name={
-                                                getActivityTypeDefinition(
-                                                    item.activityType
-                                                ).icon
-                                            }
-                                            width={16}
-                                            height={16}
-                                        />
-                                    </span>
-                                    {" "}
-                                    {timingStatuses[item.id] === "current" &&
-                                        "Now — "}
-                                    {timingStatuses[item.id] === "next" &&
-                                        "Next — "}
-                                    {item.time
-                                        ? `${item.time} — `
-                                        : ""}
-                                    {normalizeActivityTitle(item.title)}
-                                </strong>
-
-                                {item.location && (
-                                    <div>
-                                        {item.location}
-                                    </div>
-                                )}
-
-                            {item.priority && (
-                                <div>
-                                    Priority: {item.priority}
-                                </div>
-                            )}
-
-                            {item.parking && (
-                                <div>
-                                    Parking: {item.parking}
-                                </div>
-                            )}
-
-                            {item.smartChip && (
-                                <div>
-                                    {item.mapLink ? (
-                                        <a
-                                            href={item.mapLink}
-                                            target="_blank"
-                                            rel="noreferrer"
-                                        >
-                                            {item.smartChip}
-                                        </a>
-                                    ) : (
-                                        item.smartChip
-                                    )}
-                                </div>
-                            )}
-
-                            {item.price !== undefined &&
-                                item.price !== null && (
-                                    <div>
-                                        Price: {item.price}
-                                    </div>
-                                )}
-
-                                {item.note && (
-                                    <div>
-                                        Note: {item.note}
-                                    </div>
-                                )}
+                                <ActivitySummary item={item} />
 
                                 <Button
                                     type="button"

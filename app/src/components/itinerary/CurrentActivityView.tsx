@@ -1,14 +1,14 @@
 import { useEffect, useState } from "react";
 
-import { Button, Card, Heading, Icon, Modal, Stack } from "../ui";
+import { Button, Card, Heading, Icon, Modal } from "../ui";
 
 import { ActivityActionStack } from "./ActivityActionStack";
+import { ActivitySummary } from "./ActivitySummary";
 import { RecommendedVenueList } from "./RecommendedVenueList";
 import { DayStatsList } from "./DayStatsList";
 
 import type {
     ItineraryDay,
-    ItineraryItem,
     Trip,
 } from "../../types";
 import { getItineraryItemTimingStatuses } from
@@ -17,10 +17,6 @@ import {
     getMealTypeForItem,
     matchesMealType,
 } from "../../utils/getMealTypeForItem";
-import { getActivityTypeDefinition } from
-    "../../domain/activity/ActivityTypeRegistry";
-import { normalizeActivityTitle } from
-    "../../domain/activity/normalizeActivityTitle";
 import "./CurrentActivityView.css";
 
 type CurrentActivityViewProps = {
@@ -35,83 +31,6 @@ function formatLocalDate(date: Date): string {
     const day = String(date.getDate()).padStart(2, "0");
 
     return `${year}-${month}-${day}`;
-}
-
-function ActivitySummary({
-    item,
-    compact = false,
-}: {
-    item: ItineraryItem;
-    compact?: boolean;
-}) {
-    const activityTypeDefinition = getActivityTypeDefinition(
-        item.activityType
-    );
-
-    return (
-        <div className={`activity-summary${compact ? " activity-summary--compact" : ""}`}>
-            <Stack gap="sm">
-                <div className="activity-main">
-                    {item.time && <span className="time-badge">{item.time}</span>}
-                    <span className="activity-icon">
-                        <Icon
-                            name={activityTypeDefinition.icon}
-                            width={16}
-                            height={16}
-                            aria-label={activityTypeDefinition.label}
-                        />
-                    </span>
-                    <strong>{normalizeActivityTitle(item.title)}</strong>
-                </div>
-
-                {item.location && (
-                    <div className="activity-detail">
-                        <Icon name="mapPin" width={16} height={16} /> {item.location}
-                    </div>
-                )}
-
-                {!compact && item.priority && (
-                    <div className="activity-detail">
-                        <Icon name="zap" width={16} height={16} /> Priority: {item.priority}
-                    </div>
-                )}
-
-                {!compact && item.parking && (
-                    <div className="activity-detail">
-                        <Icon name="squareParking" width={16} height={16} /> Parking: {item.parking}
-                    </div>
-                )}
-
-                {!compact && item.smartChip && (
-                    <div className="activity-detail">
-                        {item.mapLink ? (
-                            <a
-                                href={item.mapLink}
-                                target="_blank"
-                                rel="noreferrer"
-                            >
-                                {item.smartChip}
-                            </a>
-                        ) : (
-                            item.smartChip
-                        )}
-                    </div>
-                )}
-
-                {!compact && item.price !== undefined && (
-                    <div className="activity-detail">
-                        <Icon name="dollarSign" width={16} height={16} /> Price: {item.price}
-                    </div>
-                )}
-
-                {!compact && item.note && (
-                    <div className="activity-detail">
-                        <Icon name="notebookPen" width={16} height={16} /> Note: {item.note}
-                    </div>
-                )}
-            </Stack>
-        </div>
-    );
 }
 
 export function CurrentActivityView({
@@ -271,10 +190,7 @@ export function CurrentActivityView({
                     <h3 className="activity-label">Next Activity</h3>
                     <Card className="current-activity-card current-activity-card--compact">
                         <div className="current-activity-row current-activity-row--compact">
-                            <ActivitySummary
-                                item={nextItem}
-                                compact
-                            />
+                            <ActivitySummary item={nextItem} />
 
                             <ActivityActionStack
                                 showFood={nextItem.priority === "FOOD"}

@@ -7,8 +7,8 @@ import type {
 } from "../types";
 import { normalizeActivityType } from
     "../domain/activity/ActivityTypeRegistry";
-import { normalizeActivityTitle } from
-    "../domain/activity/normalizeActivityTitle";
+import { sortItineraryDays } from
+    "./itinerary/sortItineraryDays";
 import { sortItineraryItems } from
     "./itinerary/sortItineraryItems";
 
@@ -147,6 +147,48 @@ export const TripService = {
         persistTrips();
     },
 
+    addItineraryDay(
+        tripId: string,
+        day: Pick<ItineraryDay, "date" | "title">
+    ): ItineraryDay | undefined {
+        const index = trips.findIndex(
+            trip => trip.id === tripId
+        );
+
+        if (index === -1) {
+            return undefined;
+        }
+
+        const trip = trips[index];
+        const itinerary = trip.itinerary ?? [];
+        const existingDay = itinerary.find(
+            item => item.date === day.date
+        );
+
+        if (existingDay) {
+            return existingDay;
+        }
+
+        const newDay: ItineraryDay = {
+            id: `day-${day.date}`,
+            date: day.date,
+            title: day.title,
+            items: [],
+        };
+
+        trips[index] = {
+            ...trip,
+            itinerary: sortItineraryDays([
+                ...itinerary,
+                newDay,
+            ]),
+        };
+
+        persistTrips();
+
+        return newDay;
+    },
+
     addItineraryItem(
         tripId: string,
         date: string,
@@ -172,7 +214,6 @@ export const TripService = {
             ...item,
             id: `${date}-item-${crypto.randomUUID()}`,
             date,
-            title: normalizeActivityTitle(item.title),
             activityType: normalizeActivityType(item.activityType),
         };
 
@@ -192,7 +233,7 @@ export const TripService = {
             : [
                 ...itinerary,
                 {
-                    id: date,
+                    id: `day-${date}`,
                     date,
                     title: "",
                     items: sortItineraryItems([newItem]),
@@ -201,7 +242,7 @@ export const TripService = {
 
         trips[index] = {
             ...trip,
-            itinerary: newItinerary,
+            itinerary: sortItineraryDays(newItinerary),
         };
 
         persistTrips();
@@ -241,9 +282,6 @@ export const TripService = {
                     ? {
                         ...current,
                         ...updates,
-                        title: updates.title === undefined
-                            ? current.title
-                            : normalizeActivityTitle(updates.title),
                         activityType: normalizeActivityType(
                             updates.activityType ?? current.activityType
                         ),

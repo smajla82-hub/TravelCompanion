@@ -9,8 +9,6 @@ import type {
 } from "../../types";
 import { normalizeActivityType } from
     "../../domain/activity/ActivityTypeRegistry";
-import { normalizeActivityTitle } from
-    "../../domain/activity/normalizeActivityTitle";
 
 type CellValue = string | number | boolean | Date | null | undefined;
 
@@ -333,7 +331,7 @@ function createItem(
 
         time: get("time"),
 
-        title: normalizeActivityTitle(get("activity")),
+        title: get("activity"),
 
         location: get("location"),
 
