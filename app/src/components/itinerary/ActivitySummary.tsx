@@ -68,6 +68,7 @@ export function ActivitySummary({
     const activityTypeDefinition = getActivityTypeDefinition(
         item.activityType
     );
+    const priorityColorVar = getPriorityColorVar(item.priority);
 
     return (
         <div className="activity-summary">
@@ -104,12 +105,10 @@ export function ActivitySummary({
                 {item.priority && (
                     <ActivityDetail
                         icon="zap"
-                        colorVar={getPriorityColorVar(item.priority)}
+                        colorVar={priorityColorVar}
                     >
                         Priority:{" "}
-                        <ActivityDetailValue
-                            colorVar={getPriorityColorVar(item.priority)}
-                        >
+                        <ActivityDetailValue colorVar={priorityColorVar}>
                             {item.priority}
                         </ActivityDetailValue>
                     </ActivityDetail>
