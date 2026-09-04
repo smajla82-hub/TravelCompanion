@@ -1,26 +1,44 @@
 /*
  * Shared "app shell" branding tokens used by the top branded header,
  * the Trip Hero Card and the Bottom Navigation so all three read as
- * one coherent, intentional visual language (Sprint 9.7).
+ * one coherent, intentional visual language (Sprint 9.7 / 9.7b).
  *
- * The travel motif is a CSS/SVG data-URI mountain skyline (no raster
- * image dependency) that gets tiled at low opacity on top of the
- * branded gradient.
+ * The travel motif is the supplied WEBP artwork (top-background.webp,
+ * hero-background.webp, bottom-nav-background.webp), layered on top of
+ * the branded gradient at low opacity via `mix-blend-mode: multiply`.
+ * That blend mode makes the artwork's white background disappear into
+ * whatever it sits on top of, leaving only the subtle silhouette lines
+ * visible, so the same asset reads correctly on both the gradient and
+ * the light/dark Hero Card surfaces without any extra image variants.
  */
 
 :root {
-    --tc-brand-gradient: linear-gradient(160deg, var(--color-purple) 0%, var(--color-primary) 100%);
+    /* Deep indigo anchor used to darken the top of the header/hero gradient. */
+    --tc-brand-deep: #1e1b4b;
+
+    /* Darker blue/purple at the top, gradually lighter toward the bottom. */
+    --tc-brand-gradient: linear-gradient(
+        180deg,
+        color-mix(in srgb, var(--color-purple) 60%, var(--tc-brand-deep)) 0%,
+        var(--color-purple) 45%,
+        var(--color-primary) 100%
+    );
     --tc-brand-gradient-soft: linear-gradient(180deg, color-mix(in srgb, var(--color-purple) 22%, transparent) 0%, transparent 100%);
 
-    --tc-brand-skyline: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='90' viewBox='0 0 480 90'%3E%3Cpath d='M0 90 L45 42 L78 66 L110 18 L150 58 L185 28 L220 62 L255 22 L292 60 L330 30 L365 64 L400 20 L440 55 L480 90 Z' fill='white' fill-opacity='0.12'/%3E%3Ccircle cx='402' cy='18' r='10' fill='white' fill-opacity='0.12'/%3E%3C/svg%3E");
-    --tc-brand-skyline-soft: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='70' viewBox='0 0 480 70'%3E%3Cpath d='M0 70 L50 34 L90 52 L130 12 L175 46 L215 20 L255 50 L300 16 L340 48 L385 22 L425 50 L480 70 Z' fill='currentColor' fill-opacity='0.08'/%3E%3C/svg%3E");
+    --tc-brand-artwork-opacity: 0.35;
 }
 
 [data-theme="dark"] {
+    /* A near-black indigo (not pure black) so the gradient stays deep blue/purple. */
+    --tc-brand-deep: #0b0a24;
+
     --tc-brand-gradient: linear-gradient(
-        160deg,
-        color-mix(in srgb, var(--color-purple) 55%, var(--color-background)) 0%,
+        180deg,
+        color-mix(in srgb, var(--color-purple) 70%, var(--tc-brand-deep)) 0%,
+        color-mix(in srgb, var(--color-purple) 55%, var(--color-background)) 45%,
         color-mix(in srgb, var(--color-primary-dark) 65%, var(--color-background)) 100%
     );
     --tc-brand-gradient-soft: linear-gradient(180deg, color-mix(in srgb, var(--color-purple) 30%, transparent) 0%, transparent 100%);
+
+    --tc-brand-artwork-opacity: 0.45;
 }

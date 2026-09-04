@@ -1,4 +1,5 @@
 import { useState } from "react";
+import type { CSSProperties } from "react";
 
 import {
     Container,
@@ -10,7 +11,13 @@ import {
     ItinerarySection,
 } from "../components/sections";
 
+import { TOP_BACKGROUND_URL } from "../styles/brandAssets";
+
 import "./DashboardPage.css";
+
+const brandHeaderStyle = {
+    "--tc-top-artwork": `url("${TOP_BACKGROUND_URL}")`,
+} as CSSProperties;
 
 export default function DashboardPage() {
 
@@ -29,7 +36,7 @@ export default function DashboardPage() {
     return (
         <Container>
 
-            <header className="tc-brand-header">
+            <header className="tc-brand-header" style={brandHeaderStyle}>
                 <Heading level={1}>Travel Companion</Heading>
 
                 <CurrentTripSection

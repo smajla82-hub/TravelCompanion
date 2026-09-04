@@ -25,11 +25,12 @@
     inset: 0;
     z-index: -1;
 
-    background-image: var(--tc-brand-skyline);
-    background-repeat: repeat-x;
-    background-position: top;
-    background-size: 480px 96px;
-    opacity: .6;
+    background-image: var(--tc-bottom-nav-artwork);
+    background-repeat: no-repeat;
+    background-position: top center;
+    background-size: cover;
+    opacity: 0.55;
+    mix-blend-mode: multiply;
     pointer-events: none;
 }
 
