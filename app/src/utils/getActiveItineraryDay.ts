@@ -28,3 +28,25 @@ export function isActiveItineraryDay(
 
     return dayDate === today;
 }
+
+/**
+ * Decides whether a day being opened in `ItineraryDayDetail` should be
+ * restricted to "remaining activities" (hiding already-finished ones).
+ *
+ * Only the active trip's active/current day, entered via the Current
+ * Activity "Show more" action (`mode === "remaining"`), qualifies. Days
+ * opened through "View whole itinerary" always use `mode === "full"` and
+ * therefore always show the complete history, regardless of the day.
+ */
+export function shouldFilterToRemainingActivities(
+    mode: "full" | "remaining",
+    dayDate: string,
+    trip: Pick<Trip, "startDate" | "endDate"> | undefined,
+    now: Date = new Date()
+): boolean {
+    if (mode !== "remaining" || !trip) {
+        return false;
+    }
+
+    return isActiveItineraryDay(dayDate, trip, now);
+}

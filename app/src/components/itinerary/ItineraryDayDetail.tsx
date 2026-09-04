@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Card, Heading, Stack, Button, Modal } from "../ui";
 import { ItineraryDayAdditionalDetails } from
@@ -28,12 +28,27 @@ import {
     getMealTypeForItem,
     matchesMealType,
 } from "../../utils/getMealTypeForItem";
+import { getRemainingItineraryItems } from
+    "../../utils/getItineraryItemTiming";
+
+// Matches the refresh cadence used by CurrentActivityView for the same
+// timing statuses.
+const REMAINING_ACTIVITIES_REFRESH_INTERVAL_MS = 60000;
 
 type ItineraryDayDetailProps = {
     day: ItineraryDay;
     tripId: string;
     onClose: () => void;
     onDayChanged: () => void;
+    /**
+     * When true, restricts the day to its "remaining" activities: the
+     * current one plus any upcoming/future ones (activities with a
+     * missing/invalid time are always kept). Reserved for the active
+     * trip's active day entered via Current Activity's "Show more".
+     * "View whole itinerary" always opens with this left `false` so the
+     * complete, unfiltered history remains available there.
+     */
+    showRemainingOnly?: boolean;
 };
 
 export function ItineraryDayDetail({
@@ -41,9 +56,24 @@ export function ItineraryDayDetail({
     tripId,
     onClose,
     onDayChanged,
+    showRemainingOnly = false,
 }: ItineraryDayDetailProps) {
     const [modalOpen, setModalOpen] =
         useState(false);
+
+    const [now, setNow] = useState(() => new Date());
+
+    useEffect(() => {
+        if (!showRemainingOnly) {
+            return;
+        }
+
+        const intervalId = setInterval(() => {
+            setNow(new Date());
+        }, REMAINING_ACTIVITIES_REFRESH_INTERVAL_MS);
+
+        return () => clearInterval(intervalId);
+    }, [showRemainingOnly]);
 
     const [editingItem, setEditingItem] =
         useState<ItineraryItem | undefined>();
@@ -111,6 +141,27 @@ export function ItineraryDayDetail({
         mealType
             ? "No recommended venues for this meal."
             : "No recommended venues for this day.";
+
+    const visibleItems = useMemo(
+        () =>
+            showRemainingOnly
+                ? getRemainingItineraryItems(day, day.items, now)
+                : day.items,
+        [day, showRemainingOnly, now]
+    );
+
+    const itemIndexById = useMemo(
+        () =>
+            new Map(
+                day.items.map((item, index) => [item.id, index])
+            ),
+        [day]
+    );
+
+    const allActivitiesFinished =
+        showRemainingOnly &&
+        day.items.length > 0 &&
+        visibleItems.length === 0;
 
     function handleSubmit(
         fields: ItineraryItemFields
@@ -206,36 +257,49 @@ export function ItineraryDayDetail({
                 </Button>
 
                 <p>
-                    {day.items.length} activities
+                    {visibleItems.length} activities
                 </p>
 
-                <Stack gap="md">
-                    {day.items.map((item, index) => (
-                        <div className="itinerary-activity-row" key={item.id}>
-                            <div className="itinerary-activity-content">
-                                <ActivitySummary item={item} />
+                {allActivitiesFinished ? (
+                    <p className="itinerary-day-detail-empty-state">
+                        All activities for today are finished.
+                    </p>
+                ) : (
+                    <Stack gap="md">
+                        {visibleItems.map(item => {
+                            // `visibleItems` is always a subset of
+                            // `day.items`, so the id is guaranteed to be
+                            // present here.
+                            const index = itemIndexById.get(item.id)!;
 
-                                <Button
-                                    type="button"
-                                    compact
-                                    onClick={() =>
-                                        setActionsIndex(index)
-                                    }
-                                >
-                                    Manage
-                                </Button>
-                            </div>
-                            <ActivityActionStack
-                                showFood={item.priority === "FOOD"}
-                                showParking={Boolean(item.parking)}
-                                onFood={() => setFoodItemId(item.id)}
-                                onParking={() => setParkingItemId(item.id)}
-                                onStatistics={() => setStatsOpen(true)}
-                            />
-                            <div className="itinerary-activity-separator" />
-                        </div>
-                    ))}
-                </Stack>
+                            return (
+                                <div className="itinerary-activity-row" key={item.id}>
+                                    <div className="itinerary-activity-content">
+                                        <ActivitySummary item={item} />
+
+                                        <Button
+                                            type="button"
+                                            compact
+                                            onClick={() =>
+                                                setActionsIndex(index)
+                                            }
+                                        >
+                                            Manage
+                                        </Button>
+                                    </div>
+                                    <ActivityActionStack
+                                        showFood={item.priority === "FOOD"}
+                                        showParking={Boolean(item.parking)}
+                                        onFood={() => setFoodItemId(item.id)}
+                                        onParking={() => setParkingItemId(item.id)}
+                                        onStatistics={() => setStatsOpen(true)}
+                                    />
+                                    <div className="itinerary-activity-separator" />
+                                </div>
+                            );
+                        })}
+                    </Stack>
+                )}
 
                 <ItineraryDayAdditionalDetails
                     day={day}
