@@ -129,6 +129,12 @@
     animation: tc-status-breathe 5s ease-in-out infinite;
 }
 
+/*
+ * Subtle "breathing" pulse: the dot rests for most of the 5s cycle
+ * (0%-80%) and only animates through the 80%-100% window, so the
+ * visible motion lasts roughly 1s per cycle and reads as a slow
+ * breath rather than a rapid blink.
+ */
 @keyframes tc-status-breathe {
     0%, 80%, 100% {
         opacity: 1;

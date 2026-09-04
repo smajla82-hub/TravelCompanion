@@ -13,10 +13,13 @@
  */
 
 :root {
+    /* Deep indigo anchor used to darken the top of the header/hero gradient. */
+    --tc-brand-deep: #1e1b4b;
+
     /* Darker blue/purple at the top, gradually lighter toward the bottom. */
     --tc-brand-gradient: linear-gradient(
         180deg,
-        color-mix(in srgb, var(--color-purple) 60%, #1e1b4b) 0%,
+        color-mix(in srgb, var(--color-purple) 60%, var(--tc-brand-deep)) 0%,
         var(--color-purple) 45%,
         var(--color-primary) 100%
     );
@@ -26,9 +29,12 @@
 }
 
 [data-theme="dark"] {
+    /* A near-black indigo (not pure black) so the gradient stays deep blue/purple. */
+    --tc-brand-deep: #0b0a24;
+
     --tc-brand-gradient: linear-gradient(
         180deg,
-        color-mix(in srgb, var(--color-purple) 70%, #0b0a24) 0%,
+        color-mix(in srgb, var(--color-purple) 70%, var(--tc-brand-deep)) 0%,
         color-mix(in srgb, var(--color-purple) 55%, var(--color-background)) 45%,
         color-mix(in srgb, var(--color-primary-dark) 65%, var(--color-background)) 100%
     );
