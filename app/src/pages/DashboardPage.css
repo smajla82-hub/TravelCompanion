@@ -1,17 +1,48 @@
-.dashboard-header {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+.tc-brand-header {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
 
-    margin: -32px -32px 20px;
-    padding: max(24px, env(safe-area-inset-top)) 32px 24px;
+    margin: calc(var(--space-xl) * -1) calc(var(--space-xl) * -1) var(--space-lg);
+    padding: max(var(--space-lg), env(safe-area-inset-top)) var(--space-xl) var(--space-2xl);
 
-    background: linear-gradient(135deg, var(--color-purple), var(--color-primary));
-    border-radius: 0 0 var(--tc-radius-card) var(--tc-radius-card);
+    background: var(--tc-brand-gradient);
+    border-radius: 0 0 var(--radius-xl) var(--radius-xl);
+    box-shadow: 0 12px 24px color-mix(in srgb, var(--color-primary) 20%, transparent);
 }
 
-.dashboard-header h1 {
+.tc-brand-header::before {
+    content: "";
+    position: absolute;
+    inset: auto 0 0 0;
+    height: 96px;
+    background-image: var(--tc-brand-skyline);
+    background-repeat: repeat-x;
+    background-position: bottom;
+    background-size: 480px 96px;
+    pointer-events: none;
+}
+
+.tc-brand-header h1 {
+    position: relative;
+    z-index: 1;
+
+    margin: 0 0 var(--space-lg);
+
     color: #ffffff;
     font-size: 28px;
     line-height: 34px;
+    letter-spacing: -0.01em;
+    text-align: center;
+}
+
+.tc-brand-header > * {
+    position: relative;
+    z-index: 1;
+}
+
+@media (max-width: 480px) {
+    .tc-brand-header {
+        padding-bottom: var(--space-xl);
+    }
 }

@@ -29,13 +29,13 @@ export default function DashboardPage() {
     return (
         <Container>
 
-            <div className="dashboard-header">
+            <header className="tc-brand-header">
                 <Heading level={1}>Travel Companion</Heading>
-            </div>
 
-            <CurrentTripSection
-                onContinue={continueTrip}
-            />
+                <CurrentTripSection
+                    onContinue={continueTrip}
+                />
+            </header>
 
             <ItinerarySection
                 key={itineraryResetKey}

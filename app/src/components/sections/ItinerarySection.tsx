@@ -11,6 +11,8 @@ import {
 
 import { TripService } from "../../services/TripService";
 
+import { isActiveItineraryDay } from "../../utils/getActiveItineraryDay";
+
 import type { ItineraryDay, Trip } from "../../types";
 import "./ItinerarySection.css";
 
@@ -153,6 +155,11 @@ export function ItinerarySection() {
                     <ItineraryCard
                         key={day.id}
                         day={day}
+                        isActive={
+                            activeTrip
+                                ? isActiveItineraryDay(day.date, activeTrip)
+                                : false
+                        }
                         onClick={() => {
                             setSelectedDay(day);
                             setView("day-detail");

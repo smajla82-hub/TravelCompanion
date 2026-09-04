@@ -1,0 +1,26 @@
+/*
+ * Shared "app shell" branding tokens used by the top branded header,
+ * the Trip Hero Card and the Bottom Navigation so all three read as
+ * one coherent, intentional visual language (Sprint 9.7).
+ *
+ * The travel motif is a CSS/SVG data-URI mountain skyline (no raster
+ * image dependency) that gets tiled at low opacity on top of the
+ * branded gradient.
+ */
+
+:root {
+    --tc-brand-gradient: linear-gradient(160deg, var(--color-purple) 0%, var(--color-primary) 100%);
+    --tc-brand-gradient-soft: linear-gradient(180deg, color-mix(in srgb, var(--color-purple) 22%, transparent) 0%, transparent 100%);
+
+    --tc-brand-skyline: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='90' viewBox='0 0 480 90'%3E%3Cpath d='M0 90 L45 42 L78 66 L110 18 L150 58 L185 28 L220 62 L255 22 L292 60 L330 30 L365 64 L400 20 L440 55 L480 90 Z' fill='white' fill-opacity='0.12'/%3E%3Ccircle cx='402' cy='18' r='10' fill='white' fill-opacity='0.12'/%3E%3C/svg%3E");
+    --tc-brand-skyline-soft: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='480' height='70' viewBox='0 0 480 70'%3E%3Cpath d='M0 70 L50 34 L90 52 L130 12 L175 46 L215 20 L255 50 L300 16 L340 48 L385 22 L425 50 L480 70 Z' fill='currentColor' fill-opacity='0.08'/%3E%3C/svg%3E");
+}
+
+[data-theme="dark"] {
+    --tc-brand-gradient: linear-gradient(
+        160deg,
+        color-mix(in srgb, var(--color-purple) 55%, var(--color-background)) 0%,
+        color-mix(in srgb, var(--color-primary-dark) 65%, var(--color-background)) 100%
+    );
+    --tc-brand-gradient-soft: linear-gradient(180deg, color-mix(in srgb, var(--color-purple) 30%, transparent) 0%, transparent 100%);
+}
