@@ -14,6 +14,24 @@
     --color-text: #0f172a;
     --color-text-secondary: #64748b;
     --color-danger: #dc2626;
+    --color-warning: #d97706;
+    --color-orange: #ea580c;
+    --color-neutral: #6b7280;
+    --color-neutral-strong: #44403c;
+
+    /* Priority semantic colors (mirrors the XLSX RoadBook color scheme) */
+    --color-priority-must: var(--color-danger);
+    --color-priority-food: var(--color-warning);
+    --color-priority-drive: var(--color-blue);
+    --color-priority-optional: var(--color-neutral);
+    --color-priority-photo: var(--color-purple);
+    --color-priority-sunset: var(--color-orange);
+    --color-priority-hotel: var(--color-neutral-strong);
+    --color-priority-break: var(--color-success);
+    --color-priority-event: var(--color-purple);
+
+    /* Parking semantic color */
+    --color-parking: var(--color-blue);
 
     /* Radius */
 
@@ -57,5 +75,9 @@
     --color-text: #f8fafc;
     --color-text-secondary: #94a3b8;
     --color-danger: #f87171;
+    --color-warning: #fbbf24;
+    --color-orange: #fb923c;
+    --color-neutral: #94a3b8;
+    --color-neutral-strong: #d6d3d1;
     --tc-shadow-card: 0 4px 16px rgba(0, 0, 0, 0.45);
 }

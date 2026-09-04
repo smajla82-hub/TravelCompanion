@@ -1,4 +1,5 @@
 import { Stack } from "../ui";
+import "./RecommendedVenueList.css";
 
 import type { RecommendedVenue } from "../../types";
 
@@ -22,7 +23,10 @@ export function RecommendedVenueList({
     return (
         <Stack gap="sm">
             {venues.map((venue) => (
-                <div key={venue.id}>
+                <div
+                    key={venue.id}
+                    className="recommended-venue-list__item"
+                >
 
                     {venue.priority && (
                         <div>

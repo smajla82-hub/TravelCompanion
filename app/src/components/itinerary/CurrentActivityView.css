@@ -10,6 +10,7 @@
 .activity-edge-state--upcoming .tc-button { color: var(--color-success); border-color: var(--color-success); }
 .activity-edge-state--ended h3 { color: var(--color-danger); }
 .activity-edge-state--ended .tc-button { color: var(--color-danger); border-color: var(--color-danger); }
+.current-activity-show-more { margin-top: 16px; }
 
 @media (max-width: 480px) {
     .current-activity-row { gap: 8px; }

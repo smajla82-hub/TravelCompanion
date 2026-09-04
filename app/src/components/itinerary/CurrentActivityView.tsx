@@ -206,6 +206,7 @@ export function CurrentActivityView({
 
             <Button
                 type="button"
+                className="current-activity-show-more"
                 onClick={() => onShowDay(day)}
             >
                 <Icon name="moreHorizontal" width={16} height={16} /> Show more
