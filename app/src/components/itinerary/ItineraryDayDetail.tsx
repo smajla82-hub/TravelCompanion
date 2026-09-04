@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 import { Card, Heading, Stack, Button, Modal } from "../ui";
 import { ItineraryDayAdditionalDetails } from
@@ -142,12 +142,20 @@ export function ItineraryDayDetail({
             ? "No recommended venues for this meal."
             : "No recommended venues for this day.";
 
-    const visibleItems = showRemainingOnly
-        ? getRemainingItineraryItems(day, day.items, now)
-        : day.items;
+    const visibleItems = useMemo(
+        () =>
+            showRemainingOnly
+                ? getRemainingItineraryItems(day, day.items, now)
+                : day.items,
+        [day, showRemainingOnly, now]
+    );
 
-    const itemIndexById = new Map(
-        day.items.map((item, index) => [item.id, index])
+    const itemIndexById = useMemo(
+        () =>
+            new Map(
+                day.items.map((item, index) => [item.id, index])
+            ),
+        [day]
     );
 
     const allActivitiesFinished =
