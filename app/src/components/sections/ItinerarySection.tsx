@@ -11,12 +11,13 @@ import {
 
 import { TripService } from "../../services/TripService";
 
-import { isActiveItineraryDay } from "../../utils/getActiveItineraryDay";
+import { isActiveItineraryDay, shouldFilterToRemainingActivities } from "../../utils/getActiveItineraryDay";
 
 import type { ItineraryDay, Trip } from "../../types";
 import "./ItinerarySection.css";
 
 type ItineraryView = "current" | "day-list" | "day-detail";
+type DayDetailMode = "full" | "remaining";
 
 function formatLocalDate(date: Date): string {
     const year = date.getFullYear();
@@ -60,6 +61,8 @@ export function ItinerarySection() {
         useState<ItineraryDay | null>(null);
     const [view, setView] =
         useState<ItineraryView>("current");
+    const [dayDetailMode, setDayDetailMode] =
+        useState<DayDetailMode>("full");
     const [dayModalOpen, setDayModalOpen] =
         useState(false);
 
@@ -74,22 +77,43 @@ export function ItinerarySection() {
         ) {
             setSelectedDay(null);
             setView("current");
+            setDayDetailMode("full");
             previousActiveTripId.current =
                 activeTripId;
         }
     }, [activeTripId]);
 
+    function openDayDetail(
+        day: ItineraryDay,
+        mode: DayDetailMode
+    ) {
+        setSelectedDay(day);
+        setDayDetailMode(mode);
+        setView("day-detail");
+    }
+
+    function goToDayList() {
+        setDayDetailMode("full");
+        setView("day-list");
+    }
+
     if (view === "day-detail" && selectedDay) {
+        const showRemainingOnly =
+            shouldFilterToRemainingActivities(
+                dayDetailMode,
+                selectedDay.date,
+                activeTrip
+            );
+
         return (
             <section id="itinerary-section">
-                <div className="itinerary-heading"><Heading level={2}>Itinerary</Heading><Button variant="pill" compact type="button" onClick={() => setView("day-list")}><Icon name="calendarDays" width={16} height={16} /> View whole itinerary</Button></div>
+                <div className="itinerary-heading"><Heading level={2}>Itinerary</Heading><Button variant="pill" compact type="button" onClick={goToDayList}><Icon name="calendarDays" width={16} height={16} /> View whole itinerary</Button></div>
 
                 <ItineraryDayDetail
                     day={selectedDay}
                     tripId={activeTrip?.id ?? ""}
-                    onClose={() =>
-                        setView("day-list")
-                    }
+                    showRemainingOnly={showRemainingOnly}
+                    onClose={goToDayList}
                     onDayChanged={() => {
                         const updatedDay =
                             TripService.getActive()
@@ -112,17 +136,14 @@ export function ItinerarySection() {
     if (view === "current" && activeTrip) {
         return (
             <section id="itinerary-section">
-                <div className="itinerary-heading"><Heading level={2}>Itinerary</Heading><Button variant="pill" compact type="button" onClick={() => setView("day-list")}><Icon name="calendarDays" width={16} height={16} /> View whole itinerary</Button></div>
+                <div className="itinerary-heading"><Heading level={2}>Itinerary</Heading><Button variant="pill" compact type="button" onClick={goToDayList}><Icon name="calendarDays" width={16} height={16} /> View whole itinerary</Button></div>
 
                 <CurrentActivityView
                     trip={activeTrip}
-                    onViewWholeItinerary={() =>
-                        setView("day-list")
+                    onViewWholeItinerary={goToDayList}
+                    onShowDay={day =>
+                        openDayDetail(day, "remaining")
                     }
-                    onShowDay={day => {
-                        setSelectedDay(day);
-                        setView("day-detail");
-                    }}
                 />
             </section>
         );
@@ -160,10 +181,9 @@ export function ItinerarySection() {
                                 ? isActiveItineraryDay(day.date, activeTrip)
                                 : false
                         }
-                        onClick={() => {
-                            setSelectedDay(day);
-                            setView("day-detail");
-                        }}
+                        onClick={() =>
+                            openDayDetail(day, "full")
+                        }
                     />
                 ))}
             </Grid>
@@ -183,8 +203,7 @@ export function ItinerarySection() {
                         setDayModalOpen(false);
 
                         if (newDay) {
-                            setSelectedDay(newDay);
-                            setView("day-detail");
+                            openDayDetail(newDay, "full");
                         }
                     }}
                 />

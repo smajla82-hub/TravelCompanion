@@ -127,3 +127,59 @@ export function getItineraryItemTimingStatuses(
 
     return statuses;
 }
+
+/**
+ * Returns only the activities that are still relevant for "today": the
+ * current activity (as long as something is still upcoming after it),
+ * the next/upcoming ones, and any activity whose time is missing or
+ * invalid (which can't be classified as finished). Already finished
+ * ("past") activities are dropped.
+ *
+ * There is no separate duration/end-time model: the timing statuses
+ * always keep exactly one activity as "current" for the rest of the
+ * day, even long after it started. Once nothing is left scheduled
+ * after it (no "next"/"upcoming" activity), the day is effectively
+ * over, so that trailing "current" activity is treated as finished
+ * too — this is what allows the "all activities finished" empty state
+ * to ever be reached.
+ *
+ * This is the pure logic backing the active day's "Show more" entry
+ * point (`showRemainingOnly` on `ItineraryDayDetail`); it intentionally
+ * does not decide *when* to apply the filter — callers only invoke it
+ * for the active trip's active day.
+ */
+export function getRemainingItineraryItems<
+    Item extends ItineraryItem
+>(
+    day: { date: string },
+    items: Item[],
+    now: Date
+): Item[] {
+    const statuses = getItineraryItemTimingStatuses(
+        day,
+        items,
+        now
+    );
+
+    const hasUpcomingActivity = Object.values(statuses).some(
+        status => status === "next" || status === "upcoming"
+    );
+
+    return items.filter(item => {
+        const status = statuses[item.id];
+
+        if (status === undefined) {
+            return true;
+        }
+
+        if (status === "past") {
+            return false;
+        }
+
+        if (status === "current") {
+            return hasUpcomingActivity;
+        }
+
+        return true;
+    });
+}

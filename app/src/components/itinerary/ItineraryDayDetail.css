@@ -26,3 +26,8 @@
     left: 0;
     border-bottom: 2px solid var(--color-border);
 }
+
+.itinerary-day-detail-empty-state {
+    color: var(--color-text-secondary);
+    font-style: italic;
+}
