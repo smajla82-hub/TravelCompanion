@@ -31,6 +31,10 @@ import {
 import { getRemainingItineraryItems } from
     "../../utils/getItineraryItemTiming";
 
+// Matches the refresh cadence used by CurrentActivityView for the same
+// timing statuses.
+const REMAINING_ACTIVITIES_REFRESH_INTERVAL_MS = 60000;
+
 type ItineraryDayDetailProps = {
     day: ItineraryDay;
     tripId: string;
@@ -66,7 +70,7 @@ export function ItineraryDayDetail({
 
         const intervalId = setInterval(() => {
             setNow(new Date());
-        }, 60000);
+        }, REMAINING_ACTIVITIES_REFRESH_INTERVAL_MS);
 
         return () => clearInterval(intervalId);
     }, [showRemainingOnly]);
@@ -141,10 +145,6 @@ export function ItineraryDayDetail({
     const visibleItems = showRemainingOnly
         ? getRemainingItineraryItems(day, day.items, now)
         : day.items;
-
-    const visibleItemIds = showRemainingOnly
-        ? new Set(visibleItems.map(item => item.id))
-        : null;
 
     const allActivitiesFinished =
         showRemainingOnly &&
@@ -254,13 +254,8 @@ export function ItineraryDayDetail({
                     </p>
                 ) : (
                     <Stack gap="md">
-                        {day.items.map((item, index) => {
-                            if (
-                                visibleItemIds &&
-                                !visibleItemIds.has(item.id)
-                            ) {
-                                return null;
-                            }
+                        {visibleItems.map(item => {
+                            const index = day.items.indexOf(item);
 
                             return (
                                 <div className="itinerary-activity-row" key={item.id}>

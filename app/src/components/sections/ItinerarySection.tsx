@@ -11,7 +11,10 @@ import {
 
 import { TripService } from "../../services/TripService";
 
-import { isActiveItineraryDay, shouldFilterToRemainingActivities } from "../../utils/getActiveItineraryDay";
+import {
+    isActiveItineraryDay,
+    shouldFilterToRemainingActivities,
+} from "../../utils/getActiveItineraryDay";
 
 import type { ItineraryDay, Trip } from "../../types";
 import "./ItinerarySection.css";
