@@ -1,4 +1,7 @@
 .tc-card {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  word-break: break-word;
   background: var(--surface-primary);
   border: 1px solid var(--border-color);
   border-radius: var(--tc-radius-card);

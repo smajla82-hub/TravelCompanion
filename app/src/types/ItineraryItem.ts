@@ -6,6 +6,11 @@ export interface ItineraryItem {
 
     title: string;
 
+    /**
+     * @deprecated Superseded by `note`. No longer shown or editable in the
+     * UI. Kept optional so previously persisted trips that still contain a
+     * description remain readable; do not populate it for new/edited items.
+     */
     description?: string;
 
     location?: string;

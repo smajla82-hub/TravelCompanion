@@ -9,6 +9,12 @@ import {
   ACTIVITY_TYPE_IDS,
   normalizeActivityType,
 } from "../../domain/activity/ActivityTypeRegistry";
+import {
+  TEXT_LIMIT_LABELS,
+  counterClassName,
+  exceedsTextLimit,
+  formatCharacterCounter,
+} from "../../domain/validation/textLimits";
 
 const PRIORITY_OPTIONS = [
   "MUST",
@@ -33,7 +39,6 @@ type ItineraryItemFormProps = {
 export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
   const [time, setTime] = useState(item?.time ?? "");
   const [title, setTitle] = useState(item?.title ?? "");
-  const [description, setDescription] = useState(item?.description ?? "");
   const [location, setLocation] = useState(item?.location ?? "");
   const [activityType, setActivityType] = useState(
     normalizeActivityType(item?.activityType)
@@ -52,6 +57,31 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
       return false;
     }
 
+    const violations = (
+      [
+        ["activityTitle", title],
+        ["location", location],
+        ["price", price],
+        ["note", note],
+        ["mapLink", mapLink],
+      ] as const
+    ).filter(([field, value]) => exceedsTextLimit(value, field));
+
+    if (violations.length > 0) {
+      const message = violations
+        .map(
+          ([field, value]) =>
+            `${TEXT_LIMIT_LABELS[field]} (${formatCharacterCounter(value, field)})`
+        )
+        .join("\n");
+
+      alert(
+        `The following fields exceed the maximum allowed length:\n${message}`
+      );
+
+      return false;
+    }
+
     return true;
   }
 
@@ -65,7 +95,6 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
     onSubmit({
       time,
       title,
-      description,
       location,
       goal: item?.goal,
       activityType,
@@ -96,14 +125,9 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
             value={title}
             onChange={(event) => setTitle(event.target.value)}
           />
-        </label>
-        <label>
-          Description
-          <input
-            type="text"
-            value={description}
-            onChange={(event) => setDescription(event.target.value)}
-          />
+          <span className={counterClassName(title, "activityTitle")}>
+            {formatCharacterCounter(title, "activityTitle")}
+          </span>
         </label>
         <label>
           Location
@@ -112,6 +136,9 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
             value={location}
             onChange={(event) => setLocation(event.target.value)}
           />
+          <span className={counterClassName(location, "location")}>
+            {formatCharacterCounter(location, "location")}
+          </span>
         </label>
         <label>
           Activity Type
@@ -168,6 +195,9 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
             value={mapLink}
             onChange={(event) => setMapLink(event.target.value)}
           />
+          <span className={counterClassName(mapLink, "mapLink")}>
+            {formatCharacterCounter(mapLink, "mapLink")}
+          </span>
         </label>
         <label>
           Price
@@ -176,6 +206,9 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
             value={price}
             onChange={(event) => setPrice(event.target.value)}
           />
+          <span className={counterClassName(price, "price")}>
+            {formatCharacterCounter(price, "price")}
+          </span>
         </label>
         <label>
           Note
@@ -184,6 +217,9 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
             value={note}
             onChange={(event) => setNote(event.target.value)}
           />
+          <span className={counterClassName(note, "note")}>
+            {formatCharacterCounter(note, "note")}
+          </span>
         </label>
         <Button type="submit">Save Activity</Button>
       </Stack>

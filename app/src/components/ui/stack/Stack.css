@@ -3,6 +3,10 @@
     flex-direction:column;
 }
 
+.tc-stack > *{
+    min-width:0;
+}
+
 .tc-stack--sm{
     gap:8px;
 }

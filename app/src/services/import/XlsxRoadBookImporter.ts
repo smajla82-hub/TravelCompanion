@@ -9,6 +9,12 @@ import type {
 } from "../../types";
 import { normalizeActivityType } from
     "../../domain/activity/ActivityTypeRegistry";
+import {
+    TEXT_LIMITS,
+    TEXT_LIMIT_LABELS,
+    exceedsTextLimit,
+    type TextLimitField,
+} from "../../domain/validation/textLimits";
 
 type CellValue = string | number | boolean | Date | null | undefined;
 
@@ -307,6 +313,86 @@ function parseStats(
     return [];
 }
 
+export type ImportWarning = {
+    day: string;
+    row?: number;
+    field: string;
+    actualLength: number;
+    maxLength: number;
+};
+
+const ITEM_LIMIT_FIELDS: {
+    itemField: "title" | "location" | "price" | "note" | "mapLink";
+    limitField: TextLimitField;
+}[] = [
+    { itemField: "title", limitField: "activityTitle" },
+    { itemField: "location", limitField: "location" },
+    { itemField: "price", limitField: "price" },
+    { itemField: "note", limitField: "note" },
+    { itemField: "mapLink", limitField: "mapLink" },
+];
+
+function validateImportedItem(
+    item: ItineraryItem,
+    dayLabel: string,
+    rowNumber: number
+): ImportWarning[] {
+    const warnings: ImportWarning[] = [];
+
+    for (const { itemField, limitField } of ITEM_LIMIT_FIELDS) {
+        const value = item[itemField];
+
+        if (exceedsTextLimit(value, limitField)) {
+            warnings.push({
+                day: dayLabel,
+                row: rowNumber,
+                field: TEXT_LIMIT_LABELS[limitField],
+                actualLength: (value ?? "").length,
+                maxLength: TEXT_LIMITS[limitField],
+            });
+        }
+    }
+
+    return warnings;
+}
+
+/** Formats a single import warning line, e.g. "DAY 2 — row 14 — Title (47/40)". */
+export function formatImportWarningLine(warning: ImportWarning): string {
+    const rowPart =
+        warning.row !== undefined
+            ? ` — row ${warning.row}`
+            : "";
+
+    return `${warning.day}${rowPart} — ${warning.field} (${warning.actualLength}/${warning.maxLength})`;
+}
+
+/** Shared summary sentence describing how many activities were skipped. */
+export function getImportWarningsSummary(count: number): string {
+    return (
+        `${count} activit${count === 1 ? "y was" : "ies were"} not imported ` +
+        "because one or more fields exceeded the maximum allowed length."
+    );
+}
+
+/** Formats a human-readable import warning report. Returns "" when there are no warnings. */
+export function formatImportWarningsReport(
+    warnings: ImportWarning[]
+): string {
+    if (warnings.length === 0) {
+        return "";
+    }
+
+    const lines = warnings.map(formatImportWarningLine);
+
+    return [
+        "Import completed with warnings.",
+        "",
+        getImportWarningsSummary(warnings.length),
+        "",
+        ...lines,
+    ].join("\n");
+}
+
 function createItem(
     sheet: XLSX.WorkSheet,
     row: ImportRow,
@@ -353,14 +439,14 @@ function createItem(
 
         note: get("note"),
 
-        description: get("note"),
-
         date,
     };
 }
 
 function parseDaySheet(
-    sheet: XLSX.WorkSheet
+    sheet: XLSX.WorkSheet,
+    dayLabel: string,
+    warnings: ImportWarning[]
 ): ItineraryDay | null {
 
     const rows =
@@ -439,6 +525,22 @@ function parseDaySheet(
             items.length
         );
 
+        // Excel rows are 1-based; `rowIndex` matches the sheet's
+        // 0-based row array, so the source row is `rowIndex + 1`.
+        const itemWarnings = validateImportedItem(
+            item,
+            dayLabel,
+            rowIndex + 1
+        );
+
+        if (itemWarnings.length > 0) {
+            warnings.push(...itemWarnings);
+
+            // Skip this activity only; all other valid activities
+            // for this day (and other days) must still be imported.
+            continue;
+        }
+
         items.push(item);
     }
 
@@ -466,9 +568,14 @@ function parseDaySheet(
     };
 }
 
+export type ImportResult = {
+    days: ItineraryDay[];
+    warnings: ImportWarning[];
+};
+
 export async function importXlsxRoadBook(
     file: File
-): Promise<ItineraryDay[]> {
+): Promise<ImportResult> {
 
     const data = await file.arrayBuffer();
 
@@ -481,6 +588,7 @@ export async function importXlsxRoadBook(
     );
 
     const days: ItineraryDay[] = [];
+    const warnings: ImportWarning[] = [];
 
     for (const sheetName of workbook.SheetNames) {
 
@@ -491,9 +599,13 @@ export async function importXlsxRoadBook(
             continue;
         }
 
+        const dayLabel = `DAY ${days.length + 1}`;
+
         const day =
             parseDaySheet(
-                sheet
+                sheet,
+                dayLabel,
+                warnings
             );
 
         if (day) {
@@ -501,5 +613,5 @@ export async function importXlsxRoadBook(
         }
     }
 
-    return days;
+    return { days, warnings };
 }

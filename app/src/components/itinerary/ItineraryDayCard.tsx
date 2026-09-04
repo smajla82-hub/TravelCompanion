@@ -1,6 +1,7 @@
 import { Card, Stack } from "../ui";
 
 import type { ItineraryDay } from "../../types";
+import "./ItineraryDayCard.css";
 
 type Props = {
     day: ItineraryDay;
@@ -15,6 +16,7 @@ export function ItineraryDayCard({
         <Card>
             <button
                 type="button"
+                className="itinerary-day-card__button"
                 onClick={onClick}
             >
                 <Stack gap="sm">

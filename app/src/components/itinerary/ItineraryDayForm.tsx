@@ -2,6 +2,12 @@ import { useState } from "react";
 
 import { Button, Stack } from "../ui";
 import "../trips/NewTripModal.css";
+import {
+    counterClassName,
+    exceedsTextLimit,
+    formatCharacterCounter,
+    TEXT_LIMIT_LABELS,
+} from "../../domain/validation/textLimits";
 
 export type ItineraryDayFields = {
     date: string;
@@ -37,6 +43,14 @@ export function ItineraryDayForm({
             return;
         }
 
+        if (exceedsTextLimit(title, "dayTitle")) {
+            alert(
+                `${TEXT_LIMIT_LABELS.dayTitle} exceeds the maximum allowed length (${formatCharacterCounter(title, "dayTitle")}).`
+            );
+
+            return;
+        }
+
         onSubmit({
             date,
             title,
@@ -66,6 +80,9 @@ export function ItineraryDayForm({
                             setTitle(event.target.value)
                         }
                     />
+                    <span className={counterClassName(title, "dayTitle")}>
+                        {formatCharacterCounter(title, "dayTitle")}
+                    </span>
                 </label>
 
                 <Button type="submit">
