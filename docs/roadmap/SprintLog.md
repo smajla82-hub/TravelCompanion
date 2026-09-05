@@ -34,6 +34,21 @@ Added PWA installation support and a GitHub Pages deployment workflow:
 
 A new **mobile-verification rule** was added to `docs/roadmap/Roadmap.md`'s Development Model: future UI/UX-affecting changes must be verified on desktop first, then re-verified on a real mobile device via the GitHub Pages deployment before being considered DONE.
 
+## Feature 10.1 — Backend foundation (agent-doable portion)
+**Status:** DONE in repository; pending user-run production server setup remains outside this agent's access
+
+The repository now includes the backend scaffold for the Milestone 7 foundation:
+
+- `server/` with Node.js + Express and SQLite (`better-sqlite3`)
+- `server/src/db/schema.sql` initial schema for `trips`, `itinerary_days` and `itinerary_items`
+- REST endpoints for Trip CRUD, Active Trip selection and itinerary day/item CRUD
+- `server/.env.example` environment config
+- `server/deploy/Caddyfile` reverse-proxy template with placeholder DuckDNS hostname
+- `server/deploy/ecosystem.config.js` `pm2` template
+- `server/README.md` deployment and verification runbook
+
+This is the agent-doable half of 10.1. The remaining tasks are still manual and must be completed on the user's actual server, outside the scope of this repository: registering the DuckDNS hostname, opening ports 80/443, copying the code onto the server, installing dependencies, starting Caddy and `pm2`, and obtaining the real Let's Encrypt certificate.
+
 ---
 
 ## Initial Project Structure

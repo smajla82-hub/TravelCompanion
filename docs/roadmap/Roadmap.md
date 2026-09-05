@@ -119,12 +119,15 @@ Introduce user accounts and shared/synced Trip data across multiple devices and 
 
 Proposed scope:
 
-- **10.1 — Architecture decision & backend foundation** — planned after the remaining 9.8E–9.8G UI work
-  - Provision the DuckDNS hostname and verify it resolves to the server's static IP.
-  - Set up Caddy as a reverse proxy in front of the new API, using the DuckDNS hostname to obtain and auto-renew a Let's Encrypt TLS certificate, so the GitHub-Pages-hosted (HTTPS) frontend can call the backend over HTTPS without mixed-content blocking.
-  - Scaffold a minimal Node.js/Express (or Fastify) API with a SQLite database (accessed via a lightweight query layer/ORM — exact choice to be confirmed when this feature is scoped in detail), managed as a `pm2` process on the user's server.
-  - Define the initial REST API surface needed to replace direct `localStorage` reads/writes: Trip CRUD, itinerary CRUD, Active Trip selection, at minimum.
-  - Record the finalized decision and its consequences in `docs/decisions/ADR-003-Backend-Architecture.md` (already created; refine further once implementation details are confirmed).
+- **10.1 — Architecture decision & backend foundation** — agent-doable scaffold complete; remaining production server steps are manual and still pending
+  - Status: the backend foundation has been scaffolded in `server/` with Node.js + Express, SQLite via `better-sqlite3`, the initial Trip/itinerary REST surface, pm2 and Caddy config templates, and deployment documentation.
+  - Manual production steps still required before 10.1 as a whole is DONE:
+    - Provision the actual DuckDNS hostname and verify it resolves to the server's static public IP.
+    - Open/forward ports 80 and 443 on the user's router/firewall to the server running Caddy.
+    - Copy/deploy the scaffolded code onto the real Linux server and install dependencies there.
+    - Run the actual `pm2` start/restart commands and Caddy startup on the real server to obtain the real Let's Encrypt certificate.
+  - The agent-doable portion is intentionally complete without touching the existing `app/` frontend behavior. Offline-first `localStorage` operation remains intact until the later sync/auth features are built.
+  - Record the finalized decision and its consequences in `docs/decisions/ADR-003-Backend-Architecture.md` (already created; this PR keeps the architecture decision and backend foundation aligned with the documented split between agent work and user-run server setup).
 
 - **10.2 — Authentication**
   - Simple email + password account creation and login, issuing a session/JWT token used by the frontend for subsequent API calls. No OAuth/social login required for the initial version.
