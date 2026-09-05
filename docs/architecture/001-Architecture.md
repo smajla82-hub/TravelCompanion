@@ -13,7 +13,7 @@
 
 # Overview
 
-Travel Companion is a modular, domain-oriented React + TypeScript PWA.
+Travel Companion is a modular, domain-oriented React + TypeScript PWA. React Router provides client-side navigation.
 
 Every subsystem is separated into an independent domain with clearly defined responsibilities.
 

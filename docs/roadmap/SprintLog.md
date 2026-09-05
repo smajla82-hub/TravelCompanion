@@ -429,7 +429,7 @@ The current XLSX importer follows the existing RoadBook workbook's column names.
 
 A future standardized English import template should be introduced when the import format is generalized for future trips. This is intentionally deferred and does not block the current BlizzCon work.
 
-Final mobile/responsive polish (icons, typography, per-component fine-tuning) driven by the user's own visual design work, and the shared persistence/accounts architecture (Milestone 7 / 10.x), remain the next planned areas of work.
+My Trips and Settings visual polish, an optional final responsive/QA pass, and the shared persistence/accounts architecture (Milestone 7 / 10.x) remain the next planned areas of work.
 
 ---
 

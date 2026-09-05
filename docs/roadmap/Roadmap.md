@@ -119,7 +119,7 @@ Introduce user accounts and shared/synced Trip data across multiple devices and 
 
 Proposed scope:
 
-- **10.1 — Architecture decision & backend foundation** — **NEXT UP**
+- **10.1 — Architecture decision & backend foundation** — planned after the remaining 9.8E–9.8G UI work
   - Provision the DuckDNS hostname and verify it resolves to the server's static IP.
   - Set up Caddy as a reverse proxy in front of the new API, using the DuckDNS hostname to obtain and auto-renew a Let's Encrypt TLS certificate, so the GitHub-Pages-hosted (HTTPS) frontend can call the backend over HTTPS without mixed-content blocking.
   - Scaffold a minimal Node.js/Express (or Fastify) API with a SQLite database (accessed via a lightweight query layer/ORM — exact choice to be confirmed when this feature is scoped in detail), managed as a `pm2` process on the user's server.
