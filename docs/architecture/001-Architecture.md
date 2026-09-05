@@ -13,7 +13,7 @@
 
 # Overview
 
-Travel Companion is designed as a modular, domain-driven application.
+Travel Companion is a modular, domain-oriented React + TypeScript PWA. React Router provides client-side navigation.
 
 Every subsystem is separated into an independent domain with clearly defined responsibilities.
 
@@ -96,11 +96,9 @@ Context is determined by:
 
 ---
 
-## Online First
+## Offline-Capable Client Operation
 
-The application primarily operates online.
-
-Offline mode guarantees uninterrupted access to critical travel information.
+The current frontend operates client-side with browser `localStorage` persistence and remains usable offline after the PWA app shell is available.
 
 ---
 
@@ -110,12 +108,10 @@ Core logic must remain independent of the user interface.
 
 Supported platforms:
 
-- Windows Desktop
-- Android
+- Web browsers, with Android/mobile as the current primary target
 
 Future:
 
-- Web
 - macOS
 - iOS
 
@@ -139,21 +135,15 @@ Infrastructure Layer
 
 ↓
 
-Database
+Browser persistence
 
 ---
 
-# Database
+# Current Persistence and Future Backend
 
-Initial database:
+Current persistence is browser `localStorage`; there is no current application database or server-side component.
 
-SQLite
-
-Future upgrade path:
-
-PostgreSQL
-
-Cloud synchronization will never require redesigning the domain layer.
+Shared persistence, accounts and a backend database are future 10.x work. That evolution must preserve the domain layer rather than requiring its redesign.
 
 ---
 
@@ -162,7 +152,7 @@ Cloud synchronization will never require redesigning the domain layer.
 Supported formats:
 
 - Excel
-- Google Sheets
+- XLSX RoadBook import
 - JSON
 
 Travel Companion remains the owner of all data.
