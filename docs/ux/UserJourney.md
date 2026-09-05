@@ -171,7 +171,7 @@ Ikony mají být konzistentní napříč celou aplikací.
 - Parking › SquareParking (P badge)
 - Statistics › BarChart
 - Location › MapPin
-- Goal › Target
+- Activity Type › canonical semantic SVG icon
 - Priority › Zap
 - Flight › Plane
 - Price › DollarSign
@@ -204,7 +204,6 @@ Například:
 - Parking › Purple
 - Statistics › Blue
 - Flight › Accent Blue
-- Goal › Success
 - Priority › Primary
 - Price › Success
 
@@ -236,7 +235,7 @@ CURRENT ACTIVITY
 07:00    [Food icon]   Snídaně
 
 📍 Praha
-🎯 Goal: Energie před cestou
+[Activity Type icon] Food
 ⚡ Priority: FOOD
 🅿️ Parking: P1
 ✈ Prague International Airport (PRG)
@@ -281,6 +280,9 @@ NEXT ACTIVITY
 Current Activity = detail.
 Next Activity = rychlý náhled.
 
+Current Activity's **“Show more”** opens the active day's remaining-activities view: the current and upcoming timed activities plus activities without a valid time. If every timed activity is finished, it can show **“All activities for today are finished.”**  
+**View Whole Itinerary** always opens complete day history for the selected day; historical and future days are not filtered.
+
 ## 12. Top background
 
 Modré/purple branded background, který se používá v horní části aplikace.
@@ -288,24 +290,18 @@ Modré/purple branded background, který se používá v horní části aplikace
 Obsah:
 
 ```
-Travel Companion        ⚙
+Travel Companion
 
-[ + New Trip ] [ My Trips ]
-
-Current Trip
+Current Trip / dashboard hero
 ```
 
-Background může mít velmi jemný dekorativní travel/mountain/city pattern.
+The approved artwork is bundled locally, not CSS/SVG-only decoration: `top-background800x800.webp` is used in the top header and `hero-background1200x600.webp` in the hero. Its positioning and spacing are intentional parts of the 9.7B mobile baseline and must not compete with content.
 
-Pattern:
-- velmi nízká opacity
-- nesmí konkurovat textu
-- pouze dekorace
-- žádný raster obrázek nutný pro samotný layout — CSS/SVG dekorace
+The top header does not contain Settings, New Trip or My Trips.
 
 ## 13. Bottom navigation
 
-Stejný branded background jako nahoře.
+Bundled `bottom-nav-background1200x300.webp` provides the branded bottom-navigation background.
 
 ```
 ┌──────────────────────────────────┐
@@ -320,6 +316,8 @@ Ikony:
 - Home
 - My Trips
 - Settings
+
+New Trip is available from **My Trips**, not from the top header.
 
 Active: white
 Inactive: white / reduced opacity
@@ -342,11 +340,13 @@ Typické použití:
 - Section gap: 24px
 - Element gap: 8–12px
 - Button gap: 12px
-- Page horizontal padding: 16px
+- Main mobile page horizontal padding: 12px
 
 ## 15. Responsive behaviour
 
 Mobile-first.
+
+Mobile is the authoritative visual target. The branded top header, hero and bottom navigation use their approved bundled raster artwork and spacing.
 
 Na telefonu:
 - 1 column
@@ -435,6 +435,12 @@ Use the blue/purple branded background for the top header and bottom navigation.
 Current Activity must be the visual focal point of the itinerary — its Food/Parking/Statistics action shortcuts must render inside the same card/block as the activity's details, not detached outside of it.
 
 Next Activity should be a compact preview.
+
+Activity Type is an explicit semantic `ItineraryItem.activityType` classification, not a value inferred from Priority or title emoji. The canonical registry supplies its SVG icon; unknown or missing values resolve to `other`. Existing title emojis remain where already stored. The legacy `goal` field is deprecated/backward-compatible and is not populated or rendered by the current importer/UI.
+
+Canonical Activity Types: `food`, `flight`, `transport`, `scenic`, `nature`, `walk`, `sightseeing`, `event`, `shopping`, `accommodation`, `parking`, `car_rental`, `travel_prep`, `airport`, `rest`, and `other`.
+
+Current text validation limits are: Trip Name 40, Day Title 40, Activity Title 40, Location 26, Price 26, Note 60, and Map Link 2048 characters. Description is deprecated/removed from the current form and import flow. Invalid imported activity rows are skipped with warnings while valid rows and days continue importing; existing stored over-limit data stays readable and is not silently truncated.
 
 Do not use the screenshot as a source of truth for text, data or layout dimensions.
 Use the existing application's domain model and components.

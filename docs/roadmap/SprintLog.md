@@ -306,13 +306,65 @@ After deployment, open `https://smajla82-hub.github.io/TravelCompanion/` in Chro
 
 ---
 
+# 9.x — Final UI Look
+
+## 9.1
+**Status:** DONE  
+Established the inline SVG icon system across navigation and actions, replacing inconsistent icon treatments.
+
+## 9.2
+**Status:** DONE  
+Introduced the canonical Activity Type registry and semantic icons, shared by persisted itinerary data, the XLSX importer and the UI.
+
+## 9.3
+**Status:** DONE  
+Integrated Activity Type into itinerary creation, editing and display, while retaining legacy `goal` data only for backward compatibility.
+
+## 9.4
+**Status:** DONE  
+Unified Current Activity, Next Activity and itinerary rows around `ActivitySummary`; polished Whole Itinerary and the Add Day flow.
+
+## 9.5
+**Status:** DONE  
+Applied semantic Priority/Parking colors, refined spacing, and added recommended-venue dividers.
+
+## 9.6
+**Status:** DONE  
+Added shared text/data limits, importer validation and warnings, and overflow handling without truncating already stored data.
+
+## 9.7 / 9.7B
+**Status:** DONE  
+Completed the approved Dashboard visual redesign: mobile is authoritative, with bundled raster artwork in the top header, hero and bottom navigation.
+
+## 9.8A
+**Status:** DONE  
+Current Activity's “Show more” now opens the active day's remaining-activities view, while Whole Itinerary remains complete history.
+
+## 9.8B
+**Status:** DONE — no code changes required  
+Completed the visual consistency review against the approved 9.7B baseline.
+
+## 9.8C
+**Status:** SKIPPED / USER VERIFIED
+
+## 9.8D
+**Status:** SKIPPED / USER VERIFIED
+
+---
+
 # Current Position
 
-**Current Milestone:** 8.x — Android / Mobile — DONE
-**Completed through:** 8.1 (real-device verified)
-**Status:** Milestone 6 (Mobile/Android) considered functionally complete; next milestone is 10.x — Shared Persistence & Accounts
+**Current Milestone:** 9.x — Final UI Look
+**Completed through:** 9.8B
+**Status:** 9.8E / My Trips visual polish and 9.8F / Settings visual polish remain planned before 10.x.
 
 Next:
+
+## 9.8E — My Trips visual polish (PLANNED)
+
+## 9.8F — Settings visual polish (PLANNED)
+
+## 9.8G — Final responsive / QA pass (PLANNED)
 
 ## 10.x — Shared Persistence & Accounts (PLANNED)
 

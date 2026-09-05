@@ -87,15 +87,28 @@ Make the application practical to use in an Android/mobile environment (PWA inst
   - **Verified end-to-end on a real Android device** (both `localhost` during development and the deployed GitHub Pages URL): installation to the home screen, standalone/full-screen launch, and a full functional pass across Trip creation, itinerary browsing, Food/Parking/Statistics modals, Dark/Light mode and Export/Import — no issues found.
 
 ### Milestone 6.5 — Final UI Look — Polish
-**9.x — PLANNED**
+**9.x — IN PROGRESS (through 9.8B)**
 
-A final, dedicated cosmetic-finish pass, sequenced after Mobile/Android (8.x) is functionally verified but before Shared Persistence & Accounts (10.x), since accounts/sync work should build on top of a visually finished app rather than a moving visual target. Scope depends on the user's own visual design work, expected to include:
+The approved Dashboard visual baseline is **9.7B**. The application is mobile-first and mobile is the authoritative visual target; the bundled raster artwork provides the top header (`top-background800x800.webp`), hero (`hero-background1200x600.webp`) and bottom navigation (`bottom-nav-background1200x300.webp`).
 
-- **9.1 — Activity-type icon set** — dedicated icons per activity type (breakfast, dinner, flight departure/arrival, etc.), replacing the current generic/placeholder icon used across all activity types (deferred from 7.x/7.5.x).
-- **9.2 — Typography refinement** — final font-weight/size pass across headings, body text and labels per the user's updated visual reference.
-- **9.3 — General cosmetic polish** — any remaining spacing, color or component-level visual refinements identified once the user's updated `docs/ux/UserJourney.md`/mockup material is provided, verified per the Development Model's mobile-verification rule (desktop first, then real Android device).
+Completed:
 
-This milestone will be planned in detail once the user provides the corresponding visual reference material (icons, typography, any other look-and-feel updates).
+- **9.1** — SVG icon system and navigation/action icon cleanup.
+- **9.2** — Canonical semantic Activity Type registry and icons.
+- **9.3** — Activity Type itinerary integration and related UI corrections.
+- **9.4** — Unified `ActivitySummary`, Whole Itinerary polish and Add Day flow.
+- **9.5** — Semantic Priority/Parking colors, spacing refinements and recommended-venue dividers.
+- **9.6** — Text/data validation limits, importer warnings and overflow handling.
+- **9.7 / 9.7B** — Final Dashboard visual redesign and branded raster backgrounds.
+- **9.8A** — Active-day “Show more” remaining-activities behavior.
+- **9.8B** — Visual consistency review completed; no code changes required.
+- **9.8C / 9.8D** — SKIPPED / USER VERIFIED.
+
+Remaining:
+
+- **9.8E — My Trips visual polish**
+- **9.8F — Settings visual polish**
+- **9.8G — Final responsive / QA pass**, if still appropriate after the page polish
 
 ### Milestone 7 — Shared Persistence & Accounts
 **10.x — PLANNED**
@@ -209,9 +222,9 @@ All work through **6.0.16** has been implemented and functionally tested.
 
 ## 5. Current State
 
-**Current Milestone:** 8.x — Mobile / Android
-**Current completed Feature:** 8.1
-**Status:** DONE through 8.1 (real-device verified). Next planned milestone: 9.x — Final UI Look — Polish, followed by 10.x — Shared Persistence & Accounts.
+**Current Milestone:** 9.x — Final UI Look
+**Current completed Feature:** 9.8B
+**Status:** The 9.7B Dashboard baseline and work through 9.8B are complete. 9.8E / My Trips and 9.8F / Settings visual polish remain planned before 10.x — Shared Persistence & Accounts.
 
 The Trip system currently supports:
 
@@ -266,6 +279,10 @@ The RoadBook/itinerary system currently supports:
 - installable PWA (manifest, branded placeholder icons, app-shell service worker) deployed to GitHub Pages
 - mobile/touch audit fixes: touch target sizing, viewport/theme-color meta, Android safe-area insets
 - **end-to-end verified on a real Android device** (both local dev server and the deployed GitHub Pages build) across Trip creation, itinerary browsing, Food/Parking/Statistics modals, Dark/Light mode and Export/Import — no issues found
+- canonical `activityType` values and semantic SVG icons, with unknown/missing values falling back to `other`
+- unified `ActivitySummary` presentation for Current Activity and Next Activity
+- active-day “Show more” remaining-activities view, distinct from Whole Itinerary’s full history
+- shared text limits and importer warnings that skip invalid rows while continuing valid rows/days
 
 Verified test data currently imports as:
 
@@ -275,9 +292,11 @@ Verified test data currently imports as:
 
 ## 6. Next Development Order
 
-1. 9.x — Final UI Look — Polish (activity-type icons, typography, remaining cosmetic refinement, pending the user's updated visual reference material)
-2. 10.x — Shared Persistence & Accounts (backend architecture confirmed — see `docs/decisions/ADR-003-Backend-Architecture.md`; starting with 10.1)
-3. 11.x+ — Extended travel functionality
+1. 9.8E — My Trips visual polish
+2. 9.8F — Settings visual polish
+3. 9.8G — Final responsive / QA pass, if still appropriate
+4. 10.x — Shared Persistence & Accounts (backend architecture confirmed — see `docs/decisions/ADR-003-Backend-Architecture.md`; starting with 10.1)
+5. 11.x+ — Extended travel functionality
 
 The order remains intentional: the mobile experience was validated on a real device, the visual design is finished before committing to the larger architectural shift of introducing a server-side component, accounts and multi-device sync, and that shared-persistence foundation is in place before the future Extended Travel Companion modules are built on top of it.
 
@@ -293,7 +312,7 @@ This is **not** a blocker for the current BlizzCon RoadBook.
 
 ### UI / UX
 
-The `appka_navrh_look.png` redesign's structural/functional pass is complete, including the permanent bottom navigation placement and comprehensive component-level dark-mode coverage. The remaining cosmetic finish (activity-type icons, typography, final polish) is tracked as Milestone 6.5 (9.x), pending the user's updated visual reference material, and is expected to be treated as binding guidance for future UI Features in the same way `docs/ux/UserJourney.md` has been.
+The approved 9.7B Dashboard redesign is complete, including permanent bottom navigation, comprehensive dark-mode coverage and bundled branded raster artwork. The remaining 9.x work is limited to My Trips (9.8E), Settings (9.8F), and a final responsive/QA pass (9.8G) if needed; it must not restore the old top navigation.
 
 ### Backup / data safety
 
