@@ -145,11 +145,11 @@ Proposed scope:
 - **10.4a — Backend: Trip edit locking + last-write-wins fallback** — **DONE** (backend-only)
   - Owners and Editors use short-lived pessimistic Trip locks with heartbeat and Owner force-release; Trip and itinerary writes require the active lock.
   - A narrow timestamp-based last-write-wins fallback is available only for offline reconnection when no lock is active and the client's known resource timestamp is current.
-- **10.4b — Frontend integration** — **NEXT**
-  - Add API client, login, sync, lock UI, and invitation UI without changing the backend locking rule.
+- **10.4b — Frontend integration** — **DONE**
+  - Optional account UI, authenticated API client, clearly separate synced/shared Trips, lock/conflict UX, and invitation management/deep links are available without changing anonymous local-first CRUD.
 
 - **10.5 — Data migration**
-  - One-time migration/import path for a user's existing local-only `localStorage` Trips/itineraries into their newly created account, so no existing BlizzCon planning data is lost when accounts are introduced.
+  - Next planned feature: one-time migration/import path for a user's existing local-only `localStorage` Trips/itineraries into their newly created account. The first real production Trip import into the backend will use this now-functional sync mechanism once the import tooling is built.
 
 - **10.6 — Operations**
   - Document the operational runbook for the self-hosted server component (the user already runs `pm2` on the server): process start/restart, SQLite backup strategy, Caddy/TLS renewal monitoring, and basic uptime expectations.
@@ -306,7 +306,7 @@ Verified test data currently imports as:
 1. 9.8E — My Trips visual polish
 2. 9.8F — Settings visual polish
 3. 9.8G — Final responsive / QA pass, if still appropriate
-4. 10.x — Shared Persistence & Accounts (backend architecture confirmed — see `docs/decisions/ADR-003-Backend-Architecture.md`; **10.1–10.4a are DONE backend-only**; next up is **10.4b — Frontend integration**)
+4. 10.x — Shared Persistence & Accounts (backend architecture confirmed — see `docs/decisions/ADR-003-Backend-Architecture.md`; **10.1–10.4b are DONE**; next up is **10.5 — Data migration**)
 5. 11.x+ — Extended travel functionality
 
 The order remains intentional: the mobile experience was validated on a real device, the visual design is finished before committing to the larger architectural shift of introducing a server-side component, accounts and multi-device sync, and that shared-persistence foundation is in place before the future Extended Travel Companion modules are built on top of it.

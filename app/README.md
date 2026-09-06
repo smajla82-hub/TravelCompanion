@@ -1,4 +1,28 @@
-# React + TypeScript + Vite
+# Travel Companion PWA
+
+## Local-first trips and optional sync
+
+Travel Companion remains fully usable without an account: local Trips, itinerary,
+import, export, and edits continue to use browser `localStorage` and work offline.
+Signing in is optional and adds a separate **Synced & shared trips** section in
+My Trips. Local-only Trips are never automatically uploaded or merged.
+
+Use the **Account** tab to create an account, sign in, or log out. The production
+API is `https://cestovatel.duckdns.org`; local development may override it with
+`VITE_API_BASE_URL`. The server's `ALLOWED_CORS_ORIGIN` is already configured
+for `https://smajla82-hub.github.io`, so no server CORS change is required.
+
+Synced Trips use short-lived edit locks. Owners and Editors obtain a lock before
+editing and the app renews it while the edit dialog is open. If another member
+holds the lock, or a save conflicts, the app shows a message rather than silently
+overwriting their change. Owners can create Editor or Viewer invitations and copy
+the generated link to share manually. Invitation recipients open the link and
+sign in with the invited email before accepting or declining.
+
+Importing existing local Trips into an account is intentionally deferred to
+Feature 10.5; the existing local import/export behavior is unchanged.
+
+## Development
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
 
