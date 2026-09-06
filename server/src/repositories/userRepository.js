@@ -6,6 +6,11 @@ const db = getDb();
 
 const SALT_ROUNDS = 10;
 const MIN_PASSWORD_LENGTH = 8;
+const MAX_EMAIL_LENGTH = 254;
+// Basic structural check (local-part@domain-with-a-dot), not a full RFC 5322
+// validator — good enough to reject obviously malformed/malicious input
+// without rejecting legitimate addresses.
+const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
 
 function mapUserRow(row) {
   if (!row) {
@@ -36,6 +41,12 @@ export function createUser({ email, password }) {
   const normalizedEmail = String(email ?? '').trim().toLowerCase();
   if (!normalizedEmail || !password) {
     const error = new Error('Email and password are required.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (normalizedEmail.length > MAX_EMAIL_LENGTH || !EMAIL_PATTERN.test(normalizedEmail)) {
+    const error = new Error('Email must be a valid email address.');
     error.statusCode = 400;
     throw error;
   }

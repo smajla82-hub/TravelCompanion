@@ -56,7 +56,7 @@ Feature 10.2 adds simple email + password accounts, backend-only (the frontend `
 
 ### Auth endpoints
 
-- `POST /auth/register` — body `{ "email": string, "password": string }`. Creates a user (email is stored lower-cased, unique case-insensitively) and returns `{ token, user }`. `user` never includes the password hash.
+- `POST /auth/register` — body `{ "email": string, "password": string }`. Validates a basic email format and an 8+ character password, creates a user (email is stored lower-cased, unique case-insensitively), and returns `{ token, user }`. `user` never includes the password hash.
 - `POST /auth/login` — body `{ "email": string, "password": string }`. Returns `{ token, user }` on success, `401` on invalid credentials.
 - `GET /auth/me` — requires an `Authorization` header with the JWT in bearer-token format (`Authorization: bearer <token>`). Returns the current user's public profile (`id`, `email`, `createdAt`, `updatedAt`).
 

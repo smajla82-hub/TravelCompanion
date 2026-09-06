@@ -97,6 +97,22 @@ test('register rejects passwords shorter than the minimum length', async () => {
   }
 });
 
+test('register rejects malformed email addresses', async () => {
+  const { server, port } = await startServer();
+  try {
+    const response = await fetch(`http://127.0.0.1:${port}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'not-an-email', password: 'super-secret-1' }),
+    });
+    assert.equal(response.status, 400);
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});
+
 test('register handles concurrent duplicate registrations with a clean 409', async () => {
   const { server, port } = await startServer();
   try {
