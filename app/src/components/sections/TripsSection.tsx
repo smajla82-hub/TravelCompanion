@@ -48,7 +48,7 @@ export function TripsSection({
             .catch(reason => setSyncedError(
                 reason instanceof ApiError ? reason.message : "Unable to load online trips.",
             ));
-    }, []);
+    }, [setSyncedTrips, setSyncedError]);
 
     useEffect(() => {
         reloadSyncedTrips();
