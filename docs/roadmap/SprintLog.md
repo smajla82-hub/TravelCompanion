@@ -419,7 +419,13 @@ Introduce user accounts and shared/synced Trip data across multiple devices, rep
 
 **10.4a — Backend: Trip edit locking + last-write-wins fallback — DONE (backend-only).** Added a short-lived pessimistic edit lock with acquire/status/heartbeat/release APIs, Owner force-release, and lock enforcement for Trip and itinerary mutations. The limited timestamp fallback is available only when no lock is active and an offline client proves its known resource timestamp is current.
 
-**10.4b — Frontend integration — DONE.** The PWA now offers optional email/password login, an authenticated API client, a clearly separate synced/shared Trips section, lock/heartbeat/conflict feedback for synced-trip edits, and Owner invitation management with accept/reject deep links. Logged-out users retain the unchanged full local `localStorage` CRUD experience.
+**10.4b — Frontend integration — DONE.** The PWA now offers optional email/password login, an authenticated API client, lock/heartbeat/conflict feedback for synced-trip edits, and Owner invitation management with accept/reject deep links. Logged-out users retain the unchanged full local `localStorage` CRUD experience.
+
+**10.4c — Unified synced Trip experience — DONE.** Offline and Online Trips
+are presented in one My Trips list. Online Trips support all Trip fields,
+itinerary day/activity CRUD, role-based read-only access, and lock-aware
+mutations. RoadBook import supports full itinerary replacement for Online Trips
+with lock conflict and partial-failure messaging.
 
 **Next planned feature: 10.5 — Data migration.** The first real production Trip import into the backend will happen through this now-functional sync mechanism once the dedicated import tooling is built; no automatic local Trip migration is included in 10.4b.
 

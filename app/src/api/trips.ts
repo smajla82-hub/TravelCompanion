@@ -1,4 +1,5 @@
 import { apiRequest } from "./client";
+import type { ItineraryDay, ItineraryItem } from "../types";
 
 export type SyncedTrip = {
     id: string;
@@ -10,6 +11,13 @@ export type SyncedTrip = {
     travellers: number;
     status: "planning" | "active" | "finished";
 };
+
+export type SyncedItinerary = {
+    tripId: string;
+    days: ItineraryDay[];
+};
+
+type ItineraryItemPayload = Omit<ItineraryItem, "id">;
 
 export type TripMember = {
     userId: string;
@@ -58,6 +66,39 @@ export const SyncedTripApi = {
         apiRequest<SyncedTrip>(`/trips/${tripId}`, {
             method: "PUT",
             body: JSON.stringify(trip),
+        }),
+    itinerary: (tripId: string) =>
+        apiRequest<SyncedItinerary>(`/trips/${tripId}/itinerary`),
+    createDay: (tripId: string, day: Pick<ItineraryDay, "date" | "title">) =>
+        apiRequest<ItineraryDay>(`/trips/${tripId}/itinerary/days`, {
+            method: "POST",
+            body: JSON.stringify(day),
+        }),
+    updateDay: (tripId: string, dayId: string, day: Pick<ItineraryDay, "date" | "title">) =>
+        apiRequest<ItineraryDay>(`/trips/${tripId}/itinerary/days/${dayId}`, {
+            method: "PUT",
+            body: JSON.stringify(day),
+        }),
+    deleteDay: (tripId: string, dayId: string) =>
+        apiRequest(`/trips/${tripId}/itinerary/days/${dayId}`, { method: "DELETE" }),
+    createItem: (tripId: string, dayId: string, item: ItineraryItemPayload) =>
+        apiRequest<ItineraryItem>(`/trips/${tripId}/itinerary/days/${dayId}/items`, {
+            method: "POST",
+            body: JSON.stringify(item),
+        }),
+    updateItem: (
+        tripId: string,
+        dayId: string,
+        itemId: string,
+        item: Partial<ItineraryItemPayload>,
+    ) =>
+        apiRequest<ItineraryItem>(
+            `/trips/${tripId}/itinerary/days/${dayId}/items/${itemId}`,
+            { method: "PUT", body: JSON.stringify(item) },
+        ),
+    deleteItem: (tripId: string, dayId: string, itemId: string) =>
+        apiRequest(`/trips/${tripId}/itinerary/days/${dayId}/items/${itemId}`, {
+            method: "DELETE",
         }),
     acceptInvitation: (token: string) =>
         apiRequest(`/invitations/${token}/accept`, { method: "POST" }),

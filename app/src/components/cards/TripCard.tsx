@@ -9,12 +9,14 @@ import { getCountryFlag } from "../../utils/getCountryFlag";
 
 type TripCardProps = {
     trip: Trip;
+    badge?: string;
 
     onClick?: () => void;
 };
 
 export function TripCard({
     trip,
+    badge = "Offline",
     onClick,
 }: TripCardProps) {
     return (
@@ -22,6 +24,7 @@ export function TripCard({
             <Card>
                 <Stack gap="sm">
                     <h3>{getCountryFlag(trip.country)} {trip.destination}</h3>
+                    <p aria-label={`Trip source: ${badge}`}>{badge}</p>
 
                     <p>
                         {formatDate(trip.startDate)} –{" "}

@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import {
     Button,
@@ -16,6 +16,10 @@ import {
 
 import { TripService } from
     "../../services/TripService";
+import { AuthService } from "../../services/AuthService";
+import { SyncedTripApi, type SyncedTrip } from "../../api/trips";
+import { ApiError } from "../../api/client";
+import { lockConflictMessage } from "../sections/lockConflictMessage";
 
 import type {
     ItineraryDay,
@@ -26,8 +30,14 @@ import { RoadBookPreview } from
 
 export function RoadBookImport() {
 
-    const trips =
-        TripService.getAll();
+    const trips = TripService.getAll();
+    const [syncedTrips, setSyncedTrips] = useState<SyncedTrip[]>([]);
+
+    useEffect(() => {
+        if (AuthService.getToken()) {
+            void SyncedTripApi.list().then(setSyncedTrips).catch(() => setSyncedTrips([]));
+        }
+    }, []);
 
     const [selectedTripId, setSelectedTripId] =
         useState("");
@@ -76,7 +86,7 @@ export function RoadBookImport() {
         }
     }
 
-    function handleSave() {
+    async function handleSave() {
 
         if (!selectedTripId) {
             setError(
@@ -89,13 +99,44 @@ export function RoadBookImport() {
             return;
         }
 
-        TripService.setItinerary(
-            selectedTripId,
-            days
-        );
+        if (!selectedTripId.startsWith("online:")) {
+            TripService.setItinerary(selectedTripId, days);
+            setError("");
+            setSaved(true);
+            return;
+        }
 
-        setError("");
-        setSaved(true);
+        const tripId = selectedTripId.slice("online:".length);
+        let ownsLock = false;
+        try {
+            await SyncedTripApi.acquireLock(tripId);
+            ownsLock = true;
+            const existing = (await SyncedTripApi.itinerary(tripId)).days;
+            for (const day of existing) {
+                await SyncedTripApi.deleteDay(tripId, day.id);
+            }
+            for (const day of days) {
+                const createdDay = await SyncedTripApi.createDay(tripId, {
+                    date: day.date,
+                    title: day.title,
+                });
+                for (const item of day.items) {
+                    const payload = { ...item } as Omit<typeof item, "id">;
+                    delete (payload as { id?: string }).id;
+                    await SyncedTripApi.createItem(tripId, createdDay.id, payload);
+                }
+            }
+            setError("");
+            setSaved(true);
+        } catch (reason) {
+            setError(reason instanceof ApiError
+                ? `${lockConflictMessage(reason)} Import may be partially applied; reload the Trip and retry if needed.`
+                : "The online Trip itinerary could only be partially replaced. Reload the Trip and retry.");
+        } finally {
+            if (ownsLock) {
+                await SyncedTripApi.releaseLock(tripId).catch(() => undefined);
+            }
+        }
     }
 
     function handleClear() {
@@ -144,7 +185,16 @@ export function RoadBookImport() {
                             key={trip.id}
                             value={trip.id}
                         >
-                            {trip.destination}
+                            Offline — {trip.destination}
+                            {" — "}
+                            {trip.startDate}
+                            {" – "}
+                            {trip.endDate}
+                        </option>
+                    ))}
+                    {syncedTrips.map(trip => (
+                        <option key={`online-${trip.id}`} value={`online:${trip.id}`}>
+                            Online — {trip.name || trip.destination}
                             {" — "}
                             {trip.startDate}
                             {" – "}
@@ -212,7 +262,7 @@ export function RoadBookImport() {
 
                         <Button
                             type="button"
-                            onClick={handleSave}
+                            onClick={() => void handleSave()}
                         >
                             Save to Trip
                         </Button>
