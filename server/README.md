@@ -49,7 +49,7 @@ Expected response:
 
 Feature 10.2 adds simple email + password accounts, backend-only (the frontend `app/` is not wired up to it yet and continues to use `localStorage`).
 
-- Passwords are hashed with `bcryptjs` before being stored — plaintext passwords are never persisted.
+- Passwords are hashed with `bcryptjs` before being stored — plaintext passwords are never persisted. A minimum password length of 8 characters is enforced on registration.
 - On successful register/login, the API issues a JSON Web Token (JWT) signed with the `JWT_SECRET` environment variable. Tokens expire after `JWT_EXPIRES_IN` (defaults to `7d`, i.e. 7 days).
 - All `/trips` routes (including nested itinerary routes) now require a valid JWT and are scoped to the authenticated user: `GET /trips` only returns that user's own trips, and `GET/PUT/DELETE` on a specific trip (or its itinerary) returns `404` if the trip doesn't belong to the caller.
 - `GET /health` remains public and unauthenticated (used by Caddy/infra monitoring).

@@ -81,6 +81,47 @@ test('register rejects duplicate emails', async () => {
   }
 });
 
+test('register rejects passwords shorter than the minimum length', async () => {
+  const { server, port } = await startServer();
+  try {
+    const response = await fetch(`http://127.0.0.1:${port}/auth/register`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ email: 'short@example.com', password: 'short1' }),
+    });
+    assert.equal(response.status, 400);
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});
+
+test('register handles concurrent duplicate registrations with a clean 409', async () => {
+  const { server, port } = await startServer();
+  try {
+    const body = JSON.stringify({ email: 'race@example.com', password: 'super-secret-1' });
+    const [first, second] = await Promise.all([
+      fetch(`http://127.0.0.1:${port}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      }),
+      fetch(`http://127.0.0.1:${port}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body,
+      }),
+    ]);
+    const statuses = [first.status, second.status].sort();
+    assert.deepEqual(statuses, [201, 409]);
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});
+
 test('login succeeds with correct credentials and fails with wrong password', async () => {
   const { server, port } = await startServer();
   try {

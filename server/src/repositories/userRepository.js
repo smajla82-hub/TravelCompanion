@@ -5,6 +5,7 @@ import { getDb } from '../db/db.js';
 const db = getDb();
 
 const SALT_ROUNDS = 10;
+const MIN_PASSWORD_LENGTH = 8;
 
 function mapUserRow(row) {
   if (!row) {
@@ -39,6 +40,12 @@ export function createUser({ email, password }) {
     throw error;
   }
 
+  if (String(password).length < MIN_PASSWORD_LENGTH) {
+    const error = new Error(`Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`);
+    error.statusCode = 400;
+    throw error;
+  }
+
   if (getUserByEmail(normalizedEmail)) {
     const error = new Error('An account with this email already exists.');
     error.statusCode = 409;
@@ -49,9 +56,22 @@ export function createUser({ email, password }) {
   const now = new Date().toISOString();
   const userId = randomUUID();
 
-  db.prepare(
-    'INSERT INTO users (id, email, password_hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?)'
-  ).run(userId, normalizedEmail, passwordHash, now, now);
+  try {
+    db.prepare(
+      'INSERT INTO users (id, email, password_hash, created_at, updated_at) VALUES (?, ?, ?, ?, ?)'
+    ).run(userId, normalizedEmail, passwordHash, now, now);
+  } catch (insertError) {
+    // Guards against a race where two concurrent registrations for the same
+    // email both pass the getUserByEmail check above before either inserts;
+    // the unique index on `email` still enforces correctness, we just need
+    // to surface it as a clean 409 instead of a raw SQLite constraint error.
+    if (insertError.code === 'SQLITE_CONSTRAINT_UNIQUE' || insertError.code === 'SQLITE_CONSTRAINT') {
+      const error = new Error('An account with this email already exists.');
+      error.statusCode = 409;
+      throw error;
+    }
+    throw insertError;
+  }
 
   return getUserById(userId);
 }
