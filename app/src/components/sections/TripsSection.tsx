@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useNavigate } from "react-router-dom";
 
@@ -39,7 +39,7 @@ export function TripsSection({
     const [syncedTrips, setSyncedTrips] = useState<SyncedTrip[]>([]);
     const [syncedError, setSyncedError] = useState("");
 
-    useEffect(() => {
+    const reloadSyncedTrips = useCallback(() => {
         if (!AuthService.getToken()) {
             return;
         }
@@ -48,7 +48,11 @@ export function TripsSection({
             .catch(reason => setSyncedError(
                 reason instanceof ApiError ? reason.message : "Unable to load online trips.",
             ));
-    }, []);
+    }, [setSyncedTrips, setSyncedError]);
+
+    useEffect(() => {
+        reloadSyncedTrips();
+    }, [reloadSyncedTrips]);
 
     const [selectedTrip, setSelectedTrip] =
         useState<Trip | null>(null);
@@ -89,12 +93,22 @@ export function TripsSection({
         setDeletingTrip(null);
     }
 
-    function confirmDelete() {
+    async function confirmDelete() {
         if (!deletingTrip) {
             return;
         }
 
-        TripService.delete(deletingTrip.id);
+        if (deletingTrip.source === "online") {
+            try {
+                await SyncedTripApi.delete(deletingTrip.id);
+                setSyncedTrips(current => current.filter(item => item.id !== deletingTrip.id));
+            } catch (reason) {
+                setSyncedError(reason instanceof ApiError ? reason.message : "Unable to delete online trip.");
+                return;
+            }
+        } else {
+            TripService.delete(deletingTrip.id);
+        }
 
         setDeletingTrip(null);
         onTripChanged?.();
@@ -172,12 +186,6 @@ export function TripsSection({
                                 setActiveTrip();
                             }
                         }}
-                        onChanged={updated => {
-                            if (updated.source === "online") {
-                                setSyncedTrips(current => current.map(item => item.id === updated.id ? { ...item, ...updated } : item));
-                                setSelectedTrip(updated);
-                            }
-                        }}
                     />
                 )}
             </Modal>
@@ -188,7 +196,10 @@ export function TripsSection({
                 initialTrip={
                     editingTrip ?? undefined
                 }
-                onTripCreated={onTripChanged}
+                onTripCreated={() => {
+                    onTripChanged?.();
+                    reloadSyncedTrips();
+                }}
             />
 
             <Modal
@@ -210,7 +221,7 @@ export function TripsSection({
 
                             <Button
                                 type="button"
-                                onClick={confirmDelete}
+                                onClick={() => void confirmDelete()}
                             >
                                 Delete
                             </Button>
