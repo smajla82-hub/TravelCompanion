@@ -64,7 +64,17 @@ function localAdapter(tripId: string): TripAdapter {
     };
 }
 
-function onlineTrip(trip: SyncedTrip): Trip {
+/**
+ * Maps a server Trip to the client Trip representation. The server tracks the
+ * active Trip with the `isActive` flag, so it wins over the stored `status`.
+ */
+export function toOnlineTrip(trip: SyncedTrip): Trip {
+    const status = trip.isActive === undefined
+        ? trip.status
+        : trip.isActive
+            ? "active"
+            : trip.status === "active" ? "planning" : trip.status;
+
     return {
         id: trip.id,
         destination: trip.destination,
@@ -72,12 +82,14 @@ function onlineTrip(trip: SyncedTrip): Trip {
         startDate: trip.startDate,
         endDate: trip.endDate,
         travellers: trip.travellers,
-        status: trip.status,
+        status,
         itinerary: [],
         source: "online",
         name: trip.name,
     };
 }
+
+const onlineTrip = toOnlineTrip;
 
 export function createTripAdapter(trip: Pick<Trip, "id" | "source"> | SyncedTrip): TripAdapter {
     if ("source" in trip

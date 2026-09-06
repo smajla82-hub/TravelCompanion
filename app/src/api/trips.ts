@@ -10,6 +10,7 @@ export type SyncedTrip = {
     endDate: string;
     travellers: number;
     status: "planning" | "active" | "finished";
+    isActive?: boolean;
 };
 
 export type SyncedItinerary = {

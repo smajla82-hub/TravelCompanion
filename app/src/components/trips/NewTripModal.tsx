@@ -8,6 +8,7 @@ import { TripService } from "../../services/TripService";
 import { AuthService } from "../../services/AuthService";
 import { SyncedTripApi } from "../../api/trips";
 import { createTripAdapter } from "../../services/TripAdapter";
+import { OnlineTripStore } from "../../services/OnlineTripStore";
 import {
     counterClassName,
     exceedsTextLimit,
@@ -97,7 +98,7 @@ export function NewTripModal({
             };
 
             if (initialTrip.source === "online") {
-                await createTripAdapter(initialTrip).updateTrip({
+                const saved = await createTripAdapter(initialTrip).updateTrip({
                     ...initialTrip,
                     name: initialTrip.name ?? destination,
                     destination,
@@ -106,6 +107,7 @@ export function NewTripModal({
                     endDate,
                     travellers,
                 });
+                OnlineTripStore.applyTrip(saved);
             } else {
                 TripService.update(updatedTrip);
             }
@@ -128,6 +130,7 @@ export function NewTripModal({
                     ...trip,
                     name: destination,
                 });
+                await OnlineTripStore.refresh();
             } else {
                 TripService.add(trip);
             }
