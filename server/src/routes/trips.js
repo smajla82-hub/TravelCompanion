@@ -30,6 +30,14 @@ function ensureExists(value, message) {
   }
 }
 
+function isValidEmail(email) {
+  if (email.length > 254 || /\s/.test(email)) {
+    return false;
+  }
+  const [local, domain, extra] = email.split('@');
+  return Boolean(local && domain && !extra && domain.includes('.'));
+}
+
 router.get('/', (req, res) => {
   const trips = repo.listTrips(req.user.id);
   res.json(trips);
@@ -128,7 +136,7 @@ router.delete('/:tripId/itinerary/days/:dayId/items/:itemId', requireTripRole(['
 router.post('/:tripId/invitations', requireTripRole(['owner']), (req, res) => {
   const email = String(req.body.email ?? '').trim();
   const role = req.body.role;
-  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || !['editor', 'viewer'].includes(role)) {
+  if (!isValidEmail(email) || !['editor', 'viewer'].includes(role)) {
     return res.status(400).json({ error: 'A valid email and an editor or viewer role are required.' });
   }
   const expiresAt = new Date(Date.now() + config.invitationExpiresInDays * 24 * 60 * 60 * 1000).toISOString();

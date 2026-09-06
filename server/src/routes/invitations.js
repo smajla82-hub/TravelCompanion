@@ -1,9 +1,19 @@
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import { requireAuth } from '../middleware/auth.js';
 import * as invitations from '../repositories/invitationRepository.js';
+import { RATE_LIMIT_WINDOW_MS } from '../middleware/rateLimitWindow.js';
 
 const router = express.Router();
 
+const invitationsLimiter = rateLimit({
+  windowMs: RATE_LIMIT_WINDOW_MS,
+  limit: 300,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+router.use(invitationsLimiter);
 router.use(requireAuth);
 
 function respond(handler) {
