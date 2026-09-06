@@ -1,9 +1,20 @@
 import express from 'express';
+import rateLimit from 'express-rate-limit';
 import * as repo from '../repositories/tripRepository.js';
 import { requireAuth } from '../middleware/auth.js';
 
 const router = express.Router();
 
+// General-purpose limiter for all authenticated Trip/itinerary routes, to
+// avoid unbounded request volume from a single client.
+const tripsLimiter = rateLimit({
+  windowMs: 15 * 60 * 1000,
+  limit: 600,
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
+router.use(tripsLimiter);
 router.use(requireAuth);
 
 function ensureExists(value, message) {

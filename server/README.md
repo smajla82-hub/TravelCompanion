@@ -69,7 +69,11 @@ curl http://localhost:3001/trips \
 
 ### `JWT_SECRET`
 
-`JWT_SECRET` **must** be set to a long, random, unique value in production — never deploy with the `.env.example` placeholder. This follows the same pattern as `ALLOWED_CORS_ORIGIN`: the placeholder ships in `.env.example` for local development only, and the real production value is set manually by the user on their server (see the deployment runbook below). There is no password reset / email verification flow in this initial version, and no OAuth/social login — both are explicitly out of scope for 10.2 per the roadmap.
+`JWT_SECRET` **must** be set to a long, random, unique value in production — never deploy with the `.env.example` placeholder. This follows the same pattern as `ALLOWED_CORS_ORIGIN`: the placeholder ships in `.env.example` for local development only, and the real production value is set manually by the user on their server (see the deployment runbook below). If `NODE_ENV=production` and `JWT_SECRET` is missing or still set to the development placeholder, the server refuses to start, so misconfiguration fails loudly instead of silently issuing forgeable tokens. There is no password reset / email verification flow in this initial version, and no OAuth/social login — both are explicitly out of scope for 10.2 per the roadmap.
+
+### Rate limiting
+
+`POST /auth/register` and `POST /auth/login` are rate-limited per IP (20 requests / 15 minutes) to reduce brute-force/credential-stuffing risk. `GET /auth/me` and all `/trips` routes use a more permissive general limiter, since they already require a valid JWT.
 
 ## API surface
 

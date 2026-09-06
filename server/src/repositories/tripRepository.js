@@ -108,9 +108,6 @@ export function listTrips(userId) {
 }
 
 export function getTripById(tripId, userId) {
-  if (userId === undefined) {
-    return mapTripRow(db.prepare('SELECT * FROM trips WHERE id = ?').get(tripId));
-  }
   return mapTripRow(db.prepare('SELECT * FROM trips WHERE id = ? AND user_id = ?').get(tripId, userId));
 }
 
