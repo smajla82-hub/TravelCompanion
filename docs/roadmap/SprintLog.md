@@ -389,7 +389,7 @@ Completed the visual consistency review against the approved 9.7B baseline.
 
 **Current Milestone:** 9.x — Final UI Look
 **Completed through:** 9.8B
-**Status:** 9.8E / My Trips visual polish and 9.8F / Settings visual polish remain planned. In parallel, Feature 10.1 (backend foundation) is fully DONE, including production deployment; Feature 10.2 (Authentication, backend-only) is now also DONE; 10.3 — Shared Trip access is the next planned feature.
+**Status:** 9.8E / My Trips visual polish and 9.8F / Settings visual polish remain planned. In parallel, Features 10.1 (backend foundation), 10.2 (Authentication), and 10.3 (Shared Trip access) are DONE backend-only; 10.4 — Sync & conflict handling is next.
 
 Next:
 
@@ -408,6 +408,16 @@ Introduce user accounts and shared/synced Trip data across multiple devices, rep
 **10.2 — Authentication — DONE (backend-only).** `server/` now has email + password accounts (`users` table, `userRepository.js`), password hashing via `bcryptjs`, JWT issuance/verification via `jsonwebtoken` (`POST /auth/register`, `POST /auth/login`, `GET /auth/me`), and an auth middleware protecting all `/trips` routes with per-account data isolation (each user only sees/edits their own Trips; `trips.user_id` added via an idempotent startup migration). `GET /health` remains public. The frontend (`app/`) is unchanged — no login UI was added, and it continues to run fully offline-first on `localStorage`; frontend integration remains deferred to a later step.
 
 **Next planned feature: 10.3 — Shared Trip access.**
+
+## Feature 10.3 — Shared Trip access
+**Status:** DONE (backend-only)
+
+- Added `trip_members` with one Owner (the original `trips.user_id`) and optional Editor/Viewer roles; the startup migration backfills an Owner membership for existing owned Trips.
+- Added expiring, email-bound invitations with accept, reject, revoke, and audit/list APIs. The returned token/accept link is shared manually by the Owner; email/SMS delivery is explicitly out of scope.
+- Server-side authorization permits Owner/Editor content changes, read-only Viewer access, and Owner-only invitation, membership, and Trip deletion management. `GET /trips` now includes Trips where the caller is a member.
+- The frontend remains unchanged and localStorage-based.
+
+**Next planned feature: 10.4 — Sync & conflict handling.**
 
 ## 11.x+ — Extended Travel Companion (PLANNED)
 

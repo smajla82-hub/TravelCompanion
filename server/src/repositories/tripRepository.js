@@ -1,5 +1,6 @@
 import { randomUUID } from 'node:crypto';
 import { getDb } from '../db/db.js';
+import { addTripMember } from './tripMemberRepository.js';
 
 const db = getDb();
 
@@ -104,17 +105,29 @@ function normalizeItineraryItemPayload(payload = {}) {
 }
 
 export function listTrips(userId) {
-  return db.prepare('SELECT * FROM trips WHERE user_id = ? ORDER BY updated_at DESC').all(userId).map(mapTripRow);
+  return db.prepare(
+    `SELECT trips.* FROM trips
+     JOIN trip_members ON trip_members.trip_id = trips.id
+     WHERE trip_members.user_id = ?
+     ORDER BY trips.updated_at DESC`,
+  ).all(userId).map(mapTripRow);
 }
 
 export function getTripById(tripId, userId) {
-  return mapTripRow(db.prepare('SELECT * FROM trips WHERE id = ? AND user_id = ?').get(tripId, userId));
+  return mapTripRow(db.prepare(
+    `SELECT trips.* FROM trips
+     JOIN trip_members ON trip_members.trip_id = trips.id
+     WHERE trips.id = ? AND trip_members.user_id = ?`,
+  ).get(tripId, userId));
 }
 
 export function getActiveTrip(userId) {
-  return mapTripRow(
-    db.prepare('SELECT * FROM trips WHERE is_active = 1 AND user_id = ? ORDER BY updated_at DESC LIMIT 1').get(userId),
-  );
+  return mapTripRow(db.prepare(
+    `SELECT trips.* FROM trips
+     JOIN trip_members ON trip_members.trip_id = trips.id
+     WHERE trips.is_active = 1 AND trip_members.user_id = ?
+     ORDER BY trips.updated_at DESC LIMIT 1`,
+  ).get(userId));
 }
 
 export function createTrip(payload = {}, userId) {
@@ -128,24 +141,16 @@ export function createTrip(payload = {}, userId) {
   const now = new Date().toISOString();
   const tripId = randomUUID();
 
-  db.prepare(
-    `INSERT INTO trips (id, name, destination, country, start_date, end_date, travellers, cover_image, status, is_active, user_id, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(
-    tripId,
-    data.name,
-    data.destination,
-    data.country,
-    data.startDate,
-    data.endDate,
-    data.travellers,
-    data.coverImage,
-    data.status,
-    data.isActive,
-    userId,
-    now,
-    now,
-  );
+  db.transaction(() => {
+    db.prepare(
+      `INSERT INTO trips (id, name, destination, country, start_date, end_date, travellers, cover_image, status, is_active, user_id, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+    ).run(
+      tripId, data.name, data.destination, data.country, data.startDate, data.endDate,
+      data.travellers, data.coverImage, data.status, data.isActive, userId, now, now,
+    );
+    addTripMember(tripId, userId, 'owner');
+  })();
 
   return getTripById(tripId, userId);
 }
@@ -164,7 +169,7 @@ export function updateTrip(tripId, payload = {}, userId) {
   db.prepare(
     `UPDATE trips
      SET name = ?, destination = ?, country = ?, start_date = ?, end_date = ?, travellers = ?, cover_image = ?, status = ?, is_active = ?, updated_at = ?
-     WHERE id = ? AND user_id = ?`
+     WHERE id = ?`
   ).run(
     data.name,
     data.destination,
@@ -177,7 +182,6 @@ export function updateTrip(tripId, payload = {}, userId) {
     data.isActive,
     now,
     tripId,
-    userId,
   );
 
   return getTripById(tripId, userId);
@@ -191,7 +195,7 @@ export function deleteTrip(tripId, userId) {
     throw error;
   }
 
-  db.prepare('DELETE FROM trips WHERE id = ? AND user_id = ?').run(tripId, userId);
+  db.prepare('DELETE FROM trips WHERE id = ?').run(tripId);
   return existing;
 }
 
@@ -203,11 +207,13 @@ export function setActiveTrip(tripId, userId) {
     throw error;
   }
 
-  db.prepare('UPDATE trips SET is_active = 0 WHERE user_id = ?').run(userId);
-  db.prepare('UPDATE trips SET is_active = 1, updated_at = ? WHERE id = ? AND user_id = ?').run(
+  db.prepare(
+    `UPDATE trips SET is_active = 0
+     WHERE id IN (SELECT trip_id FROM trip_members WHERE user_id = ?)`,
+  ).run(userId);
+  db.prepare('UPDATE trips SET is_active = 1, updated_at = ? WHERE id = ?').run(
     new Date().toISOString(),
     tripId,
-    userId,
   );
   return getTripById(tripId, userId);
 }

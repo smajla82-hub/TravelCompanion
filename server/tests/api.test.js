@@ -295,6 +295,7 @@ test('a user cannot access another user\'s trip, and only sees their own trips',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ email, password: 'super-secret-1' }),
       });
+
       const { token } = await response.json();
       return { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token };
     };
@@ -332,6 +333,137 @@ test('a user cannot access another user\'s trip, and only sees their own trips',
     const ownerTrips = await ownerListResponse.json();
     assert.equal(ownerTrips.length, 1);
     assert.equal(ownerTrips[0].id, ownerTrip.id);
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});
+
+test('shared trip invitations and roles enforce access', async () => {
+  const { server, port } = await startServer();
+  try {
+    const registerUser = async (email) => {
+      const response = await fetch(`http://127.0.0.1:${port}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: 'super-secret-1' }),
+      });
+      const { token, user } = await response.json();
+      return { user, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token } };
+    };
+    const owner = await registerUser('shared-owner@example.com');
+    const editor = await registerUser('shared-editor@example.com');
+    const viewer = await registerUser('shared-viewer@example.com');
+    const stranger = await registerUser('shared-stranger@example.com');
+
+    const createResponse = await fetch(`http://127.0.0.1:${port}/trips`, {
+      method: 'POST',
+      headers: owner.headers,
+      body: JSON.stringify({ name: 'Shared trip', startDate: '2026-10-01', endDate: '2026-10-03' }),
+    });
+    const trip = await createResponse.json();
+
+    const invite = async (user, role) => {
+      const response = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/invitations`, {
+        method: 'POST',
+        headers: owner.headers,
+        body: JSON.stringify({ email: user.user.email, role }),
+      });
+      assert.equal(response.status, 201);
+      return response.json();
+    };
+    const editorInvitation = await invite(editor, 'editor');
+    const viewerInvitation = await invite(viewer, 'viewer');
+    assert.ok(editorInvitation.token);
+    assert.equal(editorInvitation.acceptLink, `/invitations/${editorInvitation.token}/accept`);
+
+    const wrongRecipient = await fetch(`http://127.0.0.1:${port}/invitations/${editorInvitation.token}/accept`, {
+      method: 'POST', headers: stranger.headers,
+    });
+    assert.equal(wrongRecipient.status, 403);
+
+    const acceptEditor = await fetch(`http://127.0.0.1:${port}/invitations/${editorInvitation.token}/accept`, {
+      method: 'POST', headers: editor.headers,
+    });
+    assert.equal(acceptEditor.status, 200);
+    assert.equal((await acceptEditor.json()).status, 'accepted');
+
+    const rejectViewer = await fetch(`http://127.0.0.1:${port}/invitations/${viewerInvitation.token}/reject`, {
+      method: 'POST', headers: viewer.headers,
+    });
+    assert.equal(rejectViewer.status, 200);
+    assert.equal((await rejectViewer.json()).status, 'rejected');
+
+    const editorTrips = await fetch(`http://127.0.0.1:${port}/trips`, { headers: editor.headers });
+    assert.equal((await editorTrips.json()).some((entry) => entry.id === trip.id), true);
+    const editorUpdate = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}`, {
+      method: 'PUT', headers: editor.headers,
+      body: JSON.stringify({ name: 'Edited shared trip' }),
+    });
+    assert.equal(editorUpdate.status, 200);
+    const editorInvite = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/invitations`, {
+      method: 'POST', headers: editor.headers,
+      body: JSON.stringify({ email: 'nope@example.com', role: 'viewer' }),
+    });
+    assert.equal(editorInvite.status, 403);
+    const editorDelete = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}`, {
+      method: 'DELETE', headers: editor.headers,
+    });
+    assert.equal(editorDelete.status, 403);
+
+    const secondViewer = await registerUser('second-viewer@example.com');
+    const secondViewerInvitation = await invite(secondViewer, 'viewer');
+    const acceptViewer = await fetch(`http://127.0.0.1:${port}/invitations/${secondViewerInvitation.token}/accept`, {
+      method: 'POST', headers: secondViewer.headers,
+    });
+    assert.equal(acceptViewer.status, 200);
+    const viewerRead = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/itinerary`, { headers: secondViewer.headers });
+    assert.equal(viewerRead.status, 200);
+    const viewerWrite = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days`, {
+      method: 'POST', headers: secondViewer.headers, body: JSON.stringify({ date: '2026-10-01' }),
+    });
+    assert.equal(viewerWrite.status, 403);
+
+    const membersResponse = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/members`, { headers: editor.headers });
+    const tripMembers = await membersResponse.json();
+    assert.equal(tripMembers.length, 3);
+    const viewerMember = tripMembers.find((member) => member.userId === secondViewer.user.id);
+    const changeRole = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/members/${viewerMember.userId}`, {
+      method: 'PUT', headers: owner.headers, body: JSON.stringify({ role: 'editor' }),
+    });
+    assert.equal(changeRole.status, 200);
+    const removeMember = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/members/${viewerMember.userId}`, {
+      method: 'DELETE', headers: owner.headers,
+    });
+    assert.equal(removeMember.status, 200);
+    const removeOwner = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/members/${owner.user.id}`, {
+      method: 'DELETE', headers: owner.headers,
+    });
+    assert.equal(removeOwner.status, 400);
+
+    const revocable = await invite(stranger, 'viewer');
+    const revoke = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/invitations/${revocable.id}`, {
+      method: 'DELETE', headers: owner.headers,
+    });
+    assert.equal(revoke.status, 200);
+    const revokedAccept = await fetch(`http://127.0.0.1:${port}/invitations/${revocable.token}/accept`, {
+      method: 'POST', headers: stranger.headers,
+    });
+    assert.equal(revokedAccept.status, 400);
+
+    const expired = await invite(stranger, 'viewer');
+    const { getDb } = await import('../src/db/db.js');
+    getDb().prepare('UPDATE invitations SET expires_at = ? WHERE id = ?').run('2000-01-01T00:00:00.000Z', expired.id);
+    const expiredReject = await fetch(`http://127.0.0.1:${port}/invitations/${expired.token}/reject`, {
+      method: 'POST', headers: stranger.headers,
+    });
+    assert.equal(expiredReject.status, 400);
+    const invitationList = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/invitations`, { headers: owner.headers });
+    assert.equal((await invitationList.json()).find((entry) => entry.id === expired.id).status, 'expired');
+
+    const strangerTrip = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}`, { headers: stranger.headers });
+    assert.equal(strangerTrip.status, 404);
   } finally {
     await new Promise((resolve, reject) => {
       server.close((error) => (error ? reject(error) : resolve()));

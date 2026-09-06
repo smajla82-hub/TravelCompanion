@@ -26,6 +26,15 @@ if (!hasUserId) {
   db.exec('CREATE INDEX IF NOT EXISTS idx_trips_user_id ON trips (user_id)');
 }
 
+// Migration: retain access to trips created before shared memberships existed.
+// INSERT OR IGNORE makes this safe on every startup and preserves member rows.
+db.exec(
+  `INSERT OR IGNORE INTO trip_members (trip_id, user_id, role, created_at, updated_at)
+   SELECT id, user_id, 'owner', created_at, updated_at
+   FROM trips
+   WHERE user_id IS NOT NULL`,
+);
+
 export function getDb() {
   return db;
 }

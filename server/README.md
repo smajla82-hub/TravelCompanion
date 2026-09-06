@@ -1,6 +1,6 @@
 # Travel Companion Backend API
 
-This directory contains the self-hosted backend foundation for Milestone 7 / Features 10.1 and 10.2.
+This directory contains the self-hosted backend foundation for Milestone 7 / Features 10.1–10.3.
 
 ## Architecture choice
 
@@ -51,7 +51,7 @@ Feature 10.2 adds simple email + password accounts, backend-only (the frontend `
 
 - Passwords are hashed with `bcryptjs` before being stored — plaintext passwords are never persisted. A minimum password length of 8 characters is enforced on registration.
 - On successful register/login, the API issues a JSON Web Token (JWT) signed with the `JWT_SECRET` environment variable. Tokens expire after `JWT_EXPIRES_IN` (defaults to `7d`, i.e. 7 days).
-- All `/trips` routes (including nested itinerary routes) now require a valid JWT and are scoped to the authenticated user: `GET /trips` only returns that user's own trips, and `GET/PUT/DELETE` on a specific trip (or its itinerary) returns `404` if the trip doesn't belong to the caller.
+- All `/trips` routes (including nested itinerary routes) require a valid JWT.
 - `GET /health` remains public and unauthenticated (used by Caddy/infra monitoring).
 
 ### Auth endpoints
@@ -81,11 +81,11 @@ The API intentionally mirrors the current Trip/itinerary domain model without co
 
 ### Trip endpoints (require an `Authorization` header with a bearer-token JWT)
 
-- `GET /trips` — list the authenticated user's trips
+- `GET /trips` — list trips the caller owns or belongs to
 - `POST /trips` — create trip (owned by the authenticated user)
-- `GET /trips/:id` — fetch trip by ID (must belong to the authenticated user)
-- `PUT /trips/:id` — update trip (must belong to the authenticated user)
-- `DELETE /trips/:id` — delete trip (must belong to the authenticated user)
+- `GET /trips/:id` — fetch a trip visible to the caller
+- `PUT /trips/:id` — update a trip (Owner or Editor)
+- `DELETE /trips/:id` — delete a trip (Owner only)
 - `GET /trips/active` — fetch the authenticated user's active trip
 - `PUT /trips/:id/active` — set the active trip
 
@@ -100,6 +100,27 @@ The API intentionally mirrors the current Trip/itinerary domain model without co
 - `POST /trips/:tripId/itinerary/days/:dayId/items` — add itinerary item
 - `PUT /trips/:tripId/itinerary/days/:dayId/items/:itemId` — update item
 - `DELETE /trips/:tripId/itinerary/days/:dayId/items/:itemId` — delete item
+
+### Shared access endpoints (require an `Authorization` header with a bearer-token JWT)
+
+| Role | Read trip/itinerary | Edit trip/itinerary | Manage invitations/members | Delete trip |
+| --- | --- | --- | --- | --- |
+| Owner | Yes | Yes | Yes | Yes |
+| Editor | Yes | Yes | No | No |
+| Viewer | Yes | No | No | No |
+
+A Trip has exactly one Owner: its original creator. Ownership transfer is not supported.
+
+- `POST /trips/:tripId/invitations` — Owner only; body `{ "email": string, "role": "editor" | "viewer" }`. Returns the pending invitation and its token/accept link.
+- `GET /trips/:tripId/invitations` — Owner only; list invitations, including completed/revoked/expired invitations.
+- `DELETE /trips/:tripId/invitations/:invitationId` — Owner only; revoke a pending invitation.
+- `POST /invitations/:token/accept` — authenticated recipient only; the authenticated email must match the invitation email. Adds the recipient as a member.
+- `POST /invitations/:token/reject` — authenticated recipient only; marks the invitation rejected.
+- `GET /trips/:tripId/members` — any member; list members with user ID, email and role.
+- `PUT /trips/:tripId/members/:userId` — Owner only; body `{ "role": "editor" | "viewer" }`.
+- `DELETE /trips/:tripId/members/:userId` — Owner only; remove a non-owner member.
+
+Invitations expire after `INVITATION_EXPIRES_IN_DAYS` (default: `7`). Delivery by email, SMS, or any other service is deliberately out of scope: the API returns the token/accept link, which the Owner shares manually through WhatsApp or another messaging channel.
 
 ### Python- or shell-friendly example
 
@@ -130,11 +151,13 @@ The initial schema covers:
 
 - `users` — accounts (email unique, case-insensitive; password stored only as a bcrypt hash)
 - `trips` — now includes a nullable `user_id` foreign key linking a trip to its owning account
+- `trip_members` — one Owner membership for each Trip plus optional Editor/Viewer memberships
+- `invitations` — email-bound, expiring invitation tokens and their status
 - `itinerary_days`
 - `itinerary_items`
 - active-trip state via `trips.is_active`
 
-Since `trips` existed before Feature 10.2, `src/db/db.js` also runs a small idempotent migration on every startup: if the `trips` table doesn't yet have a `user_id` column (i.e. a database created under 10.1), it adds the column via `ALTER TABLE` and creates its index. This leaves any pre-existing 10.1-era trips with `user_id = NULL` (unowned) rather than failing — there is no backfill/ownership-assignment step in this PR.
+Since `trips` existed before Feature 10.2, `src/db/db.js` also runs a small idempotent migration on every startup: if the `trips` table doesn't yet have a `user_id` column (i.e. a database created under 10.1), it adds the column via `ALTER TABLE` and creates its index. It also backfills an Owner `trip_members` row for every existing Trip whose `user_id` is set.
 
 This is intentionally a minimal schema evolution for the backend foundation; future features such as shared Trip access (10.3) will extend it further without a rewrite of the existing route structure.
 

@@ -139,8 +139,8 @@ Proposed scope:
   - This is backend-only, per the roadmap: the frontend (`app/`) is unchanged and continues to operate fully offline-first on `localStorage`; no login UI or API wiring was added to the frontend in this feature. Actual frontend integration remains deferred to a later step.
   - No OAuth/social login and no password reset / email verification flow — out of scope for this initial version, as planned.
 
-- **10.3 — Shared Trip access**
-  - Mechanism for a Trip to be shared/visible across multiple accounts (e.g. co-travelers), since a Trip may be jointly planned/edited by more than one person. Exact sharing model (invite-by-email, shareable link, explicit collaborator list) to be defined during this feature's planning.
+- **10.3 — Shared Trip access** — **DONE** (backend-only)
+  - Trips have one Owner and optional Editor/Viewer members. Owners create expiring, email-bound invitations and manually share the returned token/accept link; delivery by email/SMS is out of scope. Server-side roles protect Trip, itinerary, membership and invitation actions.
 
 - **10.4 — Sync & conflict handling**
   - Define and implement the initial (deliberately simple) conflict-resolution strategy for concurrent/offline edits to the same Trip from multiple devices — the current working assumption is a **last-write-wins** strategy based on server-recorded timestamps for the initial version, with more sophisticated per-field merging or explicit conflict-resolution UI deferred as future work.
@@ -304,7 +304,7 @@ Verified test data currently imports as:
 1. 9.8E — My Trips visual polish
 2. 9.8F — Settings visual polish
 3. 9.8G — Final responsive / QA pass, if still appropriate
-4. 10.x — Shared Persistence & Accounts (backend architecture confirmed — see `docs/decisions/ADR-003-Backend-Architecture.md`; **10.1 — Architecture decision & backend foundation is DONE**; **10.2 — Authentication is DONE (backend-only)**; next up is **10.3 — Shared Trip access**)
+4. 10.x — Shared Persistence & Accounts (backend architecture confirmed — see `docs/decisions/ADR-003-Backend-Architecture.md`; **10.1 — Architecture decision & backend foundation, 10.2 — Authentication, and 10.3 — Shared Trip access are DONE (backend-only)**; next up is **10.4 — Sync & conflict handling**)
 5. 11.x+ — Extended travel functionality
 
 The order remains intentional: the mobile experience was validated on a real device, the visual design is finished before committing to the larger architectural shift of introducing a server-side component, accounts and multi-device sync, and that shared-persistence foundation is in place before the future Extended Travel Companion modules are built on top of it.
