@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 import { useNavigate } from "react-router-dom";
 
@@ -39,7 +39,7 @@ export function TripsSection({
     const [syncedTrips, setSyncedTrips] = useState<SyncedTrip[]>([]);
     const [syncedError, setSyncedError] = useState("");
 
-    useEffect(() => {
+    const reloadSyncedTrips = useCallback(() => {
         if (!AuthService.getToken()) {
             return;
         }
@@ -49,6 +49,10 @@ export function TripsSection({
                 reason instanceof ApiError ? reason.message : "Unable to load online trips.",
             ));
     }, []);
+
+    useEffect(() => {
+        reloadSyncedTrips();
+    }, [reloadSyncedTrips]);
 
     const [selectedTrip, setSelectedTrip] =
         useState<Trip | null>(null);
@@ -192,7 +196,10 @@ export function TripsSection({
                 initialTrip={
                     editingTrip ?? undefined
                 }
-                onTripCreated={onTripChanged}
+                onTripCreated={() => {
+                    onTripChanged?.();
+                    reloadSyncedTrips();
+                }}
             />
 
             <Modal
