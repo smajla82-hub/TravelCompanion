@@ -350,17 +350,12 @@ test('shared trip invitations and roles enforce access', async () => {
   const { server, port } = await startServer();
   try {
     const registerUser = async (email) => {
-      const [{ randomUUID }, jwt, { config }, { getDb }] = await Promise.all([
-        import('node:crypto'),
-        import('jsonwebtoken'),
-        import('../src/config.js'),
-        import('../src/db/db.js'),
-      ]);
-      const user = { id: randomUUID(), email };
-      getDb().prepare('INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)').run(
-        user.id, user.email, 'test-password-hash',
-      );
-      const token = jwt.default.sign({ email }, config.jwtSecret, { subject: user.id });
+      const response = await fetch(`http://127.0.0.1:${port}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: 'super-secret-1' }),
+      });
+      const { token, user } = await response.json();
       return { user, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token } };
     };
     const owner = await registerUser('shared-owner@example.com');
