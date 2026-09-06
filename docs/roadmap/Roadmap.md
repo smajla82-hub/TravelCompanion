@@ -142,9 +142,11 @@ Proposed scope:
 - **10.3 — Shared Trip access** — **DONE** (backend-only)
   - Trips have one Owner and optional Editor/Viewer members. Owners create expiring, email-bound invitations and manually share the returned token/accept link; delivery by email/SMS is out of scope. Server-side roles protect Trip, itinerary, membership and invitation actions.
 
-- **10.4 — Sync & conflict handling**
-  - Define and implement the initial (deliberately simple) conflict-resolution strategy for concurrent/offline edits to the same Trip from multiple devices — the current working assumption is a **last-write-wins** strategy based on server-recorded timestamps for the initial version, with more sophisticated per-field merging or explicit conflict-resolution UI deferred as future work.
-  - The app must continue to support fully offline usage (current `localStorage`-first behavior) with sync occurring opportunistically when connectivity is available, rather than requiring a constant server connection.
+- **10.4a — Backend: Trip edit locking + last-write-wins fallback** — **DONE** (backend-only)
+  - Owners and Editors use short-lived pessimistic Trip locks with heartbeat and Owner force-release; Trip and itinerary writes require the active lock.
+  - A narrow timestamp-based last-write-wins fallback is available only for offline reconnection when no lock is active and the client's known resource timestamp is current.
+- **10.4b — Frontend integration** — **NEXT**
+  - Add API client, login, sync, lock UI, and invitation UI without changing the backend locking rule.
 
 - **10.5 — Data migration**
   - One-time migration/import path for a user's existing local-only `localStorage` Trips/itineraries into their newly created account, so no existing BlizzCon planning data is lost when accounts are introduced.
@@ -304,7 +306,7 @@ Verified test data currently imports as:
 1. 9.8E — My Trips visual polish
 2. 9.8F — Settings visual polish
 3. 9.8G — Final responsive / QA pass, if still appropriate
-4. 10.x — Shared Persistence & Accounts (backend architecture confirmed — see `docs/decisions/ADR-003-Backend-Architecture.md`; **10.1 — Architecture decision & backend foundation, 10.2 — Authentication, and 10.3 — Shared Trip access are DONE (backend-only)**; next up is **10.4 — Sync & conflict handling**)
+4. 10.x — Shared Persistence & Accounts (backend architecture confirmed — see `docs/decisions/ADR-003-Backend-Architecture.md`; **10.1–10.4a are DONE backend-only**; next up is **10.4b — Frontend integration**)
 5. 11.x+ — Extended travel functionality
 
 The order remains intentional: the mobile experience was validated on a real device, the visual design is finished before committing to the larger architectural shift of introducing a server-side component, accounts and multi-device sync, and that shared-persistence foundation is in place before the future Extended Travel Companion modules are built on top of it.

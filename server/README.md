@@ -1,6 +1,6 @@
 # Travel Companion Backend API
 
-This directory contains the self-hosted backend foundation for Milestone 7 / Features 10.1–10.3.
+This directory contains the self-hosted backend foundation for Milestone 7 / Features 10.1–10.4a.
 
 ## Architecture choice
 
@@ -84,22 +84,37 @@ The API intentionally mirrors the current Trip/itinerary domain model without co
 - `GET /trips` — list trips the caller owns or belongs to
 - `POST /trips` — create trip (owned by the authenticated user)
 - `GET /trips/:id` — fetch a trip visible to the caller
-- `PUT /trips/:id` — update a trip (Owner or Editor)
+- `PUT /trips/:id` — update a trip (Owner or Editor; requires an active edit lock or the offline fallback below)
 - `DELETE /trips/:id` — delete a trip (Owner only)
 - `GET /trips/active` — fetch the authenticated user's active trip
-- `PUT /trips/:id/active` — set the active trip
+- `PUT /trips/:id/active` — set the active trip (requires an active edit lock or the offline fallback below)
 
 ### Itinerary endpoints (require an `Authorization` header with a bearer-token JWT)
 
 - `GET /trips/:tripId/itinerary` — list trip itinerary days with nested items
-- `POST /trips/:tripId/itinerary/days` — add an itinerary day
+- `POST /trips/:tripId/itinerary/days` — add an itinerary day (requires an active edit lock or the offline fallback below)
 - `GET /trips/:tripId/itinerary/days/:dayId` — fetch day + items
-- `PUT /trips/:tripId/itinerary/days/:dayId` — update day
-- `DELETE /trips/:tripId/itinerary/days/:dayId` — delete day
+- `PUT /trips/:tripId/itinerary/days/:dayId` — update day (requires an active edit lock or the offline fallback below)
+- `DELETE /trips/:tripId/itinerary/days/:dayId` — delete day (requires an active edit lock or the offline fallback below)
 - `GET /trips/:tripId/itinerary/days/:dayId/items` — list items for a day
-- `POST /trips/:tripId/itinerary/days/:dayId/items` — add itinerary item
-- `PUT /trips/:tripId/itinerary/days/:dayId/items/:itemId` — update item
-- `DELETE /trips/:tripId/itinerary/days/:dayId/items/:itemId` — delete item
+- `POST /trips/:tripId/itinerary/days/:dayId/items` — add itinerary item (requires an active edit lock or the offline fallback below)
+- `PUT /trips/:tripId/itinerary/days/:dayId/items/:itemId` — update item (requires an active edit lock or the offline fallback below)
+- `DELETE /trips/:tripId/itinerary/days/:dayId/items/:itemId` — delete item (requires an active edit lock or the offline fallback below)
+
+### Trip edit locks and offline fallback
+
+Owners and Editors acquire a short-lived exclusive lock with `POST /trips/:id/lock`. It returns `{ tripId, userId, acquiredAt, expiresAt }`; an active lock held by another member returns `409` with `{ error, lockedBy: { userId, email }, expiresAt }`. Viewers cannot acquire locks.
+
+- `GET /trips/:id/lock` — any member can inspect `{ locked, tripId, userId, email, acquiredAt, expiresAt }`.
+- `POST /trips/:id/lock` — Owner or Editor acquires or refreshes their lock.
+- `PUT /trips/:id/lock/heartbeat` — current Owner/Editor lock holder extends it.
+- `DELETE /trips/:id/lock` — current holder releases it; the Owner may force-release an Editor's lock.
+
+Locks expire lazily after `TRIP_LOCK_TTL_MS` (default: 120000 milliseconds / two minutes) without a heartbeat. Clients should heartbeat every 30–60 seconds. All Trip and itinerary mutations (except Owner-only Trip deletion) require the caller's active lock and otherwise return `409`.
+
+For a narrow offline-reconnect case only, a mutation with no active lock held by anyone may include `clientUpdatedAt` in its JSON body (or an `If-Unmodified-Since` header). The write is allowed only when this timestamp is valid and is greater than or equal to the server's current `updated_at` for the affected resource; otherwise it returns `409`. This last-write-wins fallback never bypasses another user's active lock and is not a general merge mechanism.
+
+For 10.4b frontend integration: acquire a lock on entering edit mode, heartbeat periodically, release it on exit, and handle `409` by showing the reported lock holder. Use the offline fallback only for reconnection of edits made without ever acquiring a lock.
 
 ### Shared access endpoints (require an `Authorization` header with a bearer-token JWT)
 
@@ -153,6 +168,7 @@ The initial schema covers:
 - `trips` — now includes a nullable `user_id` foreign key linking a trip to its owning account
 - `trip_members` — one Owner membership for each Trip plus optional Editor/Viewer memberships
 - `invitations` — email-bound, expiring invitation tokens and their status
+- `trip_locks` — one lazily-expiring pessimistic edit lock per Trip
 - `itinerary_days`
 - `itinerary_items`
 - active-trip state via `trips.is_active`

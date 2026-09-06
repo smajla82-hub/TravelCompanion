@@ -8,6 +8,7 @@ const tempDir = mkdtempSync(path.join(os.tmpdir(), 'travel-api-'));
 process.env.DB_PATH = path.join(tempDir, 'travel-companion-test.db');
 process.env.ALLOWED_CORS_ORIGIN = 'http://localhost:5173';
 process.env.PORT = '0';
+process.env.TRIP_LOCK_TTL_MS = '30';
 
 const { createApp } = await import(`../src/app.js?test=${Date.now()}`);
 
@@ -241,6 +242,11 @@ test('Trip CRUD flow works for an authenticated user', async () => {
     const tripList = await listResponse.json();
     assert.equal(tripList.length, 1);
 
+    const lockResponse = await fetch(`http://127.0.0.1:${port}/trips/${createdTrip.id}/lock`, {
+      method: 'POST', headers: authHeaders,
+    });
+    assert.equal(lockResponse.status, 200);
+
     const activeResponse = await fetch(`http://127.0.0.1:${port}/trips/${createdTrip.id}/active`, {
       method: 'PUT',
       headers: authHeaders,
@@ -397,6 +403,10 @@ test('shared trip invitations and roles enforce access', async () => {
 
     const editorTrips = await fetch(`http://127.0.0.1:${port}/trips`, { headers: editor.headers });
     assert.equal((await editorTrips.json()).some((entry) => entry.id === trip.id), true);
+    const editorLock = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, {
+      method: 'POST', headers: editor.headers,
+    });
+    assert.equal(editorLock.status, 200);
     const editorUpdate = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}`, {
       method: 'PUT', headers: editor.headers,
       body: JSON.stringify({ name: 'Edited shared trip' }),
@@ -464,6 +474,112 @@ test('shared trip invitations and roles enforce access', async () => {
 
     const strangerTrip = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}`, { headers: stranger.headers });
     assert.equal(strangerTrip.status, 404);
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});
+
+test('trip edit locks enforce exclusive edits and permit only current offline writes', async () => {
+  const { server, port } = await startServer();
+  try {
+    const registerUser = async (email) => {
+      const [{ randomUUID }, jwt, { config }, { getDb }] = await Promise.all([
+        import('node:crypto'),
+        import('jsonwebtoken'),
+        import('../src/config.js'),
+        import('../src/db/db.js'),
+      ]);
+      const user = { id: randomUUID(), email };
+      getDb().prepare('INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)').run(
+        user.id, user.email, 'test-password-hash',
+      );
+      const token = jwt.default.sign({ email }, config.jwtSecret, { subject: user.id });
+      return { user, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token } };
+    };
+    const owner = await registerUser('lock-owner@example.com');
+    const editor = await registerUser('lock-editor@example.com');
+    const viewer = await registerUser('lock-viewer@example.com');
+    const create = await fetch(`http://127.0.0.1:${port}/trips`, {
+      method: 'POST',
+      headers: owner.headers,
+      body: JSON.stringify({ name: 'Locked trip', startDate: '2026-10-01', endDate: '2026-10-03' }),
+    });
+    const trip = await create.json();
+    const { getDb } = await import('../src/db/db.js');
+    getDb().prepare(
+      `INSERT INTO trip_members (trip_id, user_id, role, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?)`,
+    ).run(trip.id, editor.user.id, 'editor', trip.created_at, trip.updated_at);
+    getDb().prepare(
+      `INSERT INTO trip_members (trip_id, user_id, role, created_at, updated_at)
+       VALUES (?, ?, ?, ?, ?)`,
+    ).run(trip.id, viewer.user.id, 'viewer', trip.created_at, trip.updated_at);
+
+    const ownerLock = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, {
+      method: 'POST', headers: owner.headers,
+    });
+    assert.equal(ownerLock.status, 200);
+    const firstLock = await ownerLock.json();
+    const blocked = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, {
+      method: 'POST', headers: editor.headers,
+    });
+    assert.equal(blocked.status, 409);
+    assert.deepEqual((await blocked.json()).lockedBy, { userId: owner.user.id, email: owner.user.email });
+    const viewerLock = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, {
+      method: 'POST', headers: viewer.headers,
+    });
+    assert.equal(viewerLock.status, 403);
+
+    await new Promise((resolve) => setTimeout(resolve, 5));
+    const heartbeat = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock/heartbeat`, {
+      method: 'PUT', headers: owner.headers,
+    });
+    assert.equal(heartbeat.status, 200);
+    assert.ok(Date.parse((await heartbeat.json()).expiresAt) >= Date.parse(firstLock.expiresAt));
+    const release = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, {
+      method: 'DELETE', headers: owner.headers,
+    });
+    assert.equal(release.status, 200);
+
+    const editorLock = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, {
+      method: 'POST', headers: editor.headers,
+    });
+    assert.equal(editorLock.status, 200);
+    const forceRelease = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, {
+      method: 'DELETE', headers: owner.headers,
+    });
+    assert.equal(forceRelease.status, 200);
+    const noLockWrite = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}`, {
+      method: 'PUT', headers: owner.headers, body: JSON.stringify({ name: 'Rejected edit' }),
+    });
+    assert.equal(noLockWrite.status, 409);
+
+    const current = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}`, { headers: owner.headers });
+    const currentTrip = await current.json();
+    const offlineWrite = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}`, {
+      method: 'PUT',
+      headers: owner.headers,
+      body: JSON.stringify({ name: 'Offline edit', clientUpdatedAt: currentTrip.updated_at }),
+    });
+    assert.equal(offlineWrite.status, 200);
+    const staleWrite = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}`, {
+      method: 'PUT',
+      headers: owner.headers,
+      body: JSON.stringify({ name: 'Stale offline edit', clientUpdatedAt: '2000-01-01T00:00:00.000Z' }),
+    });
+    assert.equal(staleWrite.status, 409);
+
+    const expiringLock = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, {
+      method: 'POST', headers: editor.headers,
+    });
+    assert.equal(expiringLock.status, 200);
+    await new Promise((resolve) => setTimeout(resolve, 40));
+    const replacementLock = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, {
+      method: 'POST', headers: owner.headers,
+    });
+    assert.equal(replacementLock.status, 200);
   } finally {
     await new Promise((resolve, reject) => {
       server.close((error) => (error ? reject(error) : resolve()));

@@ -35,6 +35,21 @@ db.exec(
    WHERE user_id IS NOT NULL`,
 );
 
+// Migration: create the short-lived per-Trip edit lock table for existing
+// databases. This is idempotent and deliberately needs no expiry cron job.
+db.exec(`
+  CREATE TABLE IF NOT EXISTS trip_locks (
+    trip_id TEXT PRIMARY KEY,
+    user_id TEXT NOT NULL,
+    acquired_at TEXT NOT NULL,
+    last_heartbeat_at TEXT NOT NULL,
+    expires_at TEXT NOT NULL,
+    FOREIGN KEY (trip_id) REFERENCES trips (id) ON DELETE CASCADE,
+    FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+  );
+  CREATE INDEX IF NOT EXISTS idx_trip_locks_expires_at ON trip_locks (expires_at);
+`);
+
 export function getDb() {
   return db;
 }
