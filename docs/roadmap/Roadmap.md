@@ -131,9 +131,13 @@ Proposed scope:
   - The agent-doable portion was completed without touching the existing `app/` frontend behavior. The frontend (`app/`, deployed via GitHub Pages) remains fully independent and unaffected — it does **not** yet call this backend and continues to operate fully offline-first on `localStorage` only, per `docs/decisions/ADR-002-PWA-Architecture.md` and `docs/decisions/ADR-003-Backend-Architecture.md`. Actual frontend integration (API calls replacing `localStorage` reads/writes) is deferred to 10.2 onward.
   - The finalized decision and its consequences are recorded in `docs/decisions/ADR-003-Backend-Architecture.md`.
 
-- **10.2 — Authentication**
-  - Simple email + password account creation and login, issuing a session/JWT token used by the frontend for subsequent API calls. No OAuth/social login required for the initial version.
-  - Basic account-level data isolation: each user's Trips belong to their account.
+- **10.2 — Authentication** — **DONE** (backend-only)
+  - Simple email + password account creation and login implemented: `POST /auth/register`, `POST /auth/login`, and `GET /auth/me` added to the `server/` API.
+  - Passwords hashed with `bcryptjs`; JWTs issued via `jsonwebtoken` (7-day default expiry, configurable via `JWT_EXPIRES_IN`), signed using the `JWT_SECRET` environment variable (placeholder in `server/.env.example`, real value set manually on the production server).
+  - `server/src/middleware/auth.js` verifies the `Authorization` header's bearer-token JWT and is applied to all `/trips` routes (and nested itinerary routes); `GET /health` remains public.
+  - Basic account-level data isolation implemented: a `user_id` column was added to `trips` (via an idempotent startup migration in `server/src/db/db.js`), and all Trip reads/writes are scoped to `req.user.id`.
+  - This is backend-only, per the roadmap: the frontend (`app/`) is unchanged and continues to operate fully offline-first on `localStorage`; no login UI or API wiring was added to the frontend in this feature. Actual frontend integration remains deferred to a later step.
+  - No OAuth/social login and no password reset / email verification flow — out of scope for this initial version, as planned.
 
 - **10.3 — Shared Trip access**
   - Mechanism for a Trip to be shared/visible across multiple accounts (e.g. co-travelers), since a Trip may be jointly planned/edited by more than one person. Exact sharing model (invite-by-email, shareable link, explicit collaborator list) to be defined during this feature's planning.
@@ -300,7 +304,7 @@ Verified test data currently imports as:
 1. 9.8E — My Trips visual polish
 2. 9.8F — Settings visual polish
 3. 9.8G — Final responsive / QA pass, if still appropriate
-4. 10.x — Shared Persistence & Accounts (backend architecture confirmed — see `docs/decisions/ADR-003-Backend-Architecture.md`; **10.1 — Architecture decision & backend foundation is DONE**; next up is **10.2 — Authentication**)
+4. 10.x — Shared Persistence & Accounts (backend architecture confirmed — see `docs/decisions/ADR-003-Backend-Architecture.md`; **10.1 — Architecture decision & backend foundation is DONE**; **10.2 — Authentication is DONE (backend-only)**; next up is **10.3 — Shared Trip access**)
 5. 11.x+ — Extended travel functionality
 
 The order remains intentional: the mobile experience was validated on a real device, the visual design is finished before committing to the larger architectural shift of introducing a server-side component, accounts and multi-device sync, and that shared-persistence foundation is in place before the future Extended Travel Companion modules are built on top of it.

@@ -51,6 +51,22 @@ The repository includes the backend scaffold for the Milestone 7 foundation:
 
 The frontend (`app/`, deployed via GitHub Pages) remains fully independent and unaffected by this — it does not yet call this backend and continues to operate fully offline-first on `localStorage` only, per `docs/decisions/ADR-002-PWA-Architecture.md` and `docs/decisions/ADR-003-Backend-Architecture.md`. Actual frontend integration is planned for Feature 10.2 (Authentication) onward.
 
+## Feature 10.2 — Authentication
+**Status:** DONE (backend-only)
+
+Backend-only email + password authentication was added to `server/`, extending the 10.1 foundation without a rewrite of the existing Trip/itinerary route structure:
+
+- `users` table added to `server/src/db/schema.sql` (email unique case-insensitively, `password_hash`, timestamps), plus a nullable `trips.user_id` foreign key column, applied to existing databases via an idempotent `ALTER TABLE` migration in `server/src/db/db.js`.
+- `server/src/repositories/userRepository.js` — user creation/lookup, following the existing `tripRepository.js` pattern.
+- Passwords hashed with `bcryptjs` (pure-JS, avoiding a second native-module toolchain alongside `better-sqlite3`); plaintext passwords are never stored.
+- `jsonwebtoken` issues/verifies JWTs (`server/src/middleware/auth.js`), with `JWT_SECRET` sourced from an environment variable (placeholder added to `server/.env.example`) and a default 7-day expiry (`JWT_EXPIRES_IN`).
+- `POST /auth/register`, `POST /auth/login`, and `GET /auth/me` added (`server/src/routes/auth.js`).
+- All `/trips` routes (including nested itinerary routes) now require a valid JWT and are scoped to `req.user.id`: `GET /trips` only returns the caller's own trips, and access to another user's trip returns `404`. `GET /health` remains public.
+- `server/tests/api.test.js` extended to cover register, login (success/failure), unauthenticated access (401), cross-account isolation (404), and per-user trip listing.
+- `server/README.md` updated to document the new endpoints, `JWT_SECRET`/`JWT_EXPIRES_IN`, the bcrypt/JWT choices, and that `/trips` now requires authentication.
+
+The frontend (`app/`) is unchanged by this feature — no login UI was added, and it continues to operate fully offline-first on `localStorage`; frontend integration (wiring the app to call this backend) remains deferred to a later step.
+
 ---
 
 ## Initial Project Structure
@@ -373,7 +389,7 @@ Completed the visual consistency review against the approved 9.7B baseline.
 
 **Current Milestone:** 9.x — Final UI Look
 **Completed through:** 9.8B
-**Status:** 9.8E / My Trips visual polish and 9.8F / Settings visual polish remain planned. In parallel, Feature 10.1 (backend foundation) is now fully DONE, including production deployment; 10.2 — Authentication is the next planned feature.
+**Status:** 9.8E / My Trips visual polish and 9.8F / Settings visual polish remain planned. In parallel, Feature 10.1 (backend foundation) is fully DONE, including production deployment; Feature 10.2 (Authentication, backend-only) is now also DONE; 10.3 — Shared Trip access is the next planned feature.
 
 Next:
 
@@ -389,7 +405,9 @@ Introduce user accounts and shared/synced Trip data across multiple devices, rep
 
 **10.1 — Architecture decision & backend foundation — DONE.** The backend is scaffolded, deployed and verified live in production at `https://cestovatel.duckdns.org` (see Feature 10.1 entry above). The frontend does not yet call it.
 
-**Next planned feature: 10.2 — Authentication.**
+**10.2 — Authentication — DONE (backend-only).** `server/` now has email + password accounts (`users` table, `userRepository.js`), password hashing via `bcryptjs`, JWT issuance/verification via `jsonwebtoken` (`POST /auth/register`, `POST /auth/login`, `GET /auth/me`), and an auth middleware protecting all `/trips` routes with per-account data isolation (each user only sees/edits their own Trips; `trips.user_id` added via an idempotent startup migration). `GET /health` remains public. The frontend (`app/`) is unchanged — no login UI was added, and it continues to run fully offline-first on `localStorage`; frontend integration remains deferred to a later step.
+
+**Next planned feature: 10.3 — Shared Trip access.**
 
 ## 11.x+ — Extended Travel Companion (PLANNED)
 

@@ -2,6 +2,7 @@ import express from 'express';
 import cors from 'cors';
 import healthRoutes from './routes/health.js';
 import tripRoutes from './routes/trips.js';
+import authRoutes from './routes/auth.js';
 import { config } from './config.js';
 
 export function createApp() {
@@ -31,6 +32,7 @@ export function createApp() {
   );
 
   app.use(healthRoutes);
+  app.use('/auth', authRoutes);
   app.use('/trips', tripRoutes);
 
   app.use((error, _req, res, _next) => {
