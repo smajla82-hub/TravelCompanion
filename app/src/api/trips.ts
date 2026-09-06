@@ -72,6 +72,8 @@ export const SyncedTripApi = {
             method: "PUT",
             body: JSON.stringify(trip),
         }),
+    delete: (tripId: string) =>
+        apiRequest(`/trips/${tripId}`, { method: "DELETE" }),
     itinerary: (tripId: string) =>
         apiRequest<SyncedItinerary>(`/trips/${tripId}/itinerary`),
     createDay: (tripId: string, day: Pick<ItineraryDay, "date" | "title">) =>
