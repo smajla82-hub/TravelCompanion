@@ -3,6 +3,7 @@ import jwt from 'jsonwebtoken';
 import rateLimit from 'express-rate-limit';
 import { config } from '../config.js';
 import { requireAuth } from '../middleware/auth.js';
+import { RATE_LIMIT_WINDOW_MS } from '../middleware/rateLimitWindow.js';
 import * as repo from '../repositories/userRepository.js';
 
 const router = express.Router();
@@ -11,14 +12,14 @@ const router = express.Router();
 // attempts per window. `/me` is read-only and already requires a valid JWT,
 // so it uses the more permissive general limiter applied below.
 const authAttemptLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: RATE_LIMIT_WINDOW_MS,
   limit: 20,
   standardHeaders: true,
   legacyHeaders: false,
 });
 
 const meLimiter = rateLimit({
-  windowMs: 15 * 60 * 1000,
+  windowMs: RATE_LIMIT_WINDOW_MS,
   limit: 300,
   standardHeaders: true,
   legacyHeaders: false,
