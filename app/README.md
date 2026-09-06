@@ -25,6 +25,10 @@ replace the complete backend itinerary while holding the Trip edit lock; partial
 failures are reported so the user can retry. Importing existing local Trips into
 an account is still deferred to Feature 10.5.
 
+Feature 10.4d is the corrective shared-flow follow-up: Offline and Online Trips
+use the same detail/itinerary UI through a source-agnostic adapter. Feature 10.5
+data migration remains next; no server changes are required for this refactor.
+
 ## Development
 
 This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.

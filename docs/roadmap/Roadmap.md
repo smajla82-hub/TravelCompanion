@@ -372,3 +372,9 @@ A new developer or AI agent should be able to understand:
 7. the current Trip → Itinerary architecture.
 
 Repository documentation is part of project continuity.
+- **10.4d — Corrective shared Trip refactor** — **DONE**. Online and Offline
+  Trips now use the same detail and itinerary components through a source-agnostic
+  adapter backed by `TripService`/`SyncedTripApi`. Online locks, heartbeat,
+  conflict feedback, active-trip dashboard state, authenticated creation, and
+  full RoadBook replacement are routed through that adapter. **10.5 — Data
+  migration** is next; server changes remain out of scope.

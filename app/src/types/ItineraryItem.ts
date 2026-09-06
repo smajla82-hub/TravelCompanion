@@ -35,4 +35,6 @@ export interface ItineraryItem {
 
     date: string;
 
+    sortOrder?: number;
+
 }

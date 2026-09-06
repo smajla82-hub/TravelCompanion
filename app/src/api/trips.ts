@@ -42,6 +42,11 @@ export type LockConflict = {
 
 export const SyncedTripApi = {
     list: () => apiRequest<SyncedTrip[]>("/trips"),
+    get: (tripId: string) => apiRequest<SyncedTrip>(`/trips/${tripId}`),
+    create: (trip: Omit<SyncedTrip, "id">) =>
+        apiRequest<SyncedTrip>("/trips", { method: "POST", body: JSON.stringify(trip) }),
+    setActive: (tripId: string) =>
+        apiRequest<SyncedTrip>(`/trips/${tripId}/active`, { method: "PUT" }),
     members: (tripId: string) =>
         apiRequest<TripMember[]>(`/trips/${tripId}/members`),
     invitations: (tripId: string) =>

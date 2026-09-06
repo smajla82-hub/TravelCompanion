@@ -16,15 +16,17 @@ export type ItineraryDayFields = {
 
 type ItineraryDayFormProps = {
     defaultDate: string;
+    initialTitle?: string;
     onSubmit: (day: ItineraryDayFields) => void;
 };
 
 export function ItineraryDayForm({
     defaultDate,
+    initialTitle = "",
     onSubmit,
 }: ItineraryDayFormProps) {
     const [date, setDate] = useState(defaultDate);
-    const [title, setTitle] = useState("");
+    const [title, setTitle] = useState(initialTitle);
 
     function handleSubmit(
         event: React.FormEvent<HTMLFormElement>

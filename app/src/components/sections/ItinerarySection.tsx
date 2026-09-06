@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from "react";
+import { useEffect, useMemo, useRef, useState } from "react";
 
 import { Button, Grid, Heading, Icon } from "../ui";
 
@@ -9,7 +9,9 @@ import {
     CurrentActivityView,
 } from "../itinerary";
 
-import { TripService } from "../../services/TripService";
+import { createTripAdapter } from "../../services/TripAdapter";
+import { useTrips } from "../../hooks";
+import { AuthService } from "../../services/AuthService";
 
 import {
     isActiveItineraryDay,
@@ -54,8 +56,24 @@ function getDefaultDayDate(trip: Trip): string {
 }
 
 export function ItinerarySection() {
-    const activeTrip =
-        TripService.getActive();
+    const { activeTrip } = useTrips();
+    const adapter = useMemo(
+        () => activeTrip ? createTripAdapter(activeTrip) : undefined,
+        [activeTrip],
+    );
+    const [canEdit, setCanEdit] = useState(activeTrip?.source !== "online");
+    /* eslint-disable react-hooks/set-state-in-effect */
+    useEffect(() => {
+        if (!adapter || adapter.source === "local") {
+            setCanEdit(true);
+            return;
+        }
+        void adapter.members().then(members => {
+            const userId = AuthService.getUser()?.id;
+            setCanEdit(members.some(member => member.userId === userId && (member.role === "owner" || member.role === "editor")));
+        }).catch(() => setCanEdit(false));
+    }, [adapter]);
+    /* eslint-enable react-hooks/set-state-in-effect */
 
     const itinerary =
         activeTrip?.itinerary ?? [];
@@ -114,13 +132,13 @@ export function ItinerarySection() {
 
                 <ItineraryDayDetail
                     day={selectedDay}
-                    tripId={activeTrip?.id ?? ""}
+                    adapter={adapter}
+                    editable={canEdit}
                     showRemainingOnly={showRemainingOnly}
                     onClose={goToDayList}
                     onDayChanged={() => {
                         const updatedDay =
-                            TripService.getActive()
-                                ?.itinerary
+                            activeTrip?.itinerary
                                 ?.find(
                                     day =>
                                         day.id ===
@@ -156,7 +174,7 @@ export function ItinerarySection() {
         <section id="itinerary-section">
             <div className="itinerary-heading"><Heading level={2}>Itinerary</Heading><Button variant="pill" compact type="button" onClick={() => setView("current")}><Icon name="calendarDays" width={16} height={16} /> View whole itinerary</Button></div>
 
-            {activeTrip && (
+            {activeTrip && canEdit && (
                 <div className="itinerary-controls">
                     <Button
                         type="button"
@@ -191,23 +209,17 @@ export function ItinerarySection() {
                 ))}
             </Grid>
 
-            {activeTrip && (
+            {activeTrip && canEdit && (
                 <ItineraryDayModal
                     open={dayModalOpen}
                     defaultDate={getDefaultDayDate(activeTrip)}
                     onClose={() => setDayModalOpen(false)}
                     onSubmit={(day) => {
-                        const newDay =
-                            TripService.addItineraryDay(
-                                activeTrip.id,
-                                day
-                            );
+                        void adapter?.addDay(day).then(newDay => {
+                            setDayModalOpen(false);
+                            if (newDay) openDayDetail(newDay, "full");
+                        });
 
-                        setDayModalOpen(false);
-
-                        if (newDay) {
-                            openDayDetail(newDay, "full");
-                        }
                     }}
                 />
             )}

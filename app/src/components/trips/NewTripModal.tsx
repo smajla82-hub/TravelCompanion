@@ -5,6 +5,9 @@ import "./NewTripModal.css";
 
 import type { Trip } from "../../types";
 import { TripService } from "../../services/TripService";
+import { AuthService } from "../../services/AuthService";
+import { SyncedTripApi } from "../../api/trips";
+import { createTripAdapter } from "../../services/TripAdapter";
 import {
     counterClassName,
     exceedsTextLimit,
@@ -40,7 +43,10 @@ export function NewTripModal({
 
     const [travellers, setTravellers] =
         useState(initialTrip?.travellers ?? 1);
+    const [online, setOnline] = useState(false);
 
+    // Form state is intentionally reset when the modal switches trips.
+    /* eslint-disable react-hooks/set-state-in-effect */
     useEffect(() => {
         if (!open) {
             return;
@@ -51,9 +57,11 @@ export function NewTripModal({
         setStartDate(initialTrip?.startDate ?? "");
         setEndDate(initialTrip?.endDate ?? "");
         setTravellers(initialTrip?.travellers ?? 1);
+        setOnline(initialTrip?.source === "online");
     }, [open, initialTrip]);
+    /* eslint-enable react-hooks/set-state-in-effect */
 
-    function handleSave() {
+    async function handleSave() {
 
         if (!destination || !country) {
             alert("Destination and country are required.");
@@ -88,7 +96,19 @@ export function NewTripModal({
                 travellers,
             };
 
-            TripService.update(updatedTrip);
+            if (initialTrip.source === "online") {
+                await createTripAdapter(initialTrip).updateTrip({
+                    ...initialTrip,
+                    name: initialTrip.name ?? destination,
+                    destination,
+                    country,
+                    startDate,
+                    endDate,
+                    travellers,
+                });
+            } else {
+                TripService.update(updatedTrip);
+            }
 
         } else {
 
@@ -103,7 +123,14 @@ export function NewTripModal({
                 status: "planning",
             };
 
-            TripService.add(trip);
+            if (online && AuthService.getToken()) {
+                await SyncedTripApi.create({
+                    ...trip,
+                    name: destination,
+                });
+            } else {
+                TripService.add(trip);
+            }
         }
 
         onTripCreated?.();
@@ -187,6 +214,19 @@ export function NewTripModal({
                         }
                     />
                 </label>
+
+                {!initialTrip && AuthService.getToken() && (
+                    <label>
+                        Trip storage
+                        <select
+                            value={online ? "online" : "offline"}
+                            onChange={event => setOnline(event.target.value === "online")}
+                        >
+                            <option value="offline">Offline</option>
+                            <option value="online">Online</option>
+                        </select>
+                    </label>
+                )}
 
                 <Button
                     type="button"
