@@ -1,0 +1,18 @@
+# Example Caddy reverse proxy for the Travel Companion backend.
+# Replace your-subdomain.duckdns.org with the actual DuckDNS hostname you register.
+# Keep the API port in sync with server/.env PORT.
+# The user must still open ports 80 and 443 on the router/firewall and point the DuckDNS hostname to the server's static public IP.
+
+# 
+# Example for production:
+# your-subdomain.duckdns.org {
+#   reverse_proxy localhost:3001
+# }
+#
+# Caddy automatically requests a Let's Encrypt certificate for the configured hostname.
+# It will renew automatically as long as port 80/443 remain open and the hostname resolves correctly.
+
+# Placeholder configuration kept intentionally simple so the user can replace the hostname and port.
+your-subdomain.duckdns.org {
+  reverse_proxy localhost:3001
+}
