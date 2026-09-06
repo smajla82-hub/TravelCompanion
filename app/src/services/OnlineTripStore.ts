@@ -53,17 +53,20 @@ export const OnlineTripStore = {
             return [];
         }
 
-        loading = loadFromServer();
-
-        try {
-            const loaded = await loading;
+        const request = loadFromServer().then(loaded => {
             publish(loaded);
             return loaded;
-        } catch (reason) {
-            publish([]);
-            throw reason;
+        });
+        loading = request;
+
+        try {
+            return await request;
         } finally {
-            loading = undefined;
+            // Only the latest request clears the in-flight marker, so a slower
+            // earlier load cannot discard it.
+            if (loading === request) {
+                loading = undefined;
+            }
         }
     },
 

@@ -43,7 +43,7 @@ export function TripsSection({
         if (!AuthService.getToken()) {
             return;
         }
-        void OnlineTripStore.refresh().catch(reason => setSyncedError(
+        void OnlineTripStore.ensureLoaded().catch(reason => setSyncedError(
             reason instanceof ApiError ? reason.message : "Unable to load online trips.",
         ));
     }, []);
