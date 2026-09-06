@@ -6,6 +6,7 @@ dotenv.config();
 const nodeEnv = process.env.NODE_ENV || 'development';
 const DEV_ONLY_JWT_SECRET = 'dev-only-insecure-secret-change-me';
 const INSECURE_JWT_SECRET_ALLOWED_ENVS = new Set(['development', 'test']);
+const configuredInvitationExpiry = Number(process.env.INVITATION_EXPIRES_IN_DAYS || 7);
 
 if (
   !INSECURE_JWT_SECRET_ALLOWED_ENVS.has(nodeEnv) &&
@@ -25,4 +26,7 @@ export const config = {
   nodeEnv,
   jwtSecret: process.env.JWT_SECRET || DEV_ONLY_JWT_SECRET,
   jwtExpiresIn: process.env.JWT_EXPIRES_IN || '7d',
+  invitationExpiresInDays: Number.isFinite(configuredInvitationExpiry) && configuredInvitationExpiry > 0
+    ? configuredInvitationExpiry
+    : 7,
 };

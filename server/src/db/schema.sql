@@ -31,6 +31,37 @@ CREATE INDEX IF NOT EXISTS idx_trips_updated_at ON trips (updated_at);
 -- on pre-existing (10.1-era) databases the column may not exist yet when this
 -- schema file is first executed.
 
+CREATE TABLE IF NOT EXISTS trip_members (
+  trip_id TEXT NOT NULL,
+  user_id TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('owner', 'editor', 'viewer')),
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  PRIMARY KEY (trip_id, user_id),
+  FOREIGN KEY (trip_id) REFERENCES trips (id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_trip_members_user_id ON trip_members (user_id);
+
+CREATE TABLE IF NOT EXISTS invitations (
+  id TEXT PRIMARY KEY,
+  trip_id TEXT NOT NULL,
+  email TEXT NOT NULL,
+  role TEXT NOT NULL CHECK (role IN ('editor', 'viewer')),
+  token TEXT NOT NULL UNIQUE,
+  status TEXT NOT NULL CHECK (status IN ('pending', 'accepted', 'rejected', 'revoked', 'expired')),
+  invited_by_user_id TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (trip_id) REFERENCES trips (id) ON DELETE CASCADE,
+  FOREIGN KEY (invited_by_user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_invitations_trip_id ON invitations (trip_id);
+CREATE INDEX IF NOT EXISTS idx_invitations_token ON invitations (token);
+
 CREATE TABLE IF NOT EXISTS itinerary_days (
   id TEXT PRIMARY KEY,
   trip_id TEXT NOT NULL,
