@@ -1,6 +1,6 @@
 # Travel Companion Backend API
 
-This directory contains the self-hosted backend foundation for Milestone 7 / Feature 10.1.
+This directory contains the self-hosted backend foundation for Milestone 7 / Features 10.1 and 10.2.
 
 ## Architecture choice
 
@@ -9,6 +9,8 @@ The backend uses:
 - Node.js + Express for the HTTP API
 - SQLite with `better-sqlite3` for the database layer
 - A thin repository layer to keep DB access isolated from route handlers
+- `bcryptjs` for password hashing (pure-JS, chosen so we don't need to manage a second native-module toolchain alongside `better-sqlite3`'s existing native bindings)
+- `jsonwebtoken` for issuing/verifying JWTs used to authenticate API requests
 
 This choice matches the existing project decision in `docs/decisions/ADR-003-Backend-Architecture.md`: small self-hosted deployment, low operational overhead, and a single SQLite file on the user's server.
 
@@ -22,6 +24,8 @@ This choice matches the existing project decision in `docs/decisions/ADR-003-Bac
 3. Copy the example environment file:
 
    cp .env.example .env
+
+   Set `JWT_SECRET` to your own value locally too — see [Authentication](#authentication) below.
 
 4. Start the API locally:
 
@@ -41,21 +45,47 @@ Expected response:
 }
 ```
 
+## Authentication
+
+Feature 10.2 adds simple email + password accounts, backend-only (the frontend `app/` is not wired up to it yet and continues to use `localStorage`).
+
+- Passwords are hashed with `bcryptjs` before being stored — plaintext passwords are never persisted.
+- On successful register/login, the API issues a JSON Web Token (JWT) signed with the `JWT_SECRET` environment variable. Tokens expire after `JWT_EXPIRES_IN` (defaults to `7d`, i.e. 7 days).
+- All `/trips` routes (including nested itinerary routes) now require a valid JWT and are scoped to the authenticated user: `GET /trips` only returns that user's own trips, and `GET/PUT/DELETE` on a specific trip (or its itinerary) returns `404` if the trip doesn't belong to the caller.
+- `GET /health` remains public and unauthenticated (used by Caddy/infra monitoring).
+
+### Auth endpoints
+
+- `POST /auth/register` — body `{ "email": string, "password": string }`. Creates a user (email is stored lower-cased, unique case-insensitively) and returns `{ token, user }`. `user` never includes the password hash.
+- `POST /auth/login` — body `{ "email": string, "password": string }`. Returns `{ token, user }` on success, `401` on invalid credentials.
+- `GET /auth/me` — requires an `Authorization` header with the JWT in bearer-token format (`Authorization: bearer <token>`). Returns the current user's public profile (`id`, `email`, `createdAt`, `updatedAt`).
+
+### Calling protected routes
+
+```bash
+curl http://localhost:3001/trips \
+  -H "Authorization: bearer $TOKEN"
+```
+
+### `JWT_SECRET`
+
+`JWT_SECRET` **must** be set to a long, random, unique value in production — never deploy with the `.env.example` placeholder. This follows the same pattern as `ALLOWED_CORS_ORIGIN`: the placeholder ships in `.env.example` for local development only, and the real production value is set manually by the user on their server (see the deployment runbook below). There is no password reset / email verification flow in this initial version, and no OAuth/social login — both are explicitly out of scope for 10.2 per the roadmap.
+
 ## API surface
 
 The API intentionally mirrors the current Trip/itinerary domain model without coupling the frontend to it yet.
 
-### Trip endpoints
+### Trip endpoints (require an `Authorization` header with a bearer-token JWT)
 
-- `GET /trips` — list trips
-- `POST /trips` — create trip
-- `GET /trips/:id` — fetch trip by ID
-- `PUT /trips/:id` — update trip
-- `DELETE /trips/:id` — delete trip
-- `GET /trips/active` — fetch active trip
+- `GET /trips` — list the authenticated user's trips
+- `POST /trips` — create trip (owned by the authenticated user)
+- `GET /trips/:id` — fetch trip by ID (must belong to the authenticated user)
+- `PUT /trips/:id` — update trip (must belong to the authenticated user)
+- `DELETE /trips/:id` — delete trip (must belong to the authenticated user)
+- `GET /trips/active` — fetch the authenticated user's active trip
 - `PUT /trips/:id/active` — set the active trip
 
-### Itinerary endpoints
+### Itinerary endpoints (require an `Authorization` header with a bearer-token JWT)
 
 - `GET /trips/:tripId/itinerary` — list trip itinerary days with nested items
 - `POST /trips/:tripId/itinerary/days` — add an itinerary day
@@ -70,8 +100,13 @@ The API intentionally mirrors the current Trip/itinerary domain model without co
 ### Python- or shell-friendly example
 
 ```bash
+TOKEN=$(curl -s -X POST http://localhost:3001/auth/login \
+  -H 'Content-Type: application/json' \
+  -d '{"email": "you@example.com", "password": "your-password"}' | node -pe 'JSON.parse(require("fs").readFileSync(0)).token')
+
 curl -X POST http://localhost:3001/trips \
   -H 'Content-Type: application/json' \
+  -H "Authorization: bearer $TOKEN" \
   -d '{
     "name": "Weekend in Prague",
     "destination": "Prague",
@@ -89,12 +124,15 @@ On startup, the app creates the SQLite database file at the configured `DB_PATH`
 
 The initial schema covers:
 
-- `trips`
+- `users` — accounts (email unique, case-insensitive; password stored only as a bcrypt hash)
+- `trips` — now includes a nullable `user_id` foreign key linking a trip to its owning account
 - `itinerary_days`
 - `itinerary_items`
 - active-trip state via `trips.is_active`
 
-This is intentionally a minimal first schema for the backend foundation; future features such as authentication and sharing will extend it without a rewrite of the existing route structure.
+Since `trips` existed before Feature 10.2, `src/db/db.js` also runs a small idempotent migration on every startup: if the `trips` table doesn't yet have a `user_id` column (i.e. a database created under 10.1), it adds the column via `ALTER TABLE` and creates its index. This leaves any pre-existing 10.1-era trips with `user_id = NULL` (unowned) rather than failing — there is no backfill/ownership-assignment step in this PR.
+
+This is intentionally a minimal schema evolution for the backend foundation; future features such as shared Trip access (10.3) will extend it further without a rewrite of the existing route structure.
 
 ## Deployment runbook (for the user's own Linux server)
 

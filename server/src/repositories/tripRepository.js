@@ -103,19 +103,24 @@ function normalizeItineraryItemPayload(payload = {}) {
   };
 }
 
-export function listTrips() {
-  return db.prepare('SELECT * FROM trips ORDER BY updated_at DESC').all().map(mapTripRow);
+export function listTrips(userId) {
+  return db.prepare('SELECT * FROM trips WHERE user_id = ? ORDER BY updated_at DESC').all(userId).map(mapTripRow);
 }
 
-export function getTripById(tripId) {
-  return mapTripRow(db.prepare('SELECT * FROM trips WHERE id = ?').get(tripId));
+export function getTripById(tripId, userId) {
+  if (userId === undefined) {
+    return mapTripRow(db.prepare('SELECT * FROM trips WHERE id = ?').get(tripId));
+  }
+  return mapTripRow(db.prepare('SELECT * FROM trips WHERE id = ? AND user_id = ?').get(tripId, userId));
 }
 
-export function getActiveTrip() {
-  return mapTripRow(db.prepare('SELECT * FROM trips WHERE is_active = 1 ORDER BY updated_at DESC LIMIT 1').get());
+export function getActiveTrip(userId) {
+  return mapTripRow(
+    db.prepare('SELECT * FROM trips WHERE is_active = 1 AND user_id = ? ORDER BY updated_at DESC LIMIT 1').get(userId),
+  );
 }
 
-export function createTrip(payload = {}) {
+export function createTrip(payload = {}, userId) {
   const data = normalizeTripPayload(payload);
   if (!data.name || !data.startDate || !data.endDate) {
     const error = new Error('Trip name, startDate and endDate are required.');
@@ -127,8 +132,8 @@ export function createTrip(payload = {}) {
   const tripId = randomUUID();
 
   db.prepare(
-    `INSERT INTO trips (id, name, destination, country, start_date, end_date, travellers, cover_image, status, is_active, created_at, updated_at)
-     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
+    `INSERT INTO trips (id, name, destination, country, start_date, end_date, travellers, cover_image, status, is_active, user_id, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
   ).run(
     tripId,
     data.name,
@@ -140,15 +145,16 @@ export function createTrip(payload = {}) {
     data.coverImage,
     data.status,
     data.isActive,
+    userId,
     now,
     now,
   );
 
-  return getTripById(tripId);
+  return getTripById(tripId, userId);
 }
 
-export function updateTrip(tripId, payload = {}) {
-  const existing = getTripById(tripId);
+export function updateTrip(tripId, payload = {}, userId) {
+  const existing = getTripById(tripId, userId);
   if (!existing) {
     const error = new Error('Trip not found.');
     error.statusCode = 404;
@@ -161,7 +167,7 @@ export function updateTrip(tripId, payload = {}) {
   db.prepare(
     `UPDATE trips
      SET name = ?, destination = ?, country = ?, start_date = ?, end_date = ?, travellers = ?, cover_image = ?, status = ?, is_active = ?, updated_at = ?
-     WHERE id = ?`
+     WHERE id = ? AND user_id = ?`
   ).run(
     data.name,
     data.destination,
@@ -174,34 +180,39 @@ export function updateTrip(tripId, payload = {}) {
     data.isActive,
     now,
     tripId,
+    userId,
   );
 
-  return getTripById(tripId);
+  return getTripById(tripId, userId);
 }
 
-export function deleteTrip(tripId) {
-  const existing = getTripById(tripId);
+export function deleteTrip(tripId, userId) {
+  const existing = getTripById(tripId, userId);
   if (!existing) {
     const error = new Error('Trip not found.');
     error.statusCode = 404;
     throw error;
   }
 
-  db.prepare('DELETE FROM trips WHERE id = ?').run(tripId);
+  db.prepare('DELETE FROM trips WHERE id = ? AND user_id = ?').run(tripId, userId);
   return existing;
 }
 
-export function setActiveTrip(tripId) {
-  const trip = getTripById(tripId);
+export function setActiveTrip(tripId, userId) {
+  const trip = getTripById(tripId, userId);
   if (!trip) {
     const error = new Error('Trip not found.');
     error.statusCode = 404;
     throw error;
   }
 
-  db.prepare('UPDATE trips SET is_active = 0').run();
-  db.prepare('UPDATE trips SET is_active = 1, updated_at = ? WHERE id = ?').run(new Date().toISOString(), tripId);
-  return getTripById(tripId);
+  db.prepare('UPDATE trips SET is_active = 0 WHERE user_id = ?').run(userId);
+  db.prepare('UPDATE trips SET is_active = 1, updated_at = ? WHERE id = ? AND user_id = ?').run(
+    new Date().toISOString(),
+    tripId,
+    userId,
+  );
+  return getTripById(tripId, userId);
 }
 
 export function listItineraryDaysForTrip(tripId) {
@@ -212,8 +223,8 @@ export function getDayById(tripId, dayId) {
   return mapDayRow(db.prepare('SELECT * FROM itinerary_days WHERE trip_id = ? AND id = ?').get(tripId, dayId));
 }
 
-export function createItineraryDay(tripId, payload = {}) {
-  const trip = getTripById(tripId);
+export function createItineraryDay(tripId, payload = {}, userId) {
+  const trip = getTripById(tripId, userId);
   if (!trip) {
     const error = new Error('Trip not found.');
     error.statusCode = 404;
