@@ -1,4 +1,9 @@
-import { useCallback, useEffect, useState } from "react";
+import {
+    useCallback,
+    useEffect,
+    useRef,
+    useState,
+} from "react";
 
 import { ApiError } from "../../api/client";
 import {
@@ -60,6 +65,7 @@ export function SyncedTripsSection() {
                             setTrips(current => current.map(item =>
                                 item.id === trip.id ? trip : item,
                             ));
+                            setSelectedTrip(trip);
                         }}
                     />
                 )}
@@ -80,6 +86,7 @@ function SyncedTripDetail({
     const [editMode, setEditMode] = useState(false);
     const [destination, setDestination] = useState(trip.destination);
     const [error, setError] = useState("");
+    const ownsLock = useRef(false);
     const currentUser = AuthService.getUser();
     const role = members.find(member => member.userId === currentUser?.id)?.role;
     const canEdit = role === "owner" || role === "editor";
@@ -109,6 +116,7 @@ function SyncedTripDetail({
         }
         const heartbeat = window.setInterval(() => {
             void SyncedTripApi.heartbeat(trip.id).catch(reason => {
+                ownsLock.current = false;
                 setError(reason instanceof ApiError
                     ? lockConflictMessage(reason)
                     : "Your edit lock could not be renewed.");
@@ -117,7 +125,10 @@ function SyncedTripDetail({
         }, 45_000);
         return () => {
             window.clearInterval(heartbeat);
-            void SyncedTripApi.releaseLock(trip.id).catch(() => undefined);
+            if (ownsLock.current) {
+                ownsLock.current = false;
+                void SyncedTripApi.releaseLock(trip.id).catch(() => undefined);
+            }
         };
     }, [editMode, trip.id]);
 
@@ -125,6 +136,7 @@ function SyncedTripDetail({
         setError("");
         try {
             await SyncedTripApi.acquireLock(trip.id);
+            ownsLock.current = true;
             setEditMode(true);
         } catch (reason) {
             setError(reason instanceof ApiError
@@ -218,7 +230,7 @@ function SyncedTripDetail({
                                             Share this link
                                             <input
                                                 readOnly
-                                                value={`${window.location.origin}${import.meta.env.BASE_URL}accept-invite/${invitation.token}`}
+                                                value={`${window.location.origin}${import.meta.env.BASE_URL}?invite=${invitation.token}`}
                                             />
                                         </label>
                                         <Button type="button" variant="outline" onClick={() => revoke(invitation)}>
