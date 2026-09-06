@@ -33,6 +33,10 @@ export default function MainLayout({ children }: MainLayoutProps) {
                     <Icon name="settings" />
                     <span>Settings</span>
                 </NavLink>
+                <NavLink to="/account">
+                    <Icon name="idCard" />
+                    <span>Account</span>
+                </NavLink>
             </nav>
         </main>
     );

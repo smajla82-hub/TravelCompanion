@@ -1,8 +1,9 @@
 import { useState } from "react";
 
 import { Button, Container, Icon } from "../components/ui";
-import { TripsSection } from "../components/sections";
+import { SyncedTripsSection, TripsSection } from "../components/sections";
 import { NewTripModal } from "../components/trips";
+import { AuthService } from "../services/AuthService";
 import "./MyTripsPage.css";
 
 export default function MyTripsPage() {
@@ -23,6 +24,8 @@ export default function MyTripsPage() {
             <TripsSection
                 onTripChanged={() => refreshTrips(value => value + 1)}
             />
+
+            {AuthService.getToken() && <SyncedTripsSection />}
 
             <NewTripModal
                 open={newTripOpen}

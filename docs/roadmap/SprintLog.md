@@ -389,7 +389,7 @@ Completed the visual consistency review against the approved 9.7B baseline.
 
 **Current Milestone:** 9.x — Final UI Look
 **Completed through:** 9.8B
-**Status:** 9.8E / My Trips visual polish and 9.8F / Settings visual polish remain planned. In parallel, Features 10.1–10.4a are DONE backend-only; 10.4b — Frontend integration is next.
+**Status:** 9.8E / My Trips visual polish and 9.8F / Settings visual polish remain planned. In parallel, Features 10.1–10.4b are DONE; 10.5 — Data migration is next.
 
 Next:
 
@@ -419,7 +419,9 @@ Introduce user accounts and shared/synced Trip data across multiple devices, rep
 
 **10.4a — Backend: Trip edit locking + last-write-wins fallback — DONE (backend-only).** Added a short-lived pessimistic edit lock with acquire/status/heartbeat/release APIs, Owner force-release, and lock enforcement for Trip and itinerary mutations. The limited timestamp fallback is available only when no lock is active and an offline client proves its known resource timestamp is current.
 
-**Next planned feature: 10.4b — Frontend integration (API client, login, sync, lock UI, invitation UI).**
+**10.4b — Frontend integration — DONE.** The PWA now offers optional email/password login, an authenticated API client, a clearly separate synced/shared Trips section, lock/heartbeat/conflict feedback for synced-trip edits, and Owner invitation management with accept/reject deep links. Logged-out users retain the unchanged full local `localStorage` CRUD experience.
+
+**Next planned feature: 10.5 — Data migration.** The first real production Trip import into the backend will happen through this now-functional sync mechanism once the dedicated import tooling is built; no automatic local Trip migration is included in 10.4b.
 
 ## 11.x+ — Extended Travel Companion (PLANNED)
 
