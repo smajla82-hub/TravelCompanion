@@ -389,7 +389,7 @@ Completed the visual consistency review against the approved 9.7B baseline.
 
 **Current Milestone:** 9.x — Final UI Look
 **Completed through:** 9.8B
-**Status:** 9.8E / My Trips visual polish and 9.8F / Settings visual polish remain planned. In parallel, Features 10.1 (backend foundation), 10.2 (Authentication), and 10.3 (Shared Trip access) are DONE backend-only; 10.4 — Sync & conflict handling is next.
+**Status:** 9.8E / My Trips visual polish and 9.8F / Settings visual polish remain planned. In parallel, Features 10.1–10.4a are DONE backend-only; 10.4b — Frontend integration is next.
 
 Next:
 
@@ -417,7 +417,9 @@ Introduce user accounts and shared/synced Trip data across multiple devices, rep
 - Server-side authorization permits Owner/Editor content changes, read-only Viewer access, and Owner-only invitation, membership, and Trip deletion management. `GET /trips` now includes Trips where the caller is a member.
 - The frontend remains unchanged and localStorage-based.
 
-**Next planned feature: 10.4 — Sync & conflict handling.**
+**10.4a — Backend: Trip edit locking + last-write-wins fallback — DONE (backend-only).** Added a short-lived pessimistic edit lock with acquire/status/heartbeat/release APIs, Owner force-release, and lock enforcement for Trip and itinerary mutations. The limited timestamp fallback is available only when no lock is active and an offline client proves its known resource timestamp is current.
+
+**Next planned feature: 10.4b — Frontend integration (API client, login, sync, lock UI, invitation UI).**
 
 ## 11.x+ — Extended Travel Companion (PLANNED)
 

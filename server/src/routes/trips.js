@@ -3,8 +3,10 @@ import rateLimit from 'express-rate-limit';
 import * as repo from '../repositories/tripRepository.js';
 import * as members from '../repositories/tripMemberRepository.js';
 import * as invitations from '../repositories/invitationRepository.js';
+import * as locks from '../repositories/tripLockRepository.js';
 import { requireAuth } from '../middleware/auth.js';
 import { requireTripRole } from '../middleware/tripRole.js';
+import { requireActiveLock } from '../middleware/tripLock.js';
 import { config } from '../config.js';
 import { RATE_LIMIT_WINDOW_MS } from '../middleware/rateLimitWindow.js';
 
@@ -38,6 +40,22 @@ function isValidEmail(email) {
   return Boolean(local && domain && !extra && domain.includes('.'));
 }
 
+function lockExpiry() {
+  return new Date(Date.now() + config.tripLockTtlMs).toISOString();
+}
+
+function currentTrip(req) {
+  return repo.getTripById(req.params.tripId ?? req.params.id, req.user.id);
+}
+
+function currentDay(req) {
+  return repo.getDayById(req.params.tripId, req.params.dayId);
+}
+
+function currentItem(req) {
+  return repo.getItemById(req.params.tripId, req.params.itemId);
+}
+
 router.get('/', (req, res) => {
   const trips = repo.listTrips(req.user.id);
   res.json(trips);
@@ -51,7 +69,7 @@ router.get('/active', (req, res) => {
   return res.json(activeTrip);
 });
 
-router.put('/:id/active', requireTripRole(['owner', 'editor']), (req, res) => {
+router.put('/:id/active', requireTripRole(['owner', 'editor']), requireActiveLock(currentTrip), (req, res) => {
   const activeTrip = repo.setActiveTrip(req.params.id, req.user.id);
   return res.json(activeTrip);
 });
@@ -61,13 +79,50 @@ router.post('/', (req, res) => {
   return res.status(201).json(trip);
 });
 
+router.get('/:id/lock', requireTripRole(['owner', 'editor', 'viewer']), (req, res) => {
+  const lock = locks.getActiveLock(req.params.id);
+  return res.json(lock
+    ? { locked: true, tripId: lock.tripId, userId: lock.userId, email: lock.email, acquiredAt: lock.acquiredAt, expiresAt: lock.expiresAt }
+    : { locked: false });
+});
+
+router.post('/:id/lock', requireTripRole(['owner', 'editor']), (req, res) => {
+  const now = new Date().toISOString();
+  const result = locks.acquireLock(req.params.id, req.user.id, now, lockExpiry());
+  if (!result.acquired) {
+    return res.status(409).json({
+      error: 'Trip is currently being edited by another user.',
+      lockedBy: { userId: result.lock.userId, email: result.lock.email },
+      expiresAt: result.lock.expiresAt,
+    });
+  }
+  const { lock } = result;
+  return res.json({ tripId: lock.tripId, userId: lock.userId, acquiredAt: lock.acquiredAt, expiresAt: lock.expiresAt });
+});
+
+router.put('/:id/lock/heartbeat', requireTripRole(['owner', 'editor']), (req, res) => {
+  const lock = locks.heartbeatLock(req.params.id, req.user.id, new Date().toISOString(), lockExpiry());
+  if (!lock) {
+    return res.status(409).json({ error: 'You do not hold an active lock for this trip.' });
+  }
+  return res.json({ tripId: lock.tripId, userId: lock.userId, acquiredAt: lock.acquiredAt, expiresAt: lock.expiresAt });
+});
+
+router.delete('/:id/lock', requireTripRole(['owner', 'editor']), (req, res) => {
+  const lock = locks.releaseLock(req.params.id, req.user.id, req.tripMember.role === 'owner');
+  if (!lock) {
+    return res.status(409).json({ error: 'You do not hold an active lock for this trip.' });
+  }
+  return res.json({ released: true, tripId: lock.tripId });
+});
+
 router.get('/:id', requireTripRole(['owner', 'editor', 'viewer']), (req, res) => {
   const trip = repo.getTripById(req.params.id, req.user.id);
   ensureExists(trip, 'Trip not found.');
   return res.json(trip);
 });
 
-router.put('/:id', requireTripRole(['owner', 'editor']), (req, res) => {
+router.put('/:id', requireTripRole(['owner', 'editor']), requireActiveLock(currentTrip), (req, res) => {
   const trip = repo.updateTrip(req.params.id, req.body, req.user.id);
   return res.json(trip);
 });
@@ -89,8 +144,9 @@ router.get('/:tripId/itinerary', requireTripRole(['owner', 'editor', 'viewer']),
   return res.json({ tripId: req.params.tripId, days: enrichedDays });
 });
 
-router.post('/:tripId/itinerary/days', requireTripRole(['owner', 'editor']), (req, res) => {
+router.post('/:tripId/itinerary/days', requireTripRole(['owner', 'editor']), requireActiveLock(currentTrip), (req, res) => {
   const day = repo.createItineraryDay(req.params.tripId, req.body, req.user.id);
+  repo.touchTrip(req.params.tripId);
   return res.status(201).json(day);
 });
 
@@ -101,13 +157,15 @@ router.get('/:tripId/itinerary/days/:dayId', requireTripRole(['owner', 'editor',
   return res.json({ ...day, items });
 });
 
-router.put('/:tripId/itinerary/days/:dayId', requireTripRole(['owner', 'editor']), (req, res) => {
+router.put('/:tripId/itinerary/days/:dayId', requireTripRole(['owner', 'editor']), requireActiveLock(currentDay), (req, res) => {
   const day = repo.updateItineraryDay(req.params.tripId, req.params.dayId, req.body);
+  repo.touchTrip(req.params.tripId);
   return res.json(day);
 });
 
-router.delete('/:tripId/itinerary/days/:dayId', requireTripRole(['owner', 'editor']), (req, res) => {
+router.delete('/:tripId/itinerary/days/:dayId', requireTripRole(['owner', 'editor']), requireActiveLock(currentDay), (req, res) => {
   const deletedDay = repo.deleteItineraryDay(req.params.tripId, req.params.dayId);
+  repo.touchTrip(req.params.tripId);
   return res.json({ deleted: true, day: deletedDay });
 });
 
@@ -118,18 +176,21 @@ router.get('/:tripId/itinerary/days/:dayId/items', requireTripRole(['owner', 'ed
   return res.json(items);
 });
 
-router.post('/:tripId/itinerary/days/:dayId/items', requireTripRole(['owner', 'editor']), (req, res) => {
+router.post('/:tripId/itinerary/days/:dayId/items', requireTripRole(['owner', 'editor']), requireActiveLock(currentDay), (req, res) => {
   const item = repo.createItineraryItem(req.params.tripId, req.params.dayId, req.body);
+  repo.touchTrip(req.params.tripId);
   return res.status(201).json(item);
 });
 
-router.put('/:tripId/itinerary/days/:dayId/items/:itemId', requireTripRole(['owner', 'editor']), (req, res) => {
+router.put('/:tripId/itinerary/days/:dayId/items/:itemId', requireTripRole(['owner', 'editor']), requireActiveLock(currentItem), (req, res) => {
   const item = repo.updateItineraryItem(req.params.tripId, req.params.dayId, req.params.itemId, req.body);
+  repo.touchTrip(req.params.tripId);
   return res.json(item);
 });
 
-router.delete('/:tripId/itinerary/days/:dayId/items/:itemId', requireTripRole(['owner', 'editor']), (req, res) => {
+router.delete('/:tripId/itinerary/days/:dayId/items/:itemId', requireTripRole(['owner', 'editor']), requireActiveLock(currentItem), (req, res) => {
   const deletedItem = repo.deleteItineraryItem(req.params.tripId, req.params.dayId, req.params.itemId);
+  repo.touchTrip(req.params.tripId);
   return res.json({ deleted: true, item: deletedItem });
 });
 

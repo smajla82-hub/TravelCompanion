@@ -7,6 +7,7 @@ const nodeEnv = process.env.NODE_ENV || 'development';
 const DEV_ONLY_JWT_SECRET = 'dev-only-insecure-secret-change-me';
 const INSECURE_JWT_SECRET_ALLOWED_ENVS = new Set(['development', 'test']);
 const configuredInvitationExpiry = Number(process.env.INVITATION_EXPIRES_IN_DAYS || 7);
+const configuredTripLockTtl = Number(process.env.TRIP_LOCK_TTL_MS || 120000);
 
 if (
   !INSECURE_JWT_SECRET_ALLOWED_ENVS.has(nodeEnv) &&
@@ -29,4 +30,7 @@ export const config = {
   invitationExpiresInDays: Number.isFinite(configuredInvitationExpiry) && configuredInvitationExpiry > 0
     ? configuredInvitationExpiry
     : 7,
+  tripLockTtlMs: Number.isFinite(configuredTripLockTtl) && configuredTripLockTtl > 0
+    ? configuredTripLockTtl
+    : 120000,
 };

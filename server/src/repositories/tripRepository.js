@@ -218,6 +218,10 @@ export function setActiveTrip(tripId, userId) {
   return getTripById(tripId, userId);
 }
 
+export function touchTrip(tripId) {
+  db.prepare('UPDATE trips SET updated_at = ? WHERE id = ?').run(new Date().toISOString(), tripId);
+}
+
 export function listItineraryDaysForTrip(tripId) {
   return db.prepare('SELECT * FROM itinerary_days WHERE trip_id = ? ORDER BY date ASC, created_at ASC').all(tripId).map(mapDayRow);
 }

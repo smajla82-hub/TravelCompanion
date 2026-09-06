@@ -44,6 +44,18 @@ CREATE TABLE IF NOT EXISTS trip_members (
 
 CREATE INDEX IF NOT EXISTS idx_trip_members_user_id ON trip_members (user_id);
 
+CREATE TABLE IF NOT EXISTS trip_locks (
+  trip_id TEXT PRIMARY KEY,
+  user_id TEXT NOT NULL,
+  acquired_at TEXT NOT NULL,
+  last_heartbeat_at TEXT NOT NULL,
+  expires_at TEXT NOT NULL,
+  FOREIGN KEY (trip_id) REFERENCES trips (id) ON DELETE CASCADE,
+  FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_trip_locks_expires_at ON trip_locks (expires_at);
+
 CREATE TABLE IF NOT EXISTS invitations (
   id TEXT PRIMARY KEY,
   trip_id TEXT NOT NULL,
