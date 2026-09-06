@@ -429,6 +429,13 @@ with lock conflict and partial-failure messaging.
 
 **Next planned feature: 10.5 — Data migration.** The first real production Trip import into the backend will happen through this now-functional sync mechanism once the dedicated import tooling is built; no automatic local Trip migration is included in 10.4b.
 
+**10.4d — Corrective shared Trip refactor — DONE.** Replaced the parallel
+synced-trip detail flow with the shared Trip detail/itinerary components and a
+source-agnostic adapter. Online lock lifecycle, conflict messages, active-trip
+dashboard state, authenticated New Trip creation, and RoadBook full replacement
+now use the adapter; members and invitations remain in unified detail. **10.5 —
+Data migration is next.**
+
 ## 11.x+ — Extended Travel Companion (PLANNED)
 
 Budget, checklist, currency, timeline, equipment, knowledge base and related modules — expected to build on top of the shared persistence/accounts foundation once it exists.

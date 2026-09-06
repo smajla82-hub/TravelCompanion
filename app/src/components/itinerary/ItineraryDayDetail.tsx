@@ -1,6 +1,7 @@
 import { useEffect, useMemo, useState } from "react";
 
 import { Card, Heading, Stack, Button, Modal } from "../ui";
+import { ItineraryDayForm } from "./ItineraryDayForm";
 import { ItineraryDayAdditionalDetails } from
     "./ItineraryDayAdditionalDetails";
 import { ItineraryItemModal } from
@@ -23,7 +24,7 @@ import type {
 } from "../../types";
 import type { ItineraryItemFields } from
     "./ItineraryItemForm";
-import { TripService } from "../../services/TripService";
+import type { TripAdapter } from "../../services/TripAdapter";
 import {
     getMealTypeForItem,
     matchesMealType,
@@ -37,7 +38,8 @@ const REMAINING_ACTIVITIES_REFRESH_INTERVAL_MS = 60000;
 
 type ItineraryDayDetailProps = {
     day: ItineraryDay;
-    tripId: string;
+    adapter?: TripAdapter;
+    editable?: boolean;
     onClose: () => void;
     onDayChanged: () => void;
     /**
@@ -53,13 +55,15 @@ type ItineraryDayDetailProps = {
 
 export function ItineraryDayDetail({
     day,
-    tripId,
+    adapter,
+    editable = true,
     onClose,
     onDayChanged,
     showRemainingOnly = false,
 }: ItineraryDayDetailProps) {
     const [modalOpen, setModalOpen] =
         useState(false);
+    const [dayEditOpen, setDayEditOpen] = useState(false);
 
     const [now, setNow] = useState(() => new Date());
 
@@ -163,25 +167,13 @@ export function ItineraryDayDetail({
         day.items.length > 0 &&
         visibleItems.length === 0;
 
-    function handleSubmit(
+    async function handleSubmit(
         fields: ItineraryItemFields
     ) {
         if (editingItem) {
-            TripService.updateItineraryItem(
-                tripId,
-                day.date,
-                editingItem.id,
-                fields
-            );
+            if (adapter) await adapter.updateItem(day, editingItem.id, fields);
         } else {
-            TripService.addItineraryItem(
-                tripId,
-                day.date,
-                {
-                    ...fields,
-                    date: day.date,
-                }
-            );
+            if (adapter) await adapter.addItem(day, fields);
         }
 
         setModalOpen(false);
@@ -194,21 +186,17 @@ export function ItineraryDayDetail({
         setModalOpen(true);
     }
 
-    function handleDelete(itemId: string) {
+    async function handleDelete(itemId: string) {
         if (!window.confirm("Delete this activity?")) {
             return;
         }
 
-        TripService.deleteItineraryItem(
-            tripId,
-            day.date,
-            itemId
-        );
+        if (adapter) await adapter.deleteItem(day, itemId);
 
         onDayChanged();
     }
 
-    function handleMove(
+    async function handleMove(
         itemIndex: number,
         direction: number
     ) {
@@ -226,11 +214,7 @@ export function ItineraryDayDetail({
 
         orderedItems.splice(newIndex, 0, item);
 
-        TripService.reorderItineraryItems(
-            tripId,
-            day.date,
-            orderedItems.map(item => item.id)
-        );
+        if (adapter) await adapter.reorderItems(day, orderedItems.map(item => item.id));
 
         onDayChanged();
     }
@@ -245,8 +229,16 @@ export function ItineraryDayDetail({
                         ? ` — ${day.title}`
                         : ""}
                 </Heading>
+                {editable && <Stack gap="sm">
+                    <Button type="button" compact onClick={() => setDayEditOpen(true)}>Edit Day</Button>
+                    <Button type="button" compact variant="outline" onClick={() => {
+                        if (window.confirm("Delete this day?")) {
+                            void adapter?.deleteDay(day.id).then(onDayChanged);
+                        }
+                    }}>Delete Day</Button>
+                </Stack>}
 
-                <Button
+                {editable && <Button
                     type="button"
                     onClick={() => {
                         setEditingItem(undefined);
@@ -254,7 +246,7 @@ export function ItineraryDayDetail({
                     }}
                 >
                     Add Activity
-                </Button>
+                </Button>}
 
                 <p>
                     {visibleItems.length} activities
@@ -277,7 +269,7 @@ export function ItineraryDayDetail({
                                     <div className="itinerary-activity-content">
                                         <ActivitySummary item={item} />
 
-                                        <Button
+                                        {editable && <Button
                                             type="button"
                                             compact
                                             onClick={() =>
@@ -285,7 +277,7 @@ export function ItineraryDayDetail({
                                             }
                                         >
                                             Manage
-                                        </Button>
+                                        </Button>}
                                     </div>
                                     <ActivityActionStack
                                         showFood={item.priority === "FOOD"}
@@ -375,6 +367,18 @@ export function ItineraryDayDetail({
                     }}
                     onSubmit={handleSubmit}
                 />
+                <Modal open={dayEditOpen} onClose={() => setDayEditOpen(false)} title="Edit Day">
+                    <ItineraryDayForm
+                        defaultDate={day.date}
+                        initialTitle={day.title}
+                        onSubmit={value => {
+                            void adapter?.updateDay({ ...day, ...value }).then(() => {
+                                setDayEditOpen(false);
+                                onDayChanged();
+                            });
+                        }}
+                    />
+                </Modal>
 
                 <Modal
                     open={statsOpen}

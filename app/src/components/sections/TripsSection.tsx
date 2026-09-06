@@ -20,7 +20,7 @@ import { TripService } from "../../services/TripService";
 import { AuthService } from "../../services/AuthService";
 import { SyncedTripApi, type SyncedTrip } from "../../api/trips";
 import { ApiError } from "../../api/client";
-import { SyncedTripDetail } from "./SyncedTripsSection";
+import { createTripAdapter } from "../../services/TripAdapter";
 
 import type { Trip } from "../../types";
 
@@ -34,11 +34,10 @@ export function TripsSection({
 
     const navigate = useNavigate();
 
-    const { trips } = useTrips();
+    const { trips: allTrips } = useTrips();
+    const trips = allTrips.filter(trip => trip.source !== "online");
     const [syncedTrips, setSyncedTrips] = useState<SyncedTrip[]>([]);
     const [syncedError, setSyncedError] = useState("");
-    const [selectedSyncedTrip, setSelectedSyncedTrip] =
-        useState<SyncedTrip | null>(null);
 
     useEffect(() => {
         if (!AuthService.getToken()) {
@@ -138,7 +137,12 @@ export function TripsSection({
                             itinerary: [],
                         }}
                         badge="Online"
-                        onClick={() => setSelectedSyncedTrip(trip)}
+                        onClick={() => setSelectedTrip({
+                            ...trip,
+                            destination: trip.destination,
+                            itinerary: [],
+                            source: "online",
+                        })}
                     />
                 ))}
             </Grid>
@@ -154,24 +158,25 @@ export function TripsSection({
                         trip={selectedTrip}
                         onEdit={openEdit}
                         onDelete={openDelete}
-                        onSetActive={setActiveTrip}
-                    />
-                )}
-            </Modal>
-
-            <Modal
-                open={selectedSyncedTrip !== null}
-                title="Trip Detail"
-                onClose={() => setSelectedSyncedTrip(null)}
-            >
-                {selectedSyncedTrip && (
-                    <SyncedTripDetail
-                        trip={selectedSyncedTrip}
-                        onChanged={trip => {
-                            setSyncedTrips(current => current.map(item =>
-                                item.id === trip.id ? trip : item,
-                            ));
-                            setSelectedSyncedTrip(trip);
+                        onSetActive={() => {
+                            if (selectedTrip.source === "online") {
+                                void createTripAdapter(selectedTrip)
+                                    .setActive()
+                                    .then(() => {
+                                        setSelectedTrip(null);
+                                        onTripChanged?.();
+                                        navigate("/");
+                                    })
+                                    .catch(reason => setSyncedError(reason instanceof ApiError ? reason.message : "Unable to set active trip."));
+                            } else {
+                                setActiveTrip();
+                            }
+                        }}
+                        onChanged={updated => {
+                            if (updated.source === "online") {
+                                setSyncedTrips(current => current.map(item => item.id === updated.id ? { ...item, ...updated } : item));
+                                setSelectedTrip(updated);
+                            }
                         }}
                     />
                 )}

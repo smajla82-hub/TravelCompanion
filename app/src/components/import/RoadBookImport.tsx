@@ -20,6 +20,7 @@ import { AuthService } from "../../services/AuthService";
 import { SyncedTripApi, type SyncedTrip } from "../../api/trips";
 import { ApiError } from "../../api/client";
 import { lockConflictMessage } from "../sections/lockConflictMessage";
+import { createTripAdapter } from "../../services/TripAdapter";
 
 import type {
     ItineraryDay,
@@ -99,33 +100,14 @@ export function RoadBookImport() {
             return;
         }
 
-        if (!selectedTripId.startsWith("online:")) {
-            TripService.setItinerary(selectedTripId, days);
-            setError("");
-            setSaved(true);
-            return;
-        }
-
-        const tripId = selectedTripId.slice("online:".length);
+        const online = selectedTripId.startsWith("online:");
+        const tripId = online ? selectedTripId.slice("online:".length) : selectedTripId;
+        const adapter = createTripAdapter({ id: tripId, source: online ? "online" : "local" });
         let ownsLock = false;
         try {
-            await SyncedTripApi.acquireLock(tripId);
-            ownsLock = true;
-            const existing = (await SyncedTripApi.itinerary(tripId)).days;
-            for (const day of existing) {
-                await SyncedTripApi.deleteDay(tripId, day.id);
-            }
-            for (const day of days) {
-                const createdDay = await SyncedTripApi.createDay(tripId, {
-                    date: day.date,
-                    title: day.title,
-                });
-                for (const item of day.items) {
-                    const payload = { ...item } as Omit<typeof item, "id">;
-                    delete (payload as { id?: string }).id;
-                    await SyncedTripApi.createItem(tripId, createdDay.id, payload);
-                }
-            }
+            await adapter.acquireLock();
+            ownsLock = online;
+            await adapter.setItinerary(days);
             setError("");
             setSaved(true);
         } catch (reason) {
@@ -134,7 +116,7 @@ export function RoadBookImport() {
                 : "The online Trip itinerary could only be partially replaced. Reload the Trip and retry.");
         } finally {
             if (ownsLock) {
-                await SyncedTripApi.releaseLock(tripId).catch(() => undefined);
+                await adapter.releaseLock().catch(() => undefined);
             }
         }
     }
