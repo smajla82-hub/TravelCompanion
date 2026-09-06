@@ -1,27 +1,29 @@
-import { useEffect, useState } from "react";
+import { useEffect, useSyncExternalStore } from "react";
 import { TripService } from "../services/TripService";
-import { SyncedTripApi } from "../api/trips";
+import { OnlineTripStore } from "../services/OnlineTripStore";
+import { AuthService } from "../services/AuthService";
+import { selectActiveTrip } from "../utils/selectActiveTrip";
 import type { Trip } from "../types";
-import { createTripAdapter } from "../services/TripAdapter";
 
 export function useTrips() {
     const trips = TripService.getAll();
-    const [onlineTrips, setOnlineTrips] = useState<Trip[]>([]);
+    const onlineTrips = useSyncExternalStore(
+        OnlineTripStore.subscribe,
+        OnlineTripStore.getSnapshot,
+        OnlineTripStore.getSnapshot,
+    );
 
     useEffect(() => {
-        if (!localStorage.getItem("travel-companion.auth-token")) return;
-        void SyncedTripApi.list().then(async list => {
-            const loaded = await Promise.all(list.map(item => createTripAdapter(item).getTrip()));
-            setOnlineTrips(loaded);
-        }).catch(() => setOnlineTrips([]));
+        if (!AuthService.getToken()) return;
+        void OnlineTripStore.ensureLoaded().catch(() => undefined);
     }, []);
 
-    const allTrips = [...trips, ...onlineTrips];
-    const activeTrip = allTrips.find(trip => trip.source === "online" && trip.status === "active")
-        ?? allTrips.find(trip => trip.status === "active");
+    const allTrips: Trip[] = [...trips, ...onlineTrips];
+    const activeTrip = selectActiveTrip(allTrips);
 
     return {
         trips: allTrips,
+        onlineTrips,
         activeTrip,
     };
 }

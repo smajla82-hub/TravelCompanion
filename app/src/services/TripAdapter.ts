@@ -64,7 +64,24 @@ function localAdapter(tripId: string): TripAdapter {
     };
 }
 
-function onlineTrip(trip: SyncedTrip): Trip {
+/**
+ * Resolves the client Trip status: the server tracks the active Trip with the
+ * `isActive` flag, so it wins over the stored `status`.
+ */
+function onlineTripStatus(trip: SyncedTrip): Trip["status"] {
+    if (trip.isActive === undefined) {
+        return trip.status;
+    }
+
+    if (trip.isActive) {
+        return "active";
+    }
+
+    return trip.status === "active" ? "planning" : trip.status;
+}
+
+/** Maps a server Trip to the client Trip representation. */
+export function toOnlineTrip(trip: SyncedTrip): Trip {
     return {
         id: trip.id,
         destination: trip.destination,
@@ -72,7 +89,7 @@ function onlineTrip(trip: SyncedTrip): Trip {
         startDate: trip.startDate,
         endDate: trip.endDate,
         travellers: trip.travellers,
-        status: trip.status,
+        status: onlineTripStatus(trip),
         itinerary: [],
         source: "online",
         name: trip.name,
@@ -87,7 +104,7 @@ export function createTripAdapter(trip: Pick<Trip, "id" | "source"> | SyncedTrip
     }
     const tripId = trip.id;
     let lockHeld = false;
-    const get = async () => onlineTrip(await SyncedTripApi.get(tripId));
+    const get = async () => toOnlineTrip(await SyncedTripApi.get(tripId));
     const reload = async () => (await SyncedTripApi.itinerary(tripId)).days;
     async function acquire() {
         if (!lockHeld) {
@@ -143,10 +160,10 @@ export function createTripAdapter(trip: Pick<Trip, "id" | "source"> | SyncedTrip
         invitations: () => SyncedTripApi.invitations(tripId),
         invite: (email, role) => SyncedTripApi.invite(tripId, email, role),
         revokeInvitation: async id => { await SyncedTripApi.revokeInvitation(tripId, id); },
-        updateTrip: updated => withLock(async () => onlineTrip(await SyncedTripApi.update(tripId, {
+        updateTrip: updated => withLock(async () => toOnlineTrip(await SyncedTripApi.update(tripId, {
             ...updated,
             name: updated.name ?? updated.destination,
         } as SyncedTrip))),
-        setActive: () => withLock(async () => onlineTrip(await SyncedTripApi.setActive(tripId))),
+        setActive: () => withLock(async () => toOnlineTrip(await SyncedTripApi.setActive(tripId))),
     };
 }

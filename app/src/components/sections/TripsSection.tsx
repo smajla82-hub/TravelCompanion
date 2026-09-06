@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useNavigate } from "react-router-dom";
 
@@ -18,9 +18,10 @@ import { useTrips } from "../../hooks";
 
 import { TripService } from "../../services/TripService";
 import { AuthService } from "../../services/AuthService";
-import { SyncedTripApi, type SyncedTrip } from "../../api/trips";
+import { SyncedTripApi } from "../../api/trips";
 import { ApiError } from "../../api/client";
 import { createTripAdapter } from "../../services/TripAdapter";
+import { OnlineTripStore } from "../../services/OnlineTripStore";
 
 import type { Trip } from "../../types";
 
@@ -34,25 +35,18 @@ export function TripsSection({
 
     const navigate = useNavigate();
 
-    const { trips: allTrips } = useTrips();
+    const { trips: allTrips, onlineTrips: syncedTrips } = useTrips();
     const trips = allTrips.filter(trip => trip.source !== "online");
-    const [syncedTrips, setSyncedTrips] = useState<SyncedTrip[]>([]);
     const [syncedError, setSyncedError] = useState("");
 
-    const reloadSyncedTrips = useCallback(() => {
+    useEffect(() => {
         if (!AuthService.getToken()) {
             return;
         }
-        void SyncedTripApi.list()
-            .then(setSyncedTrips)
-            .catch(reason => setSyncedError(
-                reason instanceof ApiError ? reason.message : "Unable to load online trips.",
-            ));
-    }, [setSyncedTrips, setSyncedError]);
-
-    useEffect(() => {
-        reloadSyncedTrips();
-    }, [reloadSyncedTrips]);
+        void OnlineTripStore.ensureLoaded().catch(reason => setSyncedError(
+            reason instanceof ApiError ? reason.message : "Unable to load online trips.",
+        ));
+    }, []);
 
     const [selectedTrip, setSelectedTrip] =
         useState<Trip | null>(null);
@@ -101,7 +95,7 @@ export function TripsSection({
         if (deletingTrip.source === "online") {
             try {
                 await SyncedTripApi.delete(deletingTrip.id);
-                setSyncedTrips(current => current.filter(item => item.id !== deletingTrip.id));
+                OnlineTripStore.remove(deletingTrip.id);
             } catch (reason) {
                 setSyncedError(reason instanceof ApiError ? reason.message : "Unable to delete online trip.");
                 return;
@@ -148,15 +142,9 @@ export function TripsSection({
                         trip={{
                             ...trip,
                             destination: trip.name || trip.destination,
-                            itinerary: [],
                         }}
                         badge="Online"
-                        onClick={() => setSelectedTrip({
-                            ...trip,
-                            destination: trip.destination,
-                            itinerary: [],
-                            source: "online",
-                        })}
+                        onClick={() => setSelectedTrip(trip)}
                     />
                 ))}
             </Grid>
@@ -176,7 +164,8 @@ export function TripsSection({
                             if (selectedTrip.source === "online") {
                                 void createTripAdapter(selectedTrip)
                                     .setActive()
-                                    .then(() => {
+                                    .then(activatedTrip => {
+                                        OnlineTripStore.applyTrip(activatedTrip);
                                         setSelectedTrip(null);
                                         onTripChanged?.();
                                         navigate("/");
@@ -198,7 +187,6 @@ export function TripsSection({
                 }
                 onTripCreated={() => {
                     onTripChanged?.();
-                    reloadSyncedTrips();
                 }}
             />
 

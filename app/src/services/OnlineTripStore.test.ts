@@ -1,0 +1,170 @@
+import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+
+// TripService reads localStorage while it is imported, so a stub has to exist
+// before the modules under test are loaded.
+vi.hoisted(() => {
+    const storage = new Map<string, string>();
+    Object.defineProperty(globalThis, "localStorage", {
+        configurable: true,
+        value: {
+            getItem: (key: string) => storage.get(key) ?? null,
+            setItem: (key: string, value: string) => storage.set(key, value),
+            removeItem: (key: string) => storage.delete(key),
+        },
+    });
+});
+
+import { SyncedTripApi, type SyncedTrip } from "../api/trips";
+import { OnlineTripStore } from "./OnlineTripStore";
+import { toOnlineTrip } from "./TripAdapter";
+import { selectActiveTrip } from "../utils/selectActiveTrip";
+import type { Trip } from "../types";
+
+function syncedTrip(overrides: Partial<SyncedTrip> & { id: string }): SyncedTrip {
+    return {
+        name: `Trip ${overrides.id}`,
+        destination: `Destination ${overrides.id}`,
+        country: "Italy",
+        startDate: "2026-09-01",
+        endDate: "2026-09-05",
+        travellers: 2,
+        status: "planning",
+        ...overrides,
+    };
+}
+
+function stubServer(trips: SyncedTrip[]) {
+    vi.spyOn(SyncedTripApi, "list").mockImplementation(async () => trips);
+    vi.spyOn(SyncedTripApi, "get").mockImplementation(async id => {
+        const found = trips.find(trip => trip.id === id);
+        if (!found) throw new Error("Trip not found.");
+        return found;
+    });
+    vi.spyOn(SyncedTripApi, "itinerary").mockImplementation(async id => ({ tripId: id, days: [] }));
+}
+
+describe("OnlineTripStore", () => {
+    beforeEach(() => {
+        const storage = new Map<string, string>([["travel-companion.auth-token", "test-token"]]);
+        vi.stubGlobal("localStorage", {
+            getItem: (key: string) => storage.get(key) ?? null,
+            setItem: (key: string, value: string) => storage.set(key, value),
+            removeItem: (key: string) => storage.delete(key),
+        });
+        OnlineTripStore.reset();
+    });
+
+    afterEach(() => {
+        vi.restoreAllMocks();
+        vi.unstubAllGlobals();
+        OnlineTripStore.reset();
+    });
+
+    it("loads online trips from the server list endpoint", async () => {
+        stubServer([syncedTrip({ id: "trip-1", isActive: true })]);
+
+        const loaded = await OnlineTripStore.refresh();
+
+        expect(loaded).toHaveLength(1);
+        expect(selectActiveTrip(loaded)?.id).toBe("trip-1");
+        expect(OnlineTripStore.getSnapshot()[0]).toMatchObject({
+            id: "trip-1",
+            source: "online",
+            name: "Trip trip-1",
+        });
+    });
+
+    it("shows a newly created online trip without reloading the page", async () => {
+        const trips = [syncedTrip({ id: "trip-1" })];
+        stubServer(trips);
+        await OnlineTripStore.refresh();
+
+        const changes: number[] = [];
+        const unsubscribe = OnlineTripStore.subscribe(() => changes.push(OnlineTripStore.getSnapshot().length));
+
+        trips.push(syncedTrip({ id: "trip-2", name: "Garda" }));
+        await OnlineTripStore.refresh();
+        unsubscribe();
+
+        expect(changes).toContain(2);
+        expect(OnlineTripStore.getSnapshot().map(trip => trip.id)).toEqual(["trip-1", "trip-2"]);
+        expect(OnlineTripStore.getSnapshot().every(trip => trip.source === "online")).toBe(true);
+    });
+
+    it("marks the activated online trip active and clears the previous one", async () => {
+        stubServer([
+            syncedTrip({ id: "trip-1", isActive: true }),
+            syncedTrip({ id: "trip-2" }),
+        ]);
+        await OnlineTripStore.refresh();
+
+        let notified = false;
+        const unsubscribe = OnlineTripStore.subscribe(() => { notified = true; });
+
+        OnlineTripStore.applyTrip(toOnlineTrip(syncedTrip({ id: "trip-2", isActive: true })));
+        unsubscribe();
+
+        const snapshot = OnlineTripStore.getSnapshot();
+        expect(notified).toBe(true);
+        expect(snapshot.find(trip => trip.id === "trip-2")?.status).toBe("active");
+        expect(snapshot.find(trip => trip.id === "trip-1")?.status).toBe("planning");
+        expect(snapshot.filter(trip => trip.status === "active")).toHaveLength(1);
+    });
+
+    it("keeps the cached itinerary when the server response omits it", async () => {
+        vi.spyOn(SyncedTripApi, "list").mockResolvedValue([syncedTrip({ id: "trip-1" })]);
+        vi.spyOn(SyncedTripApi, "get").mockResolvedValue(syncedTrip({ id: "trip-1" }));
+        vi.spyOn(SyncedTripApi, "itinerary").mockResolvedValue({
+            tripId: "trip-1",
+            days: [{ id: "day-1", date: "2026-09-01", title: "Arrival", items: [] }],
+        });
+        await OnlineTripStore.refresh();
+
+        OnlineTripStore.applyTrip({
+            ...syncedTrip({ id: "trip-1", destination: "Riva" }),
+            itinerary: [],
+            source: "online",
+        } as Trip);
+
+        const trip = OnlineTripStore.getSnapshot()[0];
+        expect(trip.destination).toBe("Riva");
+        expect(trip.itinerary).toHaveLength(1);
+    });
+
+    it("reconstructs the online state from the server on reload", async () => {
+        stubServer([syncedTrip({ id: "trip-1" }), syncedTrip({ id: "trip-2", isActive: true })]);
+        await OnlineTripStore.refresh();
+
+        OnlineTripStore.applyTrip(toOnlineTrip(syncedTrip({ id: "trip-1", isActive: true })));
+        expect(selectActiveTrip(OnlineTripStore.getSnapshot())?.id).toBe("trip-1");
+
+        // A reload re-reads the server state, which is the source of truth.
+        OnlineTripStore.reset();
+        await OnlineTripStore.refresh();
+
+        expect(selectActiveTrip(OnlineTripStore.getSnapshot())?.id).toBe("trip-2");
+    });
+
+    it("drops a deleted online trip from the cached state", async () => {
+        stubServer([syncedTrip({ id: "trip-1" }), syncedTrip({ id: "trip-2" })]);
+        await OnlineTripStore.refresh();
+
+        OnlineTripStore.remove("trip-1");
+
+        expect(OnlineTripStore.getSnapshot().map(trip => trip.id)).toEqual(["trip-2"]);
+    });
+
+    it("keeps online state empty for signed out users", async () => {
+        vi.stubGlobal("localStorage", {
+            getItem: () => null,
+            setItem: () => undefined,
+            removeItem: () => undefined,
+        });
+        const list = vi.spyOn(SyncedTripApi, "list");
+
+        await OnlineTripStore.refresh();
+
+        expect(list).not.toHaveBeenCalled();
+        expect(OnlineTripStore.getSnapshot()).toEqual([]);
+    });
+});
