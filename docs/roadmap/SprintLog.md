@@ -34,20 +34,22 @@ Added PWA installation support and a GitHub Pages deployment workflow:
 
 A new **mobile-verification rule** was added to `docs/roadmap/Roadmap.md`'s Development Model: future UI/UX-affecting changes must be verified on desktop first, then re-verified on a real mobile device via the GitHub Pages deployment before being considered DONE.
 
-## Feature 10.1 — Backend foundation (agent-doable portion)
-**Status:** DONE in repository; pending user-run production server setup remains outside this agent's access
+## Feature 10.1 — Backend foundation
+**Status:** DONE
 
-The repository now includes the backend scaffold for the Milestone 7 foundation:
+The repository includes the backend scaffold for the Milestone 7 foundation:
 
 - `server/` with Node.js + Express and SQLite (`better-sqlite3`)
 - `server/src/db/schema.sql` initial schema for `trips`, `itinerary_days` and `itinerary_items`
 - REST endpoints for Trip CRUD, Active Trip selection and itinerary day/item CRUD
 - `server/.env.example` environment config
 - `server/deploy/Caddyfile` reverse-proxy template with placeholder DuckDNS hostname
-- `server/deploy/ecosystem.config.js` `pm2` template
+- `server/deploy/ecosystem.config.cjs` `pm2` template
 - `server/README.md` deployment and verification runbook
 
-This is the agent-doable half of 10.1. The remaining tasks are still manual and must be completed on the user's actual server, outside the scope of this repository: registering the DuckDNS hostname, opening ports 80/443, copying the code onto the server, installing dependencies, starting Caddy and `pm2`, and obtaining the real Let's Encrypt certificate.
+**Production verification (post-merge):** the user completed all manual production steps on their own Linux server. The DuckDNS hostname `cestovatel.duckdns.org` was registered and confirmed resolving to the server's static public IP; ports 80/443 were opened; the code was deployed, dependencies installed and `server/.env` created from `server/.env.example`; the API was started under `pm2` (`server/deploy/ecosystem.config.cjs`) with `pm2 save`/`pm2 startup` configured to survive reboots; Caddy was deployed and obtained a real Let's Encrypt TLS certificate for `cestovatel.duckdns.org` (confirmed via `journalctl -u caddy`); and `curl https://cestovatel.duckdns.org/health` was verified to return `{"status":"ok","service":"travel-companion-api",...}` over HTTPS. The backend is now live and reachable in production.
+
+The frontend (`app/`, deployed via GitHub Pages) remains fully independent and unaffected by this — it does not yet call this backend and continues to operate fully offline-first on `localStorage` only, per `docs/decisions/ADR-002-PWA-Architecture.md` and `docs/decisions/ADR-003-Backend-Architecture.md`. Actual frontend integration is planned for Feature 10.2 (Authentication) onward.
 
 ---
 
@@ -371,7 +373,7 @@ Completed the visual consistency review against the approved 9.7B baseline.
 
 **Current Milestone:** 9.x — Final UI Look
 **Completed through:** 9.8B
-**Status:** 9.8E / My Trips visual polish and 9.8F / Settings visual polish remain planned before 10.x.
+**Status:** 9.8E / My Trips visual polish and 9.8F / Settings visual polish remain planned. In parallel, Feature 10.1 (backend foundation) is now fully DONE, including production deployment; 10.2 — Authentication is the next planned feature.
 
 Next:
 
@@ -381,9 +383,13 @@ Next:
 
 ## 9.8G — Final responsive / QA pass (PLANNED)
 
-## 10.x — Shared Persistence & Accounts (PLANNED)
+## 10.x — Shared Persistence & Accounts (IN PROGRESS)
 
-Introduce user accounts and shared/synced Trip data across multiple devices, replacing the current browser-`localStorage`-only persistence model. The user's preferred backend direction is a self-hosted Node.js/Express (or Fastify) API with PostgreSQL/SQLite, running on their own Linux server with a static public IP, paired with a free dynamic-DNS hostname (e.g. DuckDNS) and a free TLS certificate (e.g. Let's Encrypt) to satisfy the GitHub-Pages-hosted frontend's HTTPS requirement. See `docs/roadmap/Roadmap.md` section 3 (Milestone 7) for the proposed sub-feature breakdown (10.1–10.6); a formal architecture decision record in `docs/decisions/` is still pending final confirmation.
+Introduce user accounts and shared/synced Trip data across multiple devices, replacing the current browser-`localStorage`-only persistence model. The user's preferred backend direction is a self-hosted Node.js/Express (or Fastify) API with PostgreSQL/SQLite, running on their own Linux server with a static public IP, paired with a free dynamic-DNS hostname (e.g. DuckDNS) and a free TLS certificate (e.g. Let's Encrypt) to satisfy the GitHub-Pages-hosted frontend's HTTPS requirement. See `docs/roadmap/Roadmap.md` section 3 (Milestone 7) for the proposed sub-feature breakdown (10.1–10.6).
+
+**10.1 — Architecture decision & backend foundation — DONE.** The backend is scaffolded, deployed and verified live in production at `https://cestovatel.duckdns.org` (see Feature 10.1 entry above). The frontend does not yet call it.
+
+**Next planned feature: 10.2 — Authentication.**
 
 ## 11.x+ — Extended Travel Companion (PLANNED)
 

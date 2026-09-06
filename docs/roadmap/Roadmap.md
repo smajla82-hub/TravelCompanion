@@ -119,15 +119,17 @@ Introduce user accounts and shared/synced Trip data across multiple devices and 
 
 Proposed scope:
 
-- **10.1 — Architecture decision & backend foundation** — agent-doable scaffold complete; remaining production server steps are manual and still pending
-  - Status: the backend foundation has been scaffolded in `server/` with Node.js + Express, SQLite via `better-sqlite3`, the initial Trip/itinerary REST surface, pm2 and Caddy config templates, and deployment documentation.
-  - Manual production steps still required before 10.1 as a whole is DONE:
-    - Provision the actual DuckDNS hostname and verify it resolves to the server's static public IP.
-    - Open/forward ports 80 and 443 on the user's router/firewall to the server running Caddy.
-    - Copy/deploy the scaffolded code onto the real Linux server and install dependencies there.
-    - Run the actual `pm2` start/restart commands and Caddy startup on the real server to obtain the real Let's Encrypt certificate.
-  - The agent-doable portion is intentionally complete without touching the existing `app/` frontend behavior. Offline-first `localStorage` operation remains intact until the later sync/auth features are built.
-  - Record the finalized decision and its consequences in `docs/decisions/ADR-003-Backend-Architecture.md` (already created; this PR keeps the architecture decision and backend foundation aligned with the documented split between agent work and user-run server setup).
+- **10.1 — Architecture decision & backend foundation** — **DONE** (production deployment fully verified)
+  - Status: the backend foundation was scaffolded in `server/` with Node.js + Express, SQLite via `better-sqlite3`, the initial Trip/itinerary REST surface, pm2 and Caddy config templates, and deployment documentation.
+  - Production deployment completed and verified on the user's own Linux server:
+    - Production hostname `cestovatel.duckdns.org` registered and confirmed resolving to the server's static public IP.
+    - Ports 80 and 443 opened/forwarded to the server running Caddy.
+    - The code was deployed onto the real Linux server, dependencies installed, and `server/.env` created from `server/.env.example`.
+    - The API is running under `pm2` (via `server/deploy/ecosystem.config.cjs`), with `pm2 save`/`pm2 startup` configured so it survives reboots.
+    - Caddy obtained a real Let's Encrypt TLS certificate for `cestovatel.duckdns.org` (confirmed via `journalctl -u caddy`).
+    - `GET https://cestovatel.duckdns.org/health` verified live in production, returning `{"status":"ok","service":"travel-companion-api",...}` over HTTPS.
+  - The agent-doable portion was completed without touching the existing `app/` frontend behavior. The frontend (`app/`, deployed via GitHub Pages) remains fully independent and unaffected — it does **not** yet call this backend and continues to operate fully offline-first on `localStorage` only, per `docs/decisions/ADR-002-PWA-Architecture.md` and `docs/decisions/ADR-003-Backend-Architecture.md`. Actual frontend integration (API calls replacing `localStorage` reads/writes) is deferred to 10.2 onward.
+  - The finalized decision and its consequences are recorded in `docs/decisions/ADR-003-Backend-Architecture.md`.
 
 - **10.2 — Authentication**
   - Simple email + password account creation and login, issuing a session/JWT token used by the frontend for subsequent API calls. No OAuth/social login required for the initial version.
@@ -298,7 +300,7 @@ Verified test data currently imports as:
 1. 9.8E — My Trips visual polish
 2. 9.8F — Settings visual polish
 3. 9.8G — Final responsive / QA pass, if still appropriate
-4. 10.x — Shared Persistence & Accounts (backend architecture confirmed — see `docs/decisions/ADR-003-Backend-Architecture.md`; starting with 10.1)
+4. 10.x — Shared Persistence & Accounts (backend architecture confirmed — see `docs/decisions/ADR-003-Backend-Architecture.md`; **10.1 — Architecture decision & backend foundation is DONE**; next up is **10.2 — Authentication**)
 5. 11.x+ — Extended travel functionality
 
 The order remains intentional: the mobile experience was validated on a real device, the visual design is finished before committing to the larger architectural shift of introducing a server-side component, accounts and multi-device sync, and that shared-persistence foundation is in place before the future Extended Travel Companion modules are built on top of it.
