@@ -65,8 +65,8 @@ function localAdapter(tripId: string): TripAdapter {
 }
 
 /**
- * Maps a server Trip to the client Trip representation. The server tracks the
- * active Trip with the `isActive` flag, so it wins over the stored `status`.
+ * Resolves the client Trip status: the server tracks the active Trip with the
+ * `isActive` flag, so it wins over the stored `status`.
  */
 function onlineTripStatus(trip: SyncedTrip): Trip["status"] {
     if (trip.isActive === undefined) {
@@ -80,6 +80,7 @@ function onlineTripStatus(trip: SyncedTrip): Trip["status"] {
     return trip.status === "active" ? "planning" : trip.status;
 }
 
+/** Maps a server Trip to the client Trip representation. */
 export function toOnlineTrip(trip: SyncedTrip): Trip {
     return {
         id: trip.id,

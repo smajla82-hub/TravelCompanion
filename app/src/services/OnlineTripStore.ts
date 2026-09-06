@@ -22,11 +22,18 @@ function publish(next: Trip[]) {
 }
 
 function withSingleActive(trips: Trip[], activeTripId: string): Trip[] {
-    return trips.map(trip => trip.id === activeTripId
-        ? { ...trip, status: "active" as const }
-        : trip.status === "active"
-            ? { ...trip, status: "planning" as const }
-            : trip);
+    return trips.map(trip => {
+        if (trip.id === activeTripId) {
+            return { ...trip, status: "active" as const };
+        }
+
+        // A previously active Trip is demoted so only one Trip stays active.
+        if (trip.status === "active") {
+            return { ...trip, status: "planning" as const };
+        }
+
+        return trip;
+    });
 }
 
 async function loadFromServer(): Promise<Trip[]> {
@@ -76,7 +83,7 @@ export const OnlineTripStore = {
             return loading;
         }
 
-        return this.refresh();
+        return OnlineTripStore.refresh();
     },
 
     /**
