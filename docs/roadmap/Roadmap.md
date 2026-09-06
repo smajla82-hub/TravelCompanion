@@ -147,6 +147,10 @@ Proposed scope:
   - A narrow timestamp-based last-write-wins fallback is available only for offline reconnection when no lock is active and the client's known resource timestamp is current.
 - **10.4b — Frontend integration** — **DONE**
   - Optional account UI, authenticated API client, clearly separate synced/shared Trips, lock/conflict UX, and invitation management/deep links are available without changing anonymous local-first CRUD.
+- **10.4c — Unified synced Trip experience** — **DONE**. My Trips now presents
+  Offline and Online Trips together, Online Trips have full field and itinerary
+  editing with lock-aware mutations, and RoadBook import supports full-replace
+  imports into Online Trips.
 
 - **10.5 — Data migration**
   - Next planned feature: one-time migration/import path for a user's existing local-only `localStorage` Trips/itineraries into their newly created account. The first real production Trip import into the backend will use this now-functional sync mechanism once the import tooling is built.

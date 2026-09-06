@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useState } from "react";
 
 import { useNavigate } from "react-router-dom";
 
@@ -17,6 +17,10 @@ import { NewTripModal } from "../trips";
 import { useTrips } from "../../hooks";
 
 import { TripService } from "../../services/TripService";
+import { AuthService } from "../../services/AuthService";
+import { SyncedTripApi, type SyncedTrip } from "../../api/trips";
+import { ApiError } from "../../api/client";
+import { SyncedTripDetail } from "./SyncedTripsSection";
 
 import type { Trip } from "../../types";
 
@@ -31,6 +35,21 @@ export function TripsSection({
     const navigate = useNavigate();
 
     const { trips } = useTrips();
+    const [syncedTrips, setSyncedTrips] = useState<SyncedTrip[]>([]);
+    const [syncedError, setSyncedError] = useState("");
+    const [selectedSyncedTrip, setSelectedSyncedTrip] =
+        useState<SyncedTrip | null>(null);
+
+    useEffect(() => {
+        if (!AuthService.getToken()) {
+            return;
+        }
+        void SyncedTripApi.list()
+            .then(setSyncedTrips)
+            .catch(reason => setSyncedError(
+                reason instanceof ApiError ? reason.message : "Unable to load online trips.",
+            ));
+    }, []);
 
     const [selectedTrip, setSelectedTrip] =
         useState<Trip | null>(null);
@@ -110,7 +129,20 @@ export function TripsSection({
                         }
                     />
                 ))}
+                {syncedTrips.map(trip => (
+                    <TripCard
+                        key={`online-${trip.id}`}
+                        trip={{
+                            ...trip,
+                            destination: trip.name || trip.destination,
+                            itinerary: [],
+                        }}
+                        badge="Online"
+                        onClick={() => setSelectedSyncedTrip(trip)}
+                    />
+                ))}
             </Grid>
+            {syncedError && <p role="alert">{syncedError}</p>}
 
             <Modal
                 open={selectedTrip !== null}
@@ -123,6 +155,24 @@ export function TripsSection({
                         onEdit={openEdit}
                         onDelete={openDelete}
                         onSetActive={setActiveTrip}
+                    />
+                )}
+            </Modal>
+
+            <Modal
+                open={selectedSyncedTrip !== null}
+                title="Trip Detail"
+                onClose={() => setSelectedSyncedTrip(null)}
+            >
+                {selectedSyncedTrip && (
+                    <SyncedTripDetail
+                        trip={selectedSyncedTrip}
+                        onChanged={trip => {
+                            setSyncedTrips(current => current.map(item =>
+                                item.id === trip.id ? trip : item,
+                            ));
+                            setSelectedSyncedTrip(trip);
+                        }}
                     />
                 )}
             </Modal>
