@@ -221,6 +221,7 @@ function findParkingHeaderRow(
 function parseParkingLocations(
     sheet: XLSX.WorkSheet,
     rows: ImportRow[],
+    date: string,
     headerRowIndex: number
 ): ParkingLocation[] {
     if (headerRowIndex === -1) {
@@ -255,6 +256,7 @@ function parseParkingLocations(
         }
 
         parkingLocations.push({
+            id: `${date}-parking-${parkingLocations.length + 1}`,
             code,
             name,
             mapLink: getCellLink(
@@ -563,6 +565,7 @@ function parseDaySheet(
     const parkingLocations = parseParkingLocations(
         sheet,
         rows,
+        date,
         findParkingHeaderRow(rows)
     );
 

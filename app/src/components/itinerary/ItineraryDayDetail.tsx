@@ -295,6 +295,9 @@ export function ItineraryDayDetail({
 
                 <ItineraryDayAdditionalDetails
                     day={day}
+                    adapter={adapter}
+                    editable={editable}
+                    onDayChanged={onDayChanged}
                 />
 
                 <Button

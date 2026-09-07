@@ -435,3 +435,203 @@ test('a recommended venue with no name and a parking location with no code/name 
     await closeServer(server);
   }
 });
+
+async function createDay(port, headers, tripId, date, title) {
+  const response = await fetch(`http://127.0.0.1:${port}/trips/${tripId}/itinerary/days`, {
+    method: 'POST',
+    headers,
+    body: JSON.stringify({ date, title }),
+  });
+  return response.json();
+}
+
+test('a day accepts at most 6 recommended venues, rejecting a 7th', async () => {
+  const { server, port } = await startServer();
+  try {
+    const headers = await signIn(port, 'venue-limit@example.com');
+    const trip = await createTrip(port, headers, 'Garda');
+    await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, { method: 'POST', headers });
+    const day = await createDay(port, headers, trip.id, '2026-09-01', 'Day 1');
+
+    for (let index = 0; index < 6; index += 1) {
+      const response = await fetch(
+        `http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/venues`,
+        { method: 'POST', headers, body: JSON.stringify({ name: `Venue ${index + 1}` }) },
+      );
+      assert.equal(response.status, 201);
+    }
+
+    const seventh = await fetch(
+      `http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/venues`,
+      { method: 'POST', headers, body: JSON.stringify({ name: 'Venue 7' }) },
+    );
+    assert.equal(seventh.status, 409);
+
+    const itinerary = await getItinerary(port, headers, trip.id);
+    assert.equal(itinerary.days[0].venues.length, 6);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('a day accepts at most 8 parking locations, using only P1-P8 with no duplicates', async () => {
+  const { server, port } = await startServer();
+  try {
+    const headers = await signIn(port, 'parking-limit@example.com');
+    const trip = await createTrip(port, headers, 'Garda');
+    await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, { method: 'POST', headers });
+    const day = await createDay(port, headers, trip.id, '2026-09-01', 'Day 1');
+
+    for (let index = 1; index <= 8; index += 1) {
+      const response = await fetch(
+        `http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/parking`,
+        { method: 'POST', headers, body: JSON.stringify({ code: `P${index}`, name: `Lot ${index}` }) },
+      );
+      assert.equal(response.status, 201);
+    }
+
+    const ninthCode = await fetch(
+      `http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/parking`,
+      { method: 'POST', headers, body: JSON.stringify({ code: 'P9', name: 'Invalid' }) },
+    );
+    assert.equal(ninthCode.status, 400);
+
+    const duplicate = await fetch(
+      `http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/parking`,
+      { method: 'POST', headers, body: JSON.stringify({ code: 'P1', name: 'Duplicate' }) },
+    );
+    assert.equal(duplicate.status, 409);
+
+    const itinerary = await getItinerary(port, headers, trip.id);
+    assert.equal(itinerary.days[0].parkingLocations.length, 8);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('editing a recommended venue updates its fields and editing a parking location preserves its code', async () => {
+  const { server, port } = await startServer();
+  try {
+    const headers = await signIn(port, 'venue-parking-edit@example.com');
+    const trip = await createTrip(port, headers, 'Garda');
+    await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, { method: 'POST', headers });
+    const day = await createDay(port, headers, trip.id, '2026-09-01', 'Day 1');
+
+    const venue = await (await fetch(
+      `http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/venues`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ name: 'Original', mealType: 'Lunch', subtype: 'Pizza' }),
+      },
+    )).json();
+
+    const updatedVenue = await (await fetch(
+      `http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/venues/${venue.id}`,
+      {
+        method: 'PUT',
+        headers,
+        body: JSON.stringify({ name: 'Updated', mealType: 'Dinner', subtype: 'Sushi' }),
+      },
+    )).json();
+    assert.equal(updatedVenue.name, 'Updated');
+    assert.equal(updatedVenue.mealType, 'Dinner');
+    assert.equal(updatedVenue.subtype, 'Sushi');
+
+    const parking = await (await fetch(
+      `http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/parking`,
+      { method: 'POST', headers, body: JSON.stringify({ code: 'P1', name: 'Original Lot' }) },
+    )).json();
+
+    const updatedParking = await (await fetch(
+      `http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/parking/${parking.id}`,
+      {
+        method: 'PUT',
+        headers,
+        // Attempting to change `code` must be silently ignored: the code
+        // stays immutable after creation.
+        body: JSON.stringify({ code: 'P5', name: 'Updated Lot', price: '10 EUR', note: 'Covered' }),
+      },
+    )).json();
+    assert.equal(updatedParking.code, 'P1');
+    assert.equal(updatedParking.name, 'Updated Lot');
+    assert.equal(updatedParking.price, '10 EUR');
+    assert.equal(updatedParking.note, 'Covered');
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('deleting a referenced parking location is blocked by default but succeeds with clearReferences', async () => {
+  const { server, port } = await startServer();
+  try {
+    const headers = await signIn(port, 'parking-delete-safety@example.com');
+    const trip = await createTrip(port, headers, 'Garda');
+    await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, { method: 'POST', headers });
+    const day = await createDay(port, headers, trip.id, '2026-09-01', 'Day 1');
+
+    const parking = await (await fetch(
+      `http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/parking`,
+      { method: 'POST', headers, body: JSON.stringify({ code: 'P1', name: 'Lot' }) },
+    )).json();
+
+    const item = await (await fetch(
+      `http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/items`,
+      {
+        method: 'POST',
+        headers,
+        body: JSON.stringify({ date: '2026-09-01', title: 'Visit', activityType: 'other', parking: 'P1' }),
+      },
+    )).json();
+
+    const blocked = await fetch(
+      `http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/parking/${parking.id}`,
+      { method: 'DELETE', headers },
+    );
+    assert.equal(blocked.status, 409);
+    const blockedBody = await blocked.json();
+    assert.equal(blockedBody.referencingItems.length, 1);
+
+    const stillThere = await getItinerary(port, headers, trip.id);
+    assert.equal(stillThere.days[0].parkingLocations.length, 1);
+
+    const cleared = await fetch(
+      `http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/parking/${parking.id}?clearReferences=true`,
+      { method: 'DELETE', headers },
+    );
+    assert.equal(cleared.status, 200);
+
+    const afterClear = await getItinerary(port, headers, trip.id);
+    assert.equal(afterClear.days[0].parkingLocations.length, 0);
+    const clearedItem = afterClear.days[0].items.find((current) => current.id === item.id);
+    assert.equal(clearedItem.parking, null);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('deleting a recommended venue removes it without affecting other venues or activities', async () => {
+  const { server, port } = await startServer();
+  try {
+    const headers = await signIn(port, 'venue-delete@example.com');
+    const trip = await createTrip(port, headers, 'Garda');
+    await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, { method: 'POST', headers });
+    const day = await createDay(port, headers, trip.id, '2026-09-01', 'Day 1');
+
+    const venue = await (await fetch(
+      `http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/venues`,
+      { method: 'POST', headers, body: JSON.stringify({ name: 'To Delete' }) },
+    )).json();
+
+    const deleted = await fetch(
+      `http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/venues/${venue.id}`,
+      { method: 'DELETE', headers },
+    );
+    assert.equal(deleted.status, 200);
+
+    const itinerary = await getItinerary(port, headers, trip.id);
+    assert.equal(itinerary.days[0].venues.length, 0);
+  } finally {
+    await closeServer(server);
+  }
+});

@@ -4,6 +4,17 @@ import { addTripMember } from './tripMemberRepository.js';
 
 const db = getDb();
 
+// Hard product limits for day-scoped Recommended Venues/Parking Locations
+// (see FP-2 plan). Enforced here (not just client-side) so they cannot be
+// bypassed via direct API calls.
+const MAX_VENUES_PER_DAY = 6;
+const MAX_PARKING_PER_DAY = 8;
+const PARKING_CODES = ['P1', 'P2', 'P3', 'P4', 'P5', 'P6', 'P7', 'P8'];
+
+function isValidParkingCode(code) {
+  return PARKING_CODES.includes(code);
+}
+
 function mapTripRow(row) {
   if (!row) {
     return null;
@@ -131,6 +142,8 @@ function normalizeParkingLocationPayload(payload = {}) {
     code: String(payload.code ?? '').trim(),
     name: String(payload.name ?? '').trim(),
     mapLink: payload.mapLink ?? payload.map_link ?? null,
+    price: payload.price ?? null,
+    note: payload.note ?? null,
     sortOrder: Number(payload.sortOrder ?? payload.sort_order ?? 0),
   };
 }
@@ -450,6 +463,25 @@ export function replaceItinerary(tripId, days, userId) {
     const venues = Array.isArray(day?.venues) ? day.venues : [];
     const parkingLocations = Array.isArray(day?.parkingLocations) ? day.parkingLocations : [];
 
+    if (venues.length > MAX_VENUES_PER_DAY) {
+      const error = new Error(`A day may have at most ${MAX_VENUES_PER_DAY} recommended venues.`);
+      error.statusCode = 400;
+      throw error;
+    }
+
+    if (parkingLocations.length > MAX_PARKING_PER_DAY) {
+      const error = new Error(`A day may have at most ${MAX_PARKING_PER_DAY} parking locations.`);
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const parkingCodes = parkingLocations.map((location) => String(location?.code ?? '').trim());
+    if (new Set(parkingCodes).size !== parkingCodes.length) {
+      const error = new Error('Duplicate parking codes are not allowed within the same day.');
+      error.statusCode = 400;
+      throw error;
+    }
+
     return {
       ...dayData,
       items: items.map((item, index) => {
@@ -495,6 +527,12 @@ export function replaceItinerary(tripId, days, userId) {
           throw error;
         }
 
+        if (!isValidParkingCode(locationData.code)) {
+          const error = new Error('Parking code must be one of P1-P8.');
+          error.statusCode = 400;
+          throw error;
+        }
+
         return locationData;
       }),
     };
@@ -517,8 +555,8 @@ export function replaceItinerary(tripId, days, userId) {
   );
   const insertParkingLocation = db.prepare(
     `INSERT INTO parking_locations (
-      id, trip_id, day_id, code, name, map_link, sort_order, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, trip_id, day_id, code, name, map_link, price, note, sort_order, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
   db.transaction(() => {
@@ -584,6 +622,8 @@ export function replaceItinerary(tripId, days, userId) {
           location.code,
           location.name,
           location.mapLink,
+          location.price,
+          location.note,
           location.sortOrder,
           now,
           now,
@@ -730,3 +770,251 @@ export function deleteItineraryItem(tripId, dayId, itemId) {
   db.prepare('DELETE FROM itinerary_items WHERE trip_id = ? AND day_id = ? AND id = ?').run(tripId, dayId, itemId);
   return existing;
 }
+
+export function getVenueById(tripId, venueId) {
+  return mapVenueRow(db.prepare('SELECT * FROM venues WHERE trip_id = ? AND id = ?').get(tripId, venueId));
+}
+
+export function createVenue(tripId, dayId, payload = {}) {
+  const day = getDayById(tripId, dayId);
+  if (!day) {
+    const error = new Error('Itinerary day not found.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const existingVenues = listVenuesForTrip(tripId).filter((venue) => venue.dayId === dayId);
+  if (existingVenues.length >= MAX_VENUES_PER_DAY) {
+    const error = new Error(`A day may have at most ${MAX_VENUES_PER_DAY} recommended venues.`);
+    error.statusCode = 409;
+    throw error;
+  }
+
+  const data = normalizeVenuePayload({ ...payload, sortOrder: existingVenues.length });
+  if (!data.name) {
+    const error = new Error('Recommended venue name is required.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const now = new Date().toISOString();
+  const venueId = randomUUID();
+
+  db.prepare(
+    `INSERT INTO venues (
+      id, trip_id, day_id, priority, type, meal_type, subtype, name, smart_chip, map_link, recommendation,
+      price, reservation, sort_order, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(
+    venueId, tripId, dayId, data.priority, data.type, data.mealType, data.subtype, data.name,
+    data.smartChip, data.mapLink, data.recommendation, data.price, data.reservation, data.sortOrder,
+    now, now,
+  );
+
+  return getVenueById(tripId, venueId);
+}
+
+export function updateVenue(tripId, dayId, venueId, payload = {}) {
+  const existing = getVenueById(tripId, venueId);
+  if (!existing) {
+    const error = new Error('Recommended venue not found.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (existing.dayId !== dayId) {
+    const error = new Error('Recommended venue does not belong to the supplied day.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const data = normalizeVenuePayload({ ...existing, ...payload, sortOrder: existing.sortOrder });
+  if (!data.name) {
+    const error = new Error('Recommended venue name is required.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const now = new Date().toISOString();
+
+  db.prepare(
+    `UPDATE venues
+     SET priority = ?, type = ?, meal_type = ?, subtype = ?, name = ?, smart_chip = ?, map_link = ?,
+         recommendation = ?, price = ?, reservation = ?, updated_at = ?
+     WHERE trip_id = ? AND day_id = ? AND id = ?`,
+  ).run(
+    data.priority, data.type, data.mealType, data.subtype, data.name, data.smartChip, data.mapLink,
+    data.recommendation, data.price, data.reservation, now,
+    tripId, dayId, venueId,
+  );
+
+  return getVenueById(tripId, venueId);
+}
+
+export function deleteVenue(tripId, dayId, venueId) {
+  const existing = getVenueById(tripId, venueId);
+  if (!existing) {
+    const error = new Error('Recommended venue not found.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (existing.dayId !== dayId) {
+    const error = new Error('Recommended venue does not belong to the supplied day.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // Venues carry no cross-references from `itinerary_items` (see schema.sql),
+  // so deletion is always safe and immediate.
+  db.prepare('DELETE FROM venues WHERE trip_id = ? AND day_id = ? AND id = ?').run(tripId, dayId, venueId);
+  return existing;
+}
+
+export function getParkingLocationById(tripId, parkingId) {
+  return mapParkingLocationRow(
+    db.prepare('SELECT * FROM parking_locations WHERE trip_id = ? AND id = ?').get(tripId, parkingId),
+  );
+}
+
+export function createParkingLocation(tripId, dayId, payload = {}) {
+  const day = getDayById(tripId, dayId);
+  if (!day) {
+    const error = new Error('Itinerary day not found.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  const data = normalizeParkingLocationPayload(payload);
+  if (!data.code || !data.name) {
+    const error = new Error('Parking location code and name are required.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  if (!isValidParkingCode(data.code)) {
+    const error = new Error('Parking code must be one of P1-P8.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const existingParking = listParkingLocationsForTrip(tripId).filter((location) => location.dayId === dayId);
+
+  if (existingParking.some((location) => location.code === data.code)) {
+    const error = new Error(`Parking code ${data.code} is already used on this day.`);
+    error.statusCode = 409;
+    throw error;
+  }
+
+  if (existingParking.length >= MAX_PARKING_PER_DAY) {
+    const error = new Error(`A day may have at most ${MAX_PARKING_PER_DAY} parking locations.`);
+    error.statusCode = 409;
+    throw error;
+  }
+
+  const now = new Date().toISOString();
+  const parkingId = randomUUID();
+
+  db.prepare(
+    `INSERT INTO parking_locations (
+      id, trip_id, day_id, code, name, map_link, price, note, sort_order, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  ).run(
+    parkingId, tripId, dayId, data.code, data.name, data.mapLink, data.price, data.note,
+    existingParking.length, now, now,
+  );
+
+  return getParkingLocationById(tripId, parkingId);
+}
+
+export function updateParkingLocation(tripId, dayId, parkingId, payload = {}) {
+  const existing = getParkingLocationById(tripId, parkingId);
+  if (!existing) {
+    const error = new Error('Parking location not found.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (existing.dayId !== dayId) {
+    const error = new Error('Parking location does not belong to the supplied day.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  // The parking `code` is read-only after creation: changing it would
+  // require rewriting every `itinerary_items.parking` reference for the day,
+  // which this feature intentionally does not support (FP-2 decision). Any
+  // `code` in `payload` is ignored in favor of the existing code.
+  const data = normalizeParkingLocationPayload({
+    ...existing,
+    ...payload,
+    code: existing.code,
+    sortOrder: existing.sortOrder,
+  });
+
+  if (!data.name) {
+    const error = new Error('Parking location name is required.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const now = new Date().toISOString();
+
+  db.prepare(
+    `UPDATE parking_locations
+     SET name = ?, map_link = ?, price = ?, note = ?, updated_at = ?
+     WHERE trip_id = ? AND day_id = ? AND id = ?`,
+  ).run(data.name, data.mapLink, data.price, data.note, now, tripId, dayId, parkingId);
+
+  return getParkingLocationById(tripId, parkingId);
+}
+
+/**
+ * Deletes a parking location. When `clearReferences` is falsy and the code
+ * is still referenced by an activity in the same day, the deletion is
+ * rejected instead of silently orphaning `itinerary_items.parking` values.
+ * When `clearReferences` is truthy, the parking location is removed and
+ * every referencing activity's `parking` field is cleared atomically.
+ */
+export function deleteParkingLocation(tripId, dayId, parkingId, { clearReferences = false } = {}) {
+  const existing = getParkingLocationById(tripId, parkingId);
+  if (!existing) {
+    const error = new Error('Parking location not found.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (existing.dayId !== dayId) {
+    const error = new Error('Parking location does not belong to the supplied day.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const referencingItems = db
+    .prepare('SELECT * FROM itinerary_items WHERE trip_id = ? AND day_id = ? AND parking = ?')
+    .all(tripId, dayId, existing.code)
+    .map(mapItemRow);
+
+  if (referencingItems.length > 0 && !clearReferences) {
+    const error = new Error(
+      `Parking ${existing.code} is referenced by ${referencingItems.length} activity/activities. `
+      + 'Remove or reassign them before deleting, or delete and clear references.',
+    );
+    error.statusCode = 409;
+    error.referencingItems = referencingItems;
+    throw error;
+  }
+
+  db.transaction(() => {
+    if (clearReferences && referencingItems.length > 0) {
+      db.prepare(
+        'UPDATE itinerary_items SET parking = NULL WHERE trip_id = ? AND day_id = ? AND parking = ?',
+      ).run(tripId, dayId, existing.code);
+    }
+
+    db.prepare('DELETE FROM parking_locations WHERE trip_id = ? AND day_id = ? AND id = ?').run(tripId, dayId, parkingId);
+  })();
+
+  return existing;
+}
+

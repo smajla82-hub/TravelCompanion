@@ -51,7 +51,9 @@ describe("ItineraryDayAdditionalDetails", () => {
         const markup = renderToStaticMarkup(
             <ItineraryDayAdditionalDetails
                 day={baseDay({
-                    parkingLocations: [{ code: "P1", name: "Central Garage" }],
+                    parkingLocations: [
+                        { id: "p1", code: "P1", name: "Central Garage" },
+                    ],
                 })}
             />,
         );
