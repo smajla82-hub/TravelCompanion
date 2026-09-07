@@ -12,6 +12,7 @@ import {
 } from "../components/sections";
 
 import { TOP_BACKGROUND_URL } from "../styles/brandAssets";
+import { scrollToItinerary } from "./scrollToItinerary";
 
 import "./DashboardPage.css";
 
@@ -35,10 +36,22 @@ export default function DashboardPage() {
             return;
         }
 
-        document
-            .getElementById("itinerary-section")
-            ?.scrollIntoView({ behavior: "smooth" });
-        continueRequested.current = false;
+        let frameId: number | undefined;
+        const scrollWhenMounted = () => {
+            if (scrollToItinerary(document)) {
+                continueRequested.current = false;
+                return;
+            }
+
+            frameId = requestAnimationFrame(scrollWhenMounted);
+        };
+
+        scrollWhenMounted();
+        return () => {
+            if (frameId !== undefined) {
+                cancelAnimationFrame(frameId);
+            }
+        };
     }, [itineraryResetKey]);
 
     return (
