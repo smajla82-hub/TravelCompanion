@@ -15,6 +15,7 @@ vi.hoisted(() => {
 import { createTripAdapter, toOnlineTrip } from "./TripAdapter";
 import { SyncedTripApi, type SyncedTrip } from "../api/trips";
 import { ActiveTripSelectionStore } from "./ActiveTripSelection";
+import { OnlineTripStore } from "./OnlineTripStore";
 
 function serverTrip(overrides: Partial<SyncedTrip> = {}): SyncedTrip {
     return {
@@ -43,6 +44,7 @@ describe("toOnlineTrip", () => {
         afterEach(() => {
             vi.restoreAllMocks();
             ActiveTripSelectionStore.clear();
+            OnlineTripStore.reset();
         });
 
         it("updates the server name with the edited destination for consistent labels", async () => {
@@ -87,10 +89,52 @@ describe("toOnlineTrip", () => {
                 id: "online-a",
                 status: "active",
             });
+
             expect(ActiveTripSelectionStore.get()).toEqual({
                 source: "online",
                 id: "online-a",
             });
+        });
+
+        it("updates the cached itinerary after online activity mutations", async () => {
+            const adapter = createTripAdapter({
+                ...serverTrip(),
+                source: "online",
+            });
+            const day = { id: "day-1", date: "2026-09-01", title: "Day 1", items: [] };
+            OnlineTripStore.applyTrip({
+                ...toOnlineTrip(serverTrip()),
+                itinerary: [day],
+                itineraryLoaded: true,
+            });
+            vi.spyOn(SyncedTripApi, "acquireLock").mockResolvedValue({});
+            vi.spyOn(SyncedTripApi, "releaseLock").mockResolvedValue({});
+            vi.spyOn(SyncedTripApi, "createItem").mockResolvedValue({
+                id: "item-2", date: day.date, title: "Added",
+            });
+            vi.spyOn(SyncedTripApi, "updateItem").mockResolvedValue({
+                id: "item-1", date: day.date, title: "Edited",
+            });
+            vi.spyOn(SyncedTripApi, "deleteItem").mockResolvedValue({
+                deleted: true, item: { id: "item-1", date: day.date, title: "Edited" },
+            });
+            const itinerary = vi.spyOn(SyncedTripApi, "itinerary")
+                .mockResolvedValueOnce({
+                    tripId: "trip-1",
+                    days: [{ ...day, items: [{ id: "item-2", date: day.date, title: "Added" }] }],
+                })
+                .mockResolvedValueOnce({
+                    tripId: "trip-1",
+                    days: [{ ...day, items: [{ id: "item-2", date: day.date, title: "Edited" }] }],
+                })
+                .mockResolvedValueOnce({ tripId: "trip-1", days: [{ ...day, items: [] }] });
+
+            await adapter.addItem(day, { title: "Added" });
+            await adapter.updateItem(day, "item-2", { title: "Edited" });
+            await adapter.deleteItem(day, "item-2");
+
+            expect(itinerary).toHaveBeenCalledTimes(3);
+            expect(OnlineTripStore.getSnapshot()[0].itinerary).toEqual([{ ...day, items: [] }]);
         });
     });
 

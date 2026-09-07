@@ -7,6 +7,7 @@ import {
     type TripMember,
 } from "../api/trips";
 import { ActiveTripSelectionStore } from "./ActiveTripSelection";
+import { OnlineTripStore } from "./OnlineTripStore";
 
 export type TripSource = "local" | "online";
 export type TripAdapter = {
@@ -108,6 +109,9 @@ export function createTripAdapter(trip: Pick<Trip, "id" | "source"> | SyncedTrip
     let lockHeld = false;
     const get = async () => toOnlineTrip(await SyncedTripApi.get(tripId));
     const reload = async () => (await SyncedTripApi.itinerary(tripId)).days;
+    const syncItinerary = async () => {
+        OnlineTripStore.applyItinerary(tripId, await reload());
+    };
     async function acquire() {
         if (!lockHeld) {
             await SyncedTripApi.acquireLock(tripId);
@@ -137,7 +141,7 @@ export function createTripAdapter(trip: Pick<Trip, "id" | "source"> | SyncedTrip
             // single transaction, so an import can never persist days without
             // their activities, and a large RoadBook no longer needs hundreds
             // of requests.
-            await SyncedTripApi.replaceItinerary(tripId, days.map(day => ({
+            const itinerary = await SyncedTripApi.replaceItinerary(tripId, days.map(day => ({
                 date: day.date,
                 title: day.title,
                 items: day.items.map((item, sortOrder) => {
@@ -146,17 +150,38 @@ export function createTripAdapter(trip: Pick<Trip, "id" | "source"> | SyncedTrip
                     return payload;
                 }),
             })));
+            OnlineTripStore.applyItinerary(tripId, itinerary.days);
         }),
-        addDay: day => withLock(() => SyncedTripApi.createDay(tripId, day)),
-        updateDay: day => withLock(async () => { await SyncedTripApi.updateDay(tripId, day.id, day); }),
-        deleteDay: dayId => withLock(async () => { await SyncedTripApi.deleteDay(tripId, dayId); }),
-        addItem: (day, item) => withLock(async () => { await SyncedTripApi.createItem(tripId, day.id, { ...item, date: day.date }); }),
-        updateItem: (day, itemId, updates) => withLock(async () => { await SyncedTripApi.updateItem(tripId, day.id, itemId, { ...updates, date: day.date }); }),
-        deleteItem: (day, itemId) => withLock(async () => { await SyncedTripApi.deleteItem(tripId, day.id, itemId); }),
+        addDay: day => withLock(async () => {
+            const created = await SyncedTripApi.createDay(tripId, day);
+            await syncItinerary();
+            return created;
+        }),
+        updateDay: day => withLock(async () => {
+            await SyncedTripApi.updateDay(tripId, day.id, day);
+            await syncItinerary();
+        }),
+        deleteDay: dayId => withLock(async () => {
+            await SyncedTripApi.deleteDay(tripId, dayId);
+            await syncItinerary();
+        }),
+        addItem: (day, item) => withLock(async () => {
+            await SyncedTripApi.createItem(tripId, day.id, { ...item, date: day.date });
+            await syncItinerary();
+        }),
+        updateItem: (day, itemId, updates) => withLock(async () => {
+            await SyncedTripApi.updateItem(tripId, day.id, itemId, { ...updates, date: day.date });
+            await syncItinerary();
+        }),
+        deleteItem: (day, itemId) => withLock(async () => {
+            await SyncedTripApi.deleteItem(tripId, day.id, itemId);
+            await syncItinerary();
+        }),
         reorderItems: (day, ids) => withLock(async () => {
             await Promise.all(ids.map((id, sortOrder) =>
                 SyncedTripApi.updateItem(tripId, day.id, id, { sortOrder } as Partial<ItineraryItem>),
             ));
+            await syncItinerary();
         }),
         acquireLock: acquire,
         heartbeat: async () => { await SyncedTripApi.heartbeat(tripId); },

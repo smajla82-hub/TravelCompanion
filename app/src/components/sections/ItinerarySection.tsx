@@ -89,8 +89,8 @@ export function ItinerarySection() {
     const itinerary =
         activeTrip?.itinerary ?? [];
 
-    const [selectedDay, setSelectedDay] =
-        useState<ItineraryDay | null>(null);
+    const [selectedDayId, setSelectedDayId] =
+        useState<string | null>(null);
     const [view, setView] =
         useState<ItineraryView>("current");
     const [dayDetailMode, setDayDetailMode] =
@@ -107,7 +107,7 @@ export function ItinerarySection() {
             previousActiveTripId.current !==
             activeTripId
         ) {
-            setSelectedDay(null);
+            setSelectedDayId(null);
             setView("current");
             setDayDetailMode("full");
             previousActiveTripId.current =
@@ -119,7 +119,7 @@ export function ItinerarySection() {
         day: ItineraryDay,
         mode: DayDetailMode
     ) {
-        setSelectedDay(day);
+        setSelectedDayId(day.id);
         setDayDetailMode(mode);
         setView("day-detail");
     }
@@ -128,6 +128,8 @@ export function ItinerarySection() {
         setDayDetailMode("full");
         setView("day-list");
     }
+
+    const selectedDay = itinerary.find(day => day.id === selectedDayId);
 
     if (view === "day-detail" && selectedDay) {
         const showRemainingOnly =
@@ -147,19 +149,7 @@ export function ItinerarySection() {
                     editable={canEdit}
                     showRemainingOnly={showRemainingOnly}
                     onClose={goToDayList}
-                    onDayChanged={() => {
-                        const updatedDay =
-                            activeTrip?.itinerary
-                                ?.find(
-                                    day =>
-                                        day.id ===
-                                        selectedDay.id
-                                );
-
-                        setSelectedDay(
-                            updatedDay ?? null
-                        );
-                    }}
+                    onDayChanged={() => undefined}
                 />
             </section>
         );

@@ -111,6 +111,18 @@ export const OnlineTripStore = {
         publish(merged.status === "active" ? withSingleActive(next, merged.id) : next);
     },
 
+    /** Applies the server-authoritative itinerary to an already cached Trip. */
+    applyItinerary(tripId: string, itinerary: Trip["itinerary"]) {
+        const known = onlineTrips.find(trip => trip.id === tripId);
+        if (!known) {
+            return;
+        }
+
+        publish(onlineTrips.map(trip => trip.id === tripId
+            ? { ...trip, itinerary, itineraryLoaded: true }
+            : trip));
+    },
+
     remove(tripId: string) {
         publish(onlineTrips.filter(trip => trip.id !== tripId));
     },
