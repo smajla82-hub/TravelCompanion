@@ -1,6 +1,6 @@
 import { describe, expect, it } from "vitest";
 
-import { selectActiveTrip } from "./selectActiveTrip";
+import { isCurrentActiveTrip, selectActiveTrip } from "./selectActiveTrip";
 import type { Trip } from "../types";
 
 function trip(overrides: Partial<Trip> & { id: string }): Trip {
@@ -150,7 +150,100 @@ describe("selectActiveTrip", () => {
             .toBe("local-b");
     });
 
+    it("handles Online A to Offline A to Online A", () => {
+        const trips = [
+            trip({ id: "local-a", status: "active" }),
+            trip({ id: "online-a", source: "online", status: "active" }),
+        ];
+
+        expect(selectActiveTrip(trips, { source: "online", id: "online-a" })?.id)
+            .toBe("online-a");
+        expect(selectActiveTrip(trips, { source: "local", id: "local-a" })?.id)
+            .toBe("local-a");
+        // A stale local "active" status must not block re-selecting the
+        // online Trip that was previously switched away from.
+        expect(selectActiveTrip(trips, { source: "online", id: "online-a" })?.id)
+            .toBe("online-a");
+    });
+
+    it("handles Offline A to Online A to Offline B to Online A", () => {
+        const trips = [
+            trip({ id: "local-a", status: "planning" }),
+            trip({ id: "local-b", status: "active" }),
+            // Server active state for online-a is never cleared just because
+            // this device switched to an Offline Trip.
+            trip({ id: "online-a", source: "online", status: "active" }),
+        ];
+
+        expect(selectActiveTrip(trips, { source: "local", id: "local-a" })?.id)
+            .toBe("local-a");
+        expect(selectActiveTrip(trips, { source: "online", id: "online-a" })?.id)
+            .toBe("online-a");
+        expect(selectActiveTrip(trips, { source: "local", id: "local-b" })?.id)
+            .toBe("local-b");
+        // Re-selecting the previously selected online Trip must still work.
+        expect(selectActiveTrip(trips, { source: "online", id: "online-a" })?.id)
+            .toBe("online-a");
+    });
+
+    it("handles Online A to Offline B to Online A to Offline B", () => {
+        const trips = [
+            trip({ id: "local-b", status: "active" }),
+            trip({ id: "online-a", source: "online", status: "active" }),
+        ];
+
+        expect(selectActiveTrip(trips, { source: "online", id: "online-a" })?.id)
+            .toBe("online-a");
+        expect(selectActiveTrip(trips, { source: "local", id: "local-b" })?.id)
+            .toBe("local-b");
+        expect(selectActiveTrip(trips, { source: "online", id: "online-a" })?.id)
+            .toBe("online-a");
+        // Re-selecting the previously selected offline Trip must still work.
+        expect(selectActiveTrip(trips, { source: "local", id: "local-b" })?.id)
+            .toBe("local-b");
+    });
+
     it("returns nothing when no trip is active", () => {
         expect(selectActiveTrip([trip({ id: "local-1" })])).toBeUndefined();
+    });
+});
+
+describe("isCurrentActiveTrip", () => {
+    it("is false for every Trip when nothing is active", () => {
+        expect(isCurrentActiveTrip({ id: "local-a" }, undefined)).toBe(false);
+    });
+
+    it("does not treat a local Trip as current merely because an online Trip with the same id is active", () => {
+        const active = trip({ id: "a", source: "online", status: "active" });
+
+        expect(isCurrentActiveTrip({ id: "a", source: undefined }, active)).toBe(false);
+        expect(isCurrentActiveTrip({ id: "a", source: "online" }, active)).toBe(true);
+    });
+
+    it("stops treating a Trip as current once the device switches away, and reflects it again when reselected", () => {
+        const trips = [
+            trip({ id: "local-a", status: "active" }),
+            trip({ id: "online-a", source: "online", status: "active" }),
+        ];
+
+        // Offline A selected: only the local Trip counts as current, even
+        // though local status is sticky and never reset by itself.
+        let active = selectActiveTrip(trips, { source: "local", id: "local-a" });
+        expect(isCurrentActiveTrip({ id: "local-a", source: undefined }, active)).toBe(true);
+        expect(isCurrentActiveTrip({ id: "online-a", source: "online" }, active)).toBe(false);
+
+        // Online A selected: the stale local "active" status must not make
+        // the local Trip look current, and must not hide the local Trip's
+        // Set Active button forever.
+        active = selectActiveTrip(trips, { source: "online", id: "online-a" });
+        expect(isCurrentActiveTrip({ id: "online-a", source: "online" }, active)).toBe(true);
+        expect(isCurrentActiveTrip({ id: "local-a", source: undefined }, active)).toBe(false);
+
+        // Offline A selected again: must be selectable and recognised as
+        // current, even though the online Trip's server isActive flag is
+        // still true.
+        active = selectActiveTrip(trips, { source: "local", id: "local-a" });
+        expect(isCurrentActiveTrip({ id: "local-a", source: undefined }, active)).toBe(true);
+        expect(isCurrentActiveTrip({ id: "online-a", source: "online" }, active)).toBe(false);
     });
 });
