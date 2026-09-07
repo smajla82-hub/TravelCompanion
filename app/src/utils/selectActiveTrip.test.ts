@@ -59,9 +59,27 @@ describe("selectActiveTrip", () => {
         const active = selectActiveTrip([
             trip({ id: "local-1", status: "active" }),
             trip({ id: "online-1", source: "online", status: "active" }),
-        ], undefined);
+        ], { source: "online", id: "online-1" });
 
         expect(active?.id).toBe("online-1");
+    });
+
+    it("does not let stale local active state compete while an explicit online selection reloads", () => {
+        const active = selectActiveTrip([
+            trip({ id: "local-1", status: "active" }),
+        ], { source: "online", id: "online-1" });
+
+        expect(active).toBeUndefined();
+    });
+
+    it("preserves explicit online selection after refresh reconstruction", () => {
+        const refreshedTrips = [
+            trip({ id: "local-1", status: "active" }),
+            trip({ id: "online-1", source: "online", status: "active" }),
+        ];
+
+        expect(selectActiveTrip(refreshedTrips, { source: "online", id: "online-1" })?.id)
+            .toBe("online-1");
     });
 
     it("switches Online A to Online B from the server active flags", () => {
@@ -86,9 +104,50 @@ describe("selectActiveTrip", () => {
         const active = selectActiveTrip([
             trip({ id: "local-1", status: "active" }),
             trip({ id: "online-1", source: "online", status: "active" }),
-        ]);
+        ], { source: "online", id: "online-1" });
 
         expect(active?.id).toBe("online-1");
+    });
+
+    it("keeps online server active state intact when offline is selected", () => {
+        const onlineTrip = trip({ id: "online-1", source: "online", status: "active" });
+
+        const active = selectActiveTrip([
+            trip({ id: "local-1", status: "active" }),
+            onlineTrip,
+        ], { source: "local", id: "local-1" });
+
+        expect(active?.id).toBe("local-1");
+        expect(onlineTrip.status).toBe("active");
+    });
+
+    it("handles Offline A to Online A to Offline A", () => {
+        const trips = [
+            trip({ id: "local-a", status: "active" }),
+            trip({ id: "online-a", source: "online", status: "active" }),
+        ];
+
+        expect(selectActiveTrip(trips, { source: "local", id: "local-a" })?.id)
+            .toBe("local-a");
+        expect(selectActiveTrip(trips, { source: "online", id: "online-a" })?.id)
+            .toBe("online-a");
+        expect(selectActiveTrip(trips, { source: "local", id: "local-a" })?.id)
+            .toBe("local-a");
+    });
+
+    it("handles Offline A to Online A to Offline B", () => {
+        const trips = [
+            trip({ id: "local-a", status: "planning" }),
+            trip({ id: "local-b", status: "active" }),
+            trip({ id: "online-a", source: "online", status: "active" }),
+        ];
+
+        expect(selectActiveTrip(trips, { source: "local", id: "local-a" })?.id)
+            .toBe("local-a");
+        expect(selectActiveTrip(trips, { source: "online", id: "online-a" })?.id)
+            .toBe("online-a");
+        expect(selectActiveTrip(trips, { source: "local", id: "local-b" })?.id)
+            .toBe("local-b");
     });
 
     it("returns nothing when no trip is active", () => {
