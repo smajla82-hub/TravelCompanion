@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 
 import {
@@ -23,15 +23,23 @@ export default function DashboardPage() {
 
     const [itineraryResetKey, setItineraryResetKey] =
         useState(0);
+    const continueRequested = useRef(false);
 
     function continueTrip() {
         setItineraryResetKey(value => value + 1);
+        continueRequested.current = true;
+    }
+
+    useEffect(() => {
+        if (!continueRequested.current) {
+            return;
+        }
+
         document
             .getElementById("itinerary-section")
-            ?.scrollIntoView({
-                behavior: "smooth",
-            });
-    }
+            ?.scrollIntoView({ behavior: "smooth" });
+        continueRequested.current = false;
+    }, [itineraryResetKey]);
 
     return (
         <Container>

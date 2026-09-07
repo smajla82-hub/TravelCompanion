@@ -104,6 +104,33 @@ function normalizeItineraryItemPayload(payload = {}) {
   };
 }
 
+function timeValue(time) {
+  if (typeof time !== 'string' || !/^([01]\d|2[0-3]):[0-5]\d$/.test(time)) {
+    return undefined;
+  }
+
+  const [hours, minutes] = time.split(':').map(Number);
+  return hours * 60 + minutes;
+}
+
+function resequenceDayItems(tripId, dayId) {
+  const items = listItemsForDay(tripId, dayId)
+    .map((item, index) => ({ item, index, time: timeValue(item.time) }))
+    .sort((left, right) => {
+      if (left.time === undefined && right.time === undefined) return left.index - right.index;
+      if (left.time === undefined) return 1;
+      if (right.time === undefined) return -1;
+      return left.time - right.time || left.index - right.index;
+    });
+  const updateSortOrder = db.prepare(
+    'UPDATE itinerary_items SET sort_order = ? WHERE trip_id = ? AND day_id = ? AND id = ?',
+  );
+
+  items.forEach(({ item }, sortOrder) => {
+    updateSortOrder.run(sortOrder, tripId, dayId, item.id);
+  });
+}
+
 export function listTrips(userId) {
   return db.prepare(
     `SELECT trips.* FROM trips
@@ -431,12 +458,13 @@ export function createItineraryItem(tripId, dayId, payload = {}) {
   const now = new Date().toISOString();
   const itemId = randomUUID();
 
-  db.prepare(
+  db.transaction(() => {
+    db.prepare(
     `INSERT INTO itinerary_items (
       id, trip_id, day_id, date, time, title, location, description, goal, activity_type, priority, parking,
       smart_chip, map_link, price, note, sort_order, created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`
-  ).run(
+    ).run(
     itemId,
     tripId,
     dayId,
@@ -455,8 +483,10 @@ export function createItineraryItem(tripId, dayId, payload = {}) {
     data.note,
     data.sortOrder,
     now,
-    now,
-  );
+      now,
+    );
+    resequenceDayItems(tripId, dayId);
+  })();
 
   return getItemById(tripId, itemId);
 }
@@ -478,12 +508,13 @@ export function updateItineraryItem(tripId, dayId, itemId, payload = {}) {
   const data = normalizeItineraryItemPayload({ ...existing, ...payload });
   const now = new Date().toISOString();
 
-  db.prepare(
+  db.transaction(() => {
+    db.prepare(
     `UPDATE itinerary_items
      SET date = ?, time = ?, title = ?, location = ?, description = ?, goal = ?, activity_type = ?, priority = ?, parking = ?,
          smart_chip = ?, map_link = ?, price = ?, note = ?, sort_order = ?, updated_at = ?
      WHERE trip_id = ? AND day_id = ? AND id = ?`
-  ).run(
+    ).run(
     data.date,
     data.time,
     data.title,
@@ -501,8 +532,12 @@ export function updateItineraryItem(tripId, dayId, itemId, payload = {}) {
     now,
     tripId,
     dayId,
-    itemId,
-  );
+      itemId,
+    );
+    if (Object.hasOwn(payload, 'time')) {
+      resequenceDayItems(tripId, dayId);
+    }
+  })();
 
   return getItemById(tripId, itemId);
 }

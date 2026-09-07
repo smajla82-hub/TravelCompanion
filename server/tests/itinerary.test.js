@@ -204,3 +204,36 @@ test('another user cannot replace the itinerary of a trip they do not own', asyn
     await closeServer(server);
   }
 });
+
+test('single online activity mutations persist the offline chronological ordering semantics', async () => {
+  const { server, port } = await startServer();
+  try {
+    const headers = await signIn(port, 'itinerary-order@example.com');
+    const trip = await createTrip(port, headers, 'Ordered');
+    await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, { method: 'POST', headers });
+    const day = await (await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days`, {
+      method: 'POST', headers, body: JSON.stringify({ date: '2026-09-01', title: 'Day 1' }),
+    })).json();
+    const createItem = async (title, time) => (await fetch(
+      `http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/items`,
+      { method: 'POST', headers, body: JSON.stringify({ date: day.date, title, time }) },
+    )).json();
+
+    const late = await createItem('Late', '12:00');
+    await createItem('Untimed');
+    await createItem('Early', '07:00');
+    await createItem('Middle', '08:15');
+    let saved = await getItinerary(port, headers, trip.id);
+    assert.deepEqual(saved.days[0].items.map((item) => item.title), ['Early', 'Middle', 'Late', 'Untimed']);
+    assert.deepEqual(saved.days[0].items.map((item) => item.sortOrder), [0, 1, 2, 3]);
+
+    await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/items/${late.id}`, {
+      method: 'PUT', headers, body: JSON.stringify({ time: '07:30' }),
+    });
+    saved = await getItinerary(port, headers, trip.id);
+    assert.deepEqual(saved.days[0].items.map((item) => item.title), ['Early', 'Late', 'Middle', 'Untimed']);
+    assert.deepEqual(saved.days[0].items.map((item) => item.sortOrder), [0, 1, 2, 3]);
+  } finally {
+    await closeServer(server);
+  }
+});
