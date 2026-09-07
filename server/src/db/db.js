@@ -50,6 +50,20 @@ db.exec(`
   CREATE INDEX IF NOT EXISTS idx_trip_locks_expires_at ON trip_locks (expires_at);
 `);
 
+// Migration: add `price`/`note` to `parking_locations` for databases created
+// before FP-2 (Venue & Parking management). Additive/nullable, so existing
+// rows are unaffected; round-trips the RoadBook "Cena"/"Poznámka" parking
+// columns that were previously displayed/imported but never persisted.
+const parkingLocationColumns = db.prepare("PRAGMA table_info(parking_locations)").all();
+const hasParkingPrice = parkingLocationColumns.some((column) => column.name === 'price');
+if (!hasParkingPrice) {
+  db.exec('ALTER TABLE parking_locations ADD COLUMN price TEXT');
+}
+const hasParkingNote = parkingLocationColumns.some((column) => column.name === 'note');
+if (!hasParkingNote) {
+  db.exec('ALTER TABLE parking_locations ADD COLUMN note TEXT');
+}
+
 export function getDb() {
   return db;
 }

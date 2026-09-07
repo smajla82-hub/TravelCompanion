@@ -151,7 +151,7 @@ describe("toOnlineTrip", () => {
             vi.spyOn(SyncedTripApi, "releaseLock").mockResolvedValue({});
 
             const venues = [{ id: "v1", name: "Caffe Roma", mapLink: "https://maps.example.com/caffe" }];
-            const parkingLocations = [{ code: "P1", name: "Central Garage" }];
+            const parkingLocations = [{ id: "p1", code: "P1", name: "Central Garage" }];
             const persistedDay = {
                 id: "day-1",
                 date: "2026-09-01",

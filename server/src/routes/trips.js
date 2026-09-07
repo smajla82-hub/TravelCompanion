@@ -58,6 +58,14 @@ function currentItem(req) {
   return repo.getItemById(req.params.tripId, req.params.itemId);
 }
 
+function currentVenue(req) {
+  return repo.getVenueById(req.params.tripId, req.params.venueId);
+}
+
+function currentParking(req) {
+  return repo.getParkingLocationById(req.params.tripId, req.params.parkingId);
+}
+
 router.get('/', (req, res) => {
   const trips = repo.listTrips(req.user.id);
   res.json(trips);
@@ -193,6 +201,56 @@ router.delete('/:tripId/itinerary/days/:dayId/items/:itemId', requireTripRole(['
   const deletedItem = repo.deleteItineraryItem(req.params.tripId, req.params.dayId, req.params.itemId);
   repo.touchTrip(req.params.tripId);
   return res.json({ deleted: true, item: deletedItem });
+});
+
+router.post('/:tripId/itinerary/days/:dayId/venues', requireTripRole(['owner', 'editor']), requireActiveLock(currentDay), (req, res) => {
+  const venue = repo.createVenue(req.params.tripId, req.params.dayId, req.body);
+  repo.touchTrip(req.params.tripId);
+  return res.status(201).json(venue);
+});
+
+router.put('/:tripId/itinerary/days/:dayId/venues/:venueId', requireTripRole(['owner', 'editor']), requireActiveLock(currentVenue), (req, res) => {
+  const venue = repo.updateVenue(req.params.tripId, req.params.dayId, req.params.venueId, req.body);
+  repo.touchTrip(req.params.tripId);
+  return res.json(venue);
+});
+
+router.delete('/:tripId/itinerary/days/:dayId/venues/:venueId', requireTripRole(['owner', 'editor']), requireActiveLock(currentVenue), (req, res) => {
+  const deletedVenue = repo.deleteVenue(req.params.tripId, req.params.dayId, req.params.venueId);
+  repo.touchTrip(req.params.tripId);
+  return res.json({ deleted: true, venue: deletedVenue });
+});
+
+router.post('/:tripId/itinerary/days/:dayId/parking', requireTripRole(['owner', 'editor']), requireActiveLock(currentDay), (req, res) => {
+  const parking = repo.createParkingLocation(req.params.tripId, req.params.dayId, req.body);
+  repo.touchTrip(req.params.tripId);
+  return res.status(201).json(parking);
+});
+
+router.put('/:tripId/itinerary/days/:dayId/parking/:parkingId', requireTripRole(['owner', 'editor']), requireActiveLock(currentParking), (req, res) => {
+  const parking = repo.updateParkingLocation(req.params.tripId, req.params.dayId, req.params.parkingId, req.body);
+  repo.touchTrip(req.params.tripId);
+  return res.json(parking);
+});
+
+router.delete('/:tripId/itinerary/days/:dayId/parking/:parkingId', requireTripRole(['owner', 'editor']), requireActiveLock(currentParking), (req, res, next) => {
+  try {
+    const deletedParking = repo.deleteParkingLocation(
+      req.params.tripId,
+      req.params.dayId,
+      req.params.parkingId,
+    );
+    repo.touchTrip(req.params.tripId);
+    return res.json({ deleted: true, parking: deletedParking });
+  } catch (error) {
+    if (error.referencingItems) {
+      return res.status(error.statusCode ?? 409).json({
+        error: error.message,
+        referencingItems: error.referencingItems,
+      });
+    }
+    return next(error);
+  }
 });
 
 router.post('/:tripId/invitations', requireTripRole(['owner']), (req, res) => {

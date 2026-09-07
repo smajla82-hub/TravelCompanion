@@ -221,6 +221,7 @@ function findParkingHeaderRow(
 function parseParkingLocations(
     sheet: XLSX.WorkSheet,
     rows: ImportRow[],
+    date: string,
     headerRowIndex: number
 ): ParkingLocation[] {
     if (headerRowIndex === -1) {
@@ -233,6 +234,8 @@ function parseParkingLocations(
         code: findColumn(headers, "Označení"),
         name: findColumn(headers, "Místo"),
         smartChip: findColumnStartingWith(headers, "📍"),
+        price: findColumn(headers, "💰 Cena"),
+        note: findColumn(headers, "📝 Poznámka"),
     };
     const parkingLocations: ParkingLocation[] = [];
 
@@ -255,6 +258,7 @@ function parseParkingLocations(
         }
 
         parkingLocations.push({
+            id: `${date}-parking-${parkingLocations.length + 1}`,
             code,
             name,
             mapLink: getCellLink(
@@ -262,6 +266,8 @@ function parseParkingLocations(
                 rowIndex,
                 columns.smartChip
             ),
+            price: getString(row[columns.price]),
+            note: getString(row[columns.note]),
         });
     }
 
@@ -563,6 +569,7 @@ function parseDaySheet(
     const parkingLocations = parseParkingLocations(
         sheet,
         rows,
+        date,
         findParkingHeaderRow(rows)
     );
 

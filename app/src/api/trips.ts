@@ -1,5 +1,5 @@
 import { apiRequest } from "./client";
-import type { ItineraryDay, ItineraryItem } from "../types";
+import type { ItineraryDay, ItineraryItem, ParkingLocation, RecommendedVenue } from "../types";
 
 export type SyncedTrip = {
     id: string;
@@ -120,6 +120,49 @@ export const SyncedTripApi = {
         apiRequest(`/trips/${tripId}/itinerary/days/${dayId}/items/${itemId}`, {
             method: "DELETE",
         }),
+    createVenue: (tripId: string, dayId: string, venue: Omit<RecommendedVenue, "id">) =>
+        apiRequest<RecommendedVenue>(`/trips/${tripId}/itinerary/days/${dayId}/venues`, {
+            method: "POST",
+            body: JSON.stringify(venue),
+        }),
+    updateVenue: (
+        tripId: string,
+        dayId: string,
+        venueId: string,
+        venue: Partial<RecommendedVenue>,
+    ) =>
+        apiRequest<RecommendedVenue>(
+            `/trips/${tripId}/itinerary/days/${dayId}/venues/${venueId}`,
+            { method: "PUT", body: JSON.stringify(venue) },
+        ),
+    deleteVenue: (tripId: string, dayId: string, venueId: string) =>
+        apiRequest(`/trips/${tripId}/itinerary/days/${dayId}/venues/${venueId}`, {
+            method: "DELETE",
+        }),
+    createParking: (tripId: string, dayId: string, parking: Omit<ParkingLocation, "id">) =>
+        apiRequest<ParkingLocation>(`/trips/${tripId}/itinerary/days/${dayId}/parking`, {
+            method: "POST",
+            body: JSON.stringify(parking),
+        }),
+    updateParking: (
+        tripId: string,
+        dayId: string,
+        parkingId: string,
+        parking: Partial<ParkingLocation>,
+    ) =>
+        apiRequest<ParkingLocation>(
+            `/trips/${tripId}/itinerary/days/${dayId}/parking/${parkingId}`,
+            { method: "PUT", body: JSON.stringify(parking) },
+        ),
+    deleteParking: (
+        tripId: string,
+        dayId: string,
+        parkingId: string,
+    ) =>
+        apiRequest(
+            `/trips/${tripId}/itinerary/days/${dayId}/parking/${parkingId}`,
+            { method: "DELETE" },
+        ),
     acceptInvitation: (token: string) =>
         apiRequest(`/invitations/${token}/accept`, { method: "POST" }),
     rejectInvitation: (token: string) =>
