@@ -136,6 +136,65 @@ describe("toOnlineTrip", () => {
             expect(itinerary).toHaveBeenCalledTimes(3);
             expect(OnlineTripStore.getSnapshot()[0].itinerary).toEqual([{ ...day, items: [] }]);
         });
+
+        it("sends and applies recommended venues and parking locations when replacing the itinerary", async () => {
+            const adapter = createTripAdapter({
+                ...serverTrip(),
+                source: "online",
+            });
+            OnlineTripStore.applyTrip({
+                ...toOnlineTrip(serverTrip()),
+                itinerary: [],
+                itineraryLoaded: true,
+            });
+            vi.spyOn(SyncedTripApi, "acquireLock").mockResolvedValue({});
+            vi.spyOn(SyncedTripApi, "releaseLock").mockResolvedValue({});
+
+            const venues = [{ id: "v1", name: "Caffe Roma", mapLink: "https://maps.example.com/caffe" }];
+            const parkingLocations = [{ code: "P1", name: "Central Garage" }];
+            const persistedDay = {
+                id: "day-1",
+                date: "2026-09-01",
+                title: "Day 1",
+                items: [{ id: "item-1", date: "2026-09-01", title: "Breakfast", parking: "P1" }],
+                venues,
+                parkingLocations,
+            };
+            const replaceItinerary = vi.spyOn(SyncedTripApi, "replaceItinerary")
+                .mockResolvedValue({ tripId: "trip-1", days: [persistedDay] });
+
+            await adapter.setItinerary([{
+                id: "local-day-1",
+                date: "2026-09-01",
+                title: "Day 1",
+                items: [{ id: "local-item-1", date: "2026-09-01", title: "Breakfast", parking: "P1" }],
+                venues,
+                parkingLocations,
+            }]);
+
+            expect(replaceItinerary).toHaveBeenCalledWith("trip-1", [
+                expect.objectContaining({ venues, parkingLocations }),
+            ]);
+            expect(OnlineTripStore.getSnapshot()[0].itinerary).toEqual([persistedDay]);
+        });
+
+        it("does not introduce venues/parkingLocations keys for a day that has none of either", async () => {
+            const adapter = createTripAdapter({
+                ...serverTrip(),
+                source: "online",
+            });
+            vi.spyOn(SyncedTripApi, "acquireLock").mockResolvedValue({});
+            vi.spyOn(SyncedTripApi, "releaseLock").mockResolvedValue({});
+            const persistedDay = { id: "day-1", date: "2026-09-01", title: "Day 1", items: [], venues: [], parkingLocations: [] };
+            const replaceItinerary = vi.spyOn(SyncedTripApi, "replaceItinerary")
+                .mockResolvedValue({ tripId: "trip-1", days: [persistedDay] });
+
+            await adapter.setItinerary([{ id: "local-day-1", date: "2026-09-01", title: "Day 1", items: [] }]);
+
+            expect(replaceItinerary).toHaveBeenCalledWith("trip-1", [
+                expect.objectContaining({ venues: undefined, parkingLocations: undefined }),
+            ]);
+        });
     });
 
     it("does not treat a non active trip as active", () => {

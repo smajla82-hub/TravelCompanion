@@ -114,3 +114,54 @@ CREATE TABLE IF NOT EXISTS itinerary_items (
 CREATE INDEX IF NOT EXISTS idx_itinerary_items_trip_id ON itinerary_items (trip_id);
 CREATE INDEX IF NOT EXISTS idx_itinerary_items_day_id ON itinerary_items (day_id);
 CREATE INDEX IF NOT EXISTS idx_itinerary_items_sort ON itinerary_items (day_id, sort_order);
+
+-- Recommended Venues are day-scoped, matching the offline `ItineraryDay.venues`
+-- domain model. There is no relationship from `itinerary_items` to a venue
+-- (unlike parking), so no reference integrity beyond the day FK is needed.
+CREATE TABLE IF NOT EXISTS venues (
+  id TEXT PRIMARY KEY,
+  trip_id TEXT NOT NULL,
+  day_id TEXT NOT NULL,
+  priority TEXT,
+  type TEXT,
+  meal_type TEXT,
+  subtype TEXT,
+  name TEXT NOT NULL,
+  smart_chip TEXT,
+  map_link TEXT,
+  recommendation TEXT,
+  price TEXT,
+  reservation TEXT,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (trip_id) REFERENCES trips (id) ON DELETE CASCADE,
+  FOREIGN KEY (day_id) REFERENCES itinerary_days (id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_venues_trip_id ON venues (trip_id);
+CREATE INDEX IF NOT EXISTS idx_venues_day_id ON venues (day_id);
+CREATE INDEX IF NOT EXISTS idx_venues_sort ON venues (day_id, sort_order);
+
+-- Parking locations are day-scoped. `code` (e.g. "P1"-"P8") is the existing
+-- offline user-facing/reference key: `itinerary_items.parking` stores the
+-- same string and is matched against `parking_locations.code` within the
+-- same day at read time, exactly like the offline lookup. This phase keeps
+-- that string-based reference; it does not migrate to `parking_locations.id`.
+CREATE TABLE IF NOT EXISTS parking_locations (
+  id TEXT PRIMARY KEY,
+  trip_id TEXT NOT NULL,
+  day_id TEXT NOT NULL,
+  code TEXT NOT NULL,
+  name TEXT NOT NULL,
+  map_link TEXT,
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (trip_id) REFERENCES trips (id) ON DELETE CASCADE,
+  FOREIGN KEY (day_id) REFERENCES itinerary_days (id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_parking_locations_trip_id ON parking_locations (trip_id);
+CREATE INDEX IF NOT EXISTS idx_parking_locations_day_id ON parking_locations (day_id);
+CREATE INDEX IF NOT EXISTS idx_parking_locations_sort ON parking_locations (day_id, sort_order);

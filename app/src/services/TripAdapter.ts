@@ -149,6 +149,8 @@ export function createTripAdapter(trip: Pick<Trip, "id" | "source"> | SyncedTrip
                     delete (payload as { id?: string }).id;
                     return payload;
                 }),
+                venues: day.venues,
+                parkingLocations: day.parkingLocations,
             })));
             OnlineTripStore.applyItinerary(tripId, itinerary.days);
         }),

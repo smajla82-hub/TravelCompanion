@@ -28,6 +28,7 @@ export function ItineraryDayAdditionalDetails({
         <Stack gap="md">
             <Button
                 type="button"
+                variant="subtle-success"
                 onClick={() => setIsOpen(!isOpen)}
             >
                 {isOpen
