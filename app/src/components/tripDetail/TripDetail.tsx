@@ -2,6 +2,8 @@ import { useEffect, useMemo, useState } from "react";
 import { ApiError } from "../../api/client";
 import { AuthService } from "../../services/AuthService";
 import { createTripAdapter } from "../../services/TripAdapter";
+import { useTrips } from "../../hooks";
+import { isCurrentActiveTrip } from "../../utils/selectActiveTrip";
 import type { Invitation, TripMember } from "../../api/trips";
 import type { Trip } from "../../types";
 import { Button, Card, Heading, Stack } from "../ui";
@@ -25,6 +27,14 @@ export function TripDetail({
     const user = AuthService.getUser();
     const role = members.find(member => member.userId === user?.id)?.role;
     const canEdit = adapter.source === "local" || role === "owner" || role === "editor";
+
+    // The explicit current-device selection (not the source-specific
+    // `status`/`isActive` flag) determines whether this Trip is already the
+    // active one. Relying on `status` here made the button disappear
+    // permanently once a Trip had ever been active on its own source, even
+    // after the device switched its active selection away from it.
+    const { activeTrip } = useTrips();
+    const isCurrentSelection = isCurrentActiveTrip(trip, activeTrip);
 
     useEffect(() => {
         if (adapter.source !== "online") return;
@@ -70,7 +80,7 @@ export function TripDetail({
             <p>{adapter.source === "online" ? `${role ?? "Member"} access` : "Offline trip"}</p>
             {error && <p role="alert">{error}</p>}
             <Stack gap="sm">
-                {trip.status !== "active" && <Button type="button" onClick={onSetActive}>Set as Active Trip</Button>}
+                {!isCurrentSelection && <Button type="button" onClick={onSetActive}>Set as Active Trip</Button>}
                 {canEdit && onEdit && <Button type="button" onClick={onEdit}>Edit Trip</Button>}
                 {(adapter.source === "local" || role === "owner") && onDelete && <Button type="button" onClick={onDelete}>Delete Trip</Button>}
             </Stack>
