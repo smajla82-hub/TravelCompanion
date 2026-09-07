@@ -19,6 +19,8 @@ const tripsLimiter = rateLimit({
   limit: 600,
   standardHeaders: true,
   legacyHeaders: false,
+  // JSON so clients can surface the real reason instead of a generic failure.
+  message: { error: 'Too many trip requests. Please wait a moment and try again.' },
 });
 
 router.use(tripsLimiter);
@@ -64,7 +66,7 @@ router.get('/', (req, res) => {
 router.get('/active', (req, res) => {
   const activeTrip = repo.getActiveTrip(req.user.id);
   if (!activeTrip) {
-    return res.status(404).json({ message: 'No active trip selected.' });
+    return res.status(404).json({ error: 'No active trip selected.' });
   }
   return res.json(activeTrip);
 });
@@ -133,15 +135,14 @@ router.delete('/:id', requireTripRole(['owner']), (req, res) => {
 });
 
 router.get('/:tripId/itinerary', requireTripRole(['owner', 'editor', 'viewer']), (req, res) => {
-  const days = repo.listItineraryDaysForTrip(req.params.tripId);
-  const items = repo.listItemsForTrip(req.params.tripId);
+  return res.json(repo.getItinerary(req.params.tripId));
+});
 
-  const enrichedDays = days.map((day) => ({
-    ...day,
-    items: items.filter((item) => item.day_id === day.id),
-  }));
-
-  return res.json({ tripId: req.params.tripId, days: enrichedDays });
+// Atomic full itinerary replacement, used by the RoadBook import so that a
+// whole imported itinerary is persisted (or rejected) in a single request.
+router.put('/:tripId/itinerary', requireTripRole(['owner', 'editor']), requireActiveLock(currentTrip), (req, res) => {
+  const itinerary = repo.replaceItinerary(req.params.tripId, req.body?.days, req.user.id);
+  return res.json(itinerary);
 });
 
 router.post('/:tripId/itinerary/days', requireTripRole(['owner', 'editor']), requireActiveLock(currentTrip), (req, res) => {

@@ -61,7 +61,12 @@ export const OnlineTripStore = {
         }
 
         const request = loadFromServer().then(loaded => {
-            publish(loaded);
+            // A slower earlier refresh must never overwrite the result of a
+            // newer one, so only the latest in-flight request publishes.
+            if (loading === request) {
+                publish(loaded);
+            }
+
             return loaded;
         });
         loading = request;

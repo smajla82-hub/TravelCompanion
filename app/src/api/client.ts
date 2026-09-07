@@ -68,10 +68,16 @@ export async function apiRequest<T>(
     const body = await response.json().catch(() => undefined);
 
     if (!response.ok) {
-        const message = typeof body === "object" && body &&
+        const serverMessage = typeof body === "object" && body &&
             "error" in body && typeof body.error === "string"
             ? body.error
-            : "The sync request could not be completed.";
+            : undefined;
+
+        // A response without a JSON error body (proxy failure, rate limiting,
+        // unexpected status) still has to name the status so the failure is
+        // reported truthfully instead of as an anonymous sync problem.
+        const message = serverMessage
+            ?? `The sync request could not be completed (HTTP ${response.status}).`;
 
         throw new ApiError(message, {
             status: response.status,

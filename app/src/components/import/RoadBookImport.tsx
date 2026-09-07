@@ -21,6 +21,7 @@ import { SyncedTripApi, type SyncedTrip } from "../../api/trips";
 import { ApiError } from "../../api/client";
 import { lockConflictMessage } from "../sections/lockConflictMessage";
 import { createTripAdapter } from "../../services/TripAdapter";
+import { OnlineTripStore } from "../../services/OnlineTripStore";
 
 import type {
     ItineraryDay,
@@ -110,10 +111,23 @@ export function RoadBookImport() {
             await adapter.setItinerary(days);
             setError("");
             setSaved(true);
+
+            if (online) {
+                // The itinerary is already stored; re-reading it only updates
+                // the cached online Trip, so a failure here is not an import
+                // failure.
+                await adapter.getTrip()
+                    .then(trip => OnlineTripStore.applyTrip(trip))
+                    .catch(() => undefined);
+            }
         } catch (reason) {
+            setSaved(false);
+            // Only a lock conflict is reported as a concurrent edit; every
+            // other API failure keeps its own message so the user learns the
+            // real reason the import did not persist.
             setError(reason instanceof ApiError
-                ? `${lockConflictMessage(reason)} Import may be partially applied; reload the Trip and retry if needed.`
-                : "The online Trip itinerary could only be partially replaced. Reload the Trip and retry.");
+                ? `${reason.status === 409 ? lockConflictMessage(reason) : reason.message} The itinerary was not saved; retry the import.`
+                : "The Trip itinerary could not be saved. Retry the import.");
         } finally {
             if (ownsLock) {
                 await adapter.releaseLock().catch(() => undefined);
