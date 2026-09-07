@@ -133,16 +133,19 @@ export function createTripAdapter(trip: Pick<Trip, "id" | "source"> | SyncedTrip
         source: "online",
         getTrip: async () => ({ ...(await get()), itinerary: await reload(), itineraryLoaded: true }),
         setItinerary: days => withLock(async () => {
-            const existing = await reload();
-            for (const day of existing) await SyncedTripApi.deleteDay(tripId, day.id);
-            for (const day of days) {
-                const created = await SyncedTripApi.createDay(tripId, { date: day.date, title: day.title });
-                for (const item of day.items) {
-                    const payload = { ...item };
+            // One atomic request: the server replaces days and activities in a
+            // single transaction, so an import can never persist days without
+            // their activities, and a large RoadBook no longer needs hundreds
+            // of requests.
+            await SyncedTripApi.replaceItinerary(tripId, days.map(day => ({
+                date: day.date,
+                title: day.title,
+                items: day.items.map((item, sortOrder) => {
+                    const payload = { ...item, date: item.date || day.date, sortOrder };
                     delete (payload as { id?: string }).id;
-                    await SyncedTripApi.createItem(tripId, created.id, payload);
-                }
-            }
+                    return payload;
+                }),
+            })));
         }),
         addDay: day => withLock(() => SyncedTripApi.createDay(tripId, day)),
         updateDay: day => withLock(async () => { await SyncedTripApi.updateDay(tripId, day.id, day); }),

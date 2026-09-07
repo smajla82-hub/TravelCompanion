@@ -20,6 +20,10 @@ export type SyncedItinerary = {
 
 type ItineraryItemPayload = Omit<ItineraryItem, "id">;
 
+export type ItineraryDayPayload = Pick<ItineraryDay, "date" | "title"> & {
+    items: ItineraryItemPayload[];
+};
+
 export type TripMember = {
     userId: string;
     email: string;
@@ -77,6 +81,12 @@ export const SyncedTripApi = {
         apiRequest(`/trips/${tripId}`, { method: "DELETE" }),
     itinerary: (tripId: string) =>
         apiRequest<SyncedItinerary>(`/trips/${tripId}/itinerary`),
+    /** Replaces the whole itinerary of a Trip in one atomic server request. */
+    replaceItinerary: (tripId: string, days: ItineraryDayPayload[]) =>
+        apiRequest<SyncedItinerary>(`/trips/${tripId}/itinerary`, {
+            method: "PUT",
+            body: JSON.stringify({ days }),
+        }),
     createDay: (tripId: string, day: Pick<ItineraryDay, "date" | "title">) =>
         apiRequest<ItineraryDay>(`/trips/${tripId}/itinerary/days`, {
             method: "POST",

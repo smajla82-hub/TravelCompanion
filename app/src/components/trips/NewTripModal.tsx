@@ -7,7 +7,7 @@ import type { Trip } from "../../types";
 import { TripService } from "../../services/TripService";
 import { AuthService } from "../../services/AuthService";
 import { SyncedTripApi } from "../../api/trips";
-import { createTripAdapter } from "../../services/TripAdapter";
+import { createTripAdapter, toOnlineTrip } from "../../services/TripAdapter";
 import { OnlineTripStore } from "../../services/OnlineTripStore";
 import {
     counterClassName,
@@ -126,11 +126,15 @@ export function NewTripModal({
             };
 
             if (online && AuthService.getToken()) {
-                await SyncedTripApi.create({
+                const created = await SyncedTripApi.create({
                     ...trip,
                     name: destination,
                 });
-                await OnlineTripStore.refresh();
+
+                // The created Trip is shown from the server response, so a
+                // failing list refresh cannot hide it or block further creates.
+                OnlineTripStore.applyTrip(toOnlineTrip(created));
+                await OnlineTripStore.refresh().catch(() => undefined);
             } else {
                 TripService.add(trip);
             }

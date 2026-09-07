@@ -293,6 +293,122 @@ export function listItemsForTrip(tripId) {
   return db.prepare('SELECT * FROM itinerary_items WHERE trip_id = ? ORDER BY sort_order ASC, created_at ASC').all(tripId).map(mapItemRow);
 }
 
+export function getItinerary(tripId) {
+  const days = listItineraryDaysForTrip(tripId);
+  const items = listItemsForTrip(tripId);
+
+  return {
+    tripId,
+    days: days.map((day) => ({
+      ...day,
+      // `mapItemRow` renames `day_id` to `dayId`; grouping on the raw column
+      // name silently produced empty days.
+      items: items.filter((item) => item.dayId === day.id),
+    })),
+  };
+}
+
+/**
+ * Replaces the whole itinerary of a Trip in a single transaction. Either every
+ * day and activity is persisted, or nothing is changed, so an interrupted or
+ * invalid import can never leave a half-written itinerary behind.
+ */
+export function replaceItinerary(tripId, days, userId) {
+  const trip = getTripById(tripId, userId);
+  if (!trip) {
+    const error = new Error('Trip not found.');
+    error.statusCode = 404;
+    throw error;
+  }
+
+  if (!Array.isArray(days)) {
+    const error = new Error('An itinerary days array is required.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const now = new Date().toISOString();
+  const normalizedDays = days.map((day) => {
+    const dayData = normalizeItineraryDayPayload(day);
+    if (!dayData.date) {
+      const error = new Error('Itinerary day requires a date.');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    const items = Array.isArray(day?.items) ? day.items : [];
+
+    return {
+      ...dayData,
+      items: items.map((item, index) => {
+        // Import order is authoritative: an itinerary sent as a whole keeps the
+        // position of every activity inside its day.
+        const itemData = normalizeItineraryItemPayload({
+          ...item,
+          date: item?.date || dayData.date,
+          sortOrder: index,
+        });
+
+        if (!itemData.title) {
+          const error = new Error('Itinerary item title is required.');
+          error.statusCode = 400;
+          throw error;
+        }
+
+        return itemData;
+      }),
+    };
+  });
+
+  const insertDay = db.prepare(
+    'INSERT INTO itinerary_days (id, trip_id, date, title, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+  );
+  const insertItem = db.prepare(
+    `INSERT INTO itinerary_items (
+      id, trip_id, day_id, date, time, title, location, description, goal, activity_type, priority, parking,
+      smart_chip, map_link, price, note, sort_order, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  );
+
+  db.transaction(() => {
+    db.prepare('DELETE FROM itinerary_days WHERE trip_id = ?').run(tripId);
+    db.prepare('DELETE FROM itinerary_items WHERE trip_id = ?').run(tripId);
+
+    for (const day of normalizedDays) {
+      const dayId = randomUUID();
+      insertDay.run(dayId, tripId, day.date, day.title, now, now);
+
+      for (const item of day.items) {
+        insertItem.run(
+          randomUUID(),
+          tripId,
+          dayId,
+          item.date,
+          item.time,
+          item.title,
+          item.location,
+          item.description,
+          item.goal,
+          item.activityType,
+          item.priority,
+          item.parking,
+          item.smartChip,
+          item.mapLink,
+          item.price,
+          item.note,
+          item.sortOrder,
+          now,
+          now,
+        );
+      }
+    }
+
+    db.prepare('UPDATE trips SET updated_at = ? WHERE id = ?').run(now, tripId);
+  })();
+
+  return getItinerary(tripId);
+}
+
 export function getItemById(tripId, itemId) {
   return mapItemRow(db.prepare('SELECT * FROM itinerary_items WHERE trip_id = ? AND id = ?').get(tripId, itemId));
 }

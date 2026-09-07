@@ -15,6 +15,7 @@ vi.hoisted(() => {
 });
 
 import { SyncedTripApi, type SyncedTrip } from "../api/trips";
+import { ApiError } from "../api/client";
 import { OnlineTripStore } from "./OnlineTripStore";
 import { toOnlineTrip } from "./TripAdapter";
 import { selectActiveTrip } from "../utils/selectActiveTrip";
@@ -196,6 +197,68 @@ describe("OnlineTripStore", () => {
         OnlineTripStore.remove("trip-1");
 
         expect(OnlineTripStore.getSnapshot().map(trip => trip.id)).toEqual(["trip-2"]);
+    });
+
+    it("recovers after a rate limited refresh without losing the cached trips", async () => {
+        const rateLimited = new ApiError("Too many trip requests. Please wait a moment and try again.", { status: 429 });
+        const list = vi.spyOn(SyncedTripApi, "list")
+            .mockResolvedValueOnce([syncedTrip({ id: "trip-1" })])
+            .mockRejectedValueOnce(rateLimited)
+            .mockResolvedValueOnce([syncedTrip({ id: "trip-1" }), syncedTrip({ id: "trip-2" })]);
+
+        await OnlineTripStore.refresh();
+        await expect(OnlineTripStore.refresh()).rejects.toBe(rateLimited);
+
+        // The failed refresh must not empty My Trips.
+        expect(OnlineTripStore.getSnapshot().map(trip => trip.id)).toEqual(["trip-1"]);
+
+        await OnlineTripStore.refresh();
+
+        expect(list).toHaveBeenCalledTimes(3);
+        expect(OnlineTripStore.getSnapshot().map(trip => trip.id)).toEqual(["trip-1", "trip-2"]);
+    });
+
+    it("still applies a newly created trip after a failed refresh", async () => {
+        vi.spyOn(SyncedTripApi, "list").mockRejectedValue(new ApiError("The sync request could not be completed (HTTP 500).", { status: 500 }));
+
+        await expect(OnlineTripStore.refresh()).rejects.toThrow("HTTP 500");
+        OnlineTripStore.applyTrip(toOnlineTrip(syncedTrip({ id: "trip-created" })));
+
+        expect(OnlineTripStore.getSnapshot().map(trip => trip.id)).toEqual(["trip-created"]);
+    });
+
+    it("does not let a slower earlier refresh overwrite a newer result", async () => {
+        let resolveSlow: (trips: SyncedTrip[]) => void = () => undefined;
+        const slow = new Promise<SyncedTrip[]>(resolve => { resolveSlow = resolve; });
+        vi.spyOn(SyncedTripApi, "list")
+            .mockReturnValueOnce(slow)
+            .mockResolvedValueOnce([syncedTrip({ id: "trip-new" })]);
+
+        const first = OnlineTripStore.refresh();
+        await OnlineTripStore.refresh();
+
+        resolveSlow([syncedTrip({ id: "trip-stale" })]);
+        await first;
+
+        expect(OnlineTripStore.getSnapshot().map(trip => trip.id)).toEqual(["trip-new"]);
+    });
+
+    it("does not empty the cache when a concurrent refresh fails", async () => {
+        vi.spyOn(SyncedTripApi, "list")
+            .mockResolvedValueOnce([syncedTrip({ id: "trip-1" })]);
+        await OnlineTripStore.refresh();
+
+        vi.mocked(SyncedTripApi.list)
+            .mockRejectedValueOnce(new ApiError("The sync request could not be completed (HTTP 502).", { status: 502 }))
+            .mockRejectedValueOnce(new ApiError("The sync request could not be completed (HTTP 502).", { status: 502 }));
+
+        const results = await Promise.allSettled([
+            OnlineTripStore.refresh(),
+            OnlineTripStore.refresh(),
+        ]);
+
+        expect(results.every(result => result.status === "rejected")).toBe(true);
+        expect(OnlineTripStore.getSnapshot().map(trip => trip.id)).toEqual(["trip-1"]);
     });
 
     it("keeps online state empty for signed out users", async () => {

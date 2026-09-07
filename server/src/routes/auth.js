@@ -16,6 +16,7 @@ const authAttemptLimiter = rateLimit({
   limit: 20,
   standardHeaders: true,
   legacyHeaders: false,
+  message: { error: 'Too many authentication attempts. Please wait a moment and try again.' },
 });
 
 const meLimiter = rateLimit({
@@ -23,6 +24,7 @@ const meLimiter = rateLimit({
   limit: 300,
   standardHeaders: true,
   legacyHeaders: false,
+  message: { error: 'Too many requests. Please wait a moment and try again.' },
 });
 
 function issueToken(user) {
