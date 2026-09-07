@@ -4,6 +4,7 @@ import { AuthService } from "../../services/AuthService";
 import { createTripAdapter } from "../../services/TripAdapter";
 import { useTrips } from "../../hooks";
 import { isCurrentActiveTrip } from "../../utils/selectActiveTrip";
+import { buildInviteShareLink } from "../../utils/invitationLink";
 import type { Invitation, TripMember } from "../../api/trips";
 import type { Trip } from "../../types";
 import { Button, Card, Heading, Stack } from "../ui";
@@ -89,7 +90,7 @@ export function TripDetail({
                 {members.map(member => <p key={member.userId}>{member.email} — {member.role}</p>)}
                 {role === "owner" && <><Heading level={2}>Invite collaborator</Heading>
                     <form onSubmit={invite}><Stack gap="sm"><input name="email" type="email" required placeholder="collaborator@example.com" /><select name="role" defaultValue="editor"><option value="editor">Editor</option><option value="viewer">Viewer</option></select><Button type="submit">Create invitation</Button></Stack></form>
-                    {invitations.map(invitation => <Card key={invitation.id}><Stack gap="sm"><p>{invitation.email} — {invitation.role} ({invitation.status})</p>{invitation.status === "pending" && <Button type="button" variant="outline" onClick={() => void revoke(invitation.id)}>Revoke invitation</Button>}</Stack></Card>)}
+                    {invitations.map(invitation => <Card key={invitation.id}><Stack gap="sm"><p>{invitation.email} — {invitation.role} ({invitation.status})</p>{invitation.status === "pending" && invitation.acceptLink && <p>Invite link: <code>{buildInviteShareLink(window.location.origin, invitation.acceptLink)}</code></p>}{invitation.status === "pending" && <Button type="button" variant="outline" onClick={() => void revoke(invitation.id)}>Revoke invitation</Button>}</Stack></Card>)}
                 </>}
             </>}
         </Stack>

@@ -382,7 +382,7 @@ test('shared trip invitations and roles enforce access', async () => {
     const editorInvitation = await invite(editor, 'editor');
     const viewerInvitation = await invite(viewer, 'viewer');
     assert.ok(editorInvitation.token);
-    assert.equal(editorInvitation.acceptLink, `/invitations/${editorInvitation.token}/accept`);
+    assert.equal(editorInvitation.acceptLink, `/accept-invite/${editorInvitation.token}`);
 
     const wrongRecipient = await fetch(`http://127.0.0.1:${port}/invitations/${editorInvitation.token}/accept`, {
       method: 'POST', headers: stranger.headers,
