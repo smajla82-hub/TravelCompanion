@@ -44,6 +44,11 @@ export function isCurrentActiveTrip(
         return false;
     }
 
+    // `source` is only ever "online" or absent/"local" for offline Trips, so
+    // normalize both sides before comparing instead of relying on strict
+    // equality of the raw (possibly undefined) values.
+    const normalizedSource = (source: Trip["source"]) => source === "online" ? "online" : "local";
+
     return active.id === trip.id
-        && (active.source === "online") === (trip.source === "online");
+        && normalizedSource(active.source) === normalizedSource(trip.source);
 }
