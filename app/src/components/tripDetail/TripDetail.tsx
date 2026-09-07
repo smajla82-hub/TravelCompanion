@@ -25,6 +25,7 @@ export function TripDetail({
     const [members, setMembers] = useState<TripMember[]>([]);
     const [invitations, setInvitations] = useState<Invitation[]>([]);
     const [error, setError] = useState("");
+    const [copiedInvitationId, setCopiedInvitationId] = useState<string | null>(null);
     const user = AuthService.getUser();
     const role = members.find(member => member.userId === user?.id)?.role;
     const canEdit = adapter.source === "local" || role === "owner" || role === "editor";
@@ -71,6 +72,18 @@ export function TripDetail({
         }
     }
 
+    async function copyInviteLink(invitationId: string, link: string) {
+        try {
+            if (!navigator.clipboard?.writeText) {
+                throw new Error("Clipboard API unavailable.");
+            }
+            await navigator.clipboard.writeText(link);
+            setCopiedInvitationId(invitationId);
+        } catch {
+            setError("Unable to copy the invite link. Please copy it manually.");
+        }
+    }
+
     return (
         <Stack gap="md">
             <Heading level={2}>{trip.name ?? trip.destination}</Heading>
@@ -90,7 +103,12 @@ export function TripDetail({
                 {members.map(member => <p key={member.userId}>{member.email} — {member.role}</p>)}
                 {role === "owner" && <><Heading level={2}>Invite collaborator</Heading>
                     <form onSubmit={invite}><Stack gap="sm"><input name="email" type="email" required placeholder="collaborator@example.com" /><select name="role" defaultValue="editor"><option value="editor">Editor</option><option value="viewer">Viewer</option></select><Button type="submit">Create invitation</Button></Stack></form>
-                    {invitations.map(invitation => <Card key={invitation.id}><Stack gap="sm"><p>{invitation.email} — {invitation.role} ({invitation.status})</p>{invitation.status === "pending" && invitation.acceptLink && <p>Invite link: <code>{buildInviteShareLink(window.location.origin, invitation.acceptLink)}</code></p>}{invitation.status === "pending" && <Button type="button" variant="outline" onClick={() => void revoke(invitation.id)}>Revoke invitation</Button>}</Stack></Card>)}
+                    {invitations.map(invitation => {
+                        const inviteLink = invitation.status === "pending" && invitation.acceptLink
+                            ? buildInviteShareLink(window.location.origin, invitation.acceptLink)
+                            : undefined;
+                        return <Card key={invitation.id}><Stack gap="sm"><p>{invitation.email} — {invitation.role} ({invitation.status})</p>{inviteLink && <p>Invite link: <code>{inviteLink}</code> <Button type="button" variant="outline" onClick={() => void copyInviteLink(invitation.id, inviteLink)}>Copy link</Button>{copiedInvitationId === invitation.id && " Copied!"}</p>}{invitation.status === "pending" && <Button type="button" variant="outline" onClick={() => void revoke(invitation.id)}>Revoke invitation</Button>}</Stack></Card>;
+                    })}
                 </>}
             </>}
         </Stack>
