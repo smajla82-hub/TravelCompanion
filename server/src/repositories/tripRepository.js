@@ -459,6 +459,16 @@ export function createItineraryItem(tripId, dayId, payload = {}) {
   const itemId = randomUUID();
 
   db.transaction(() => {
+    // The final `sort_order` is always recomputed by `resequenceDayItems`
+    // right after the insert, but that resequencing tie-breaks activities
+    // sharing the same (or no) time by their current relative order. A new
+    // Activity must therefore start out *after* every existing Activity in
+    // that ordering, or it can jump ahead of an already-positioned Activity
+    // it happens to collide with (e.g. the default `sortOrder` of `0`
+    // colliding with the day's first Activity) and appear to reorder
+    // unrelated Activities.
+    const insertSortOrder = listItemsForDay(tripId, dayId).length;
+
     db.prepare(
     `INSERT INTO itinerary_items (
       id, trip_id, day_id, date, time, title, location, description, goal, activity_type, priority, parking,
@@ -481,7 +491,7 @@ export function createItineraryItem(tripId, dayId, payload = {}) {
     data.mapLink,
     data.price,
     data.note,
-    data.sortOrder,
+    insertSortOrder,
     now,
       now,
     );

@@ -18,6 +18,7 @@ import {
     isActiveItineraryDay,
     shouldFilterToRemainingActivities,
 } from "../../utils/getActiveItineraryDay";
+import { isItineraryReady } from "../../utils/isItineraryReady";
 
 import type { ItineraryDay, Trip } from "../../types";
 import "./ItinerarySection.css";
@@ -56,7 +57,17 @@ function getDefaultDayDate(trip: Trip): string {
     return formatLocalDate(nextDate);
 }
 
-export function ItinerarySection() {
+type ItinerarySectionProps = {
+    /**
+     * Bumped by the Dashboard's Continue Trip action to reset the section
+     * back to its default "current activity" view in place, without
+     * remounting the component (a remount would re-run the itinerary
+     * loading effect below and could drop in-flight state).
+     */
+    resetToken?: number;
+};
+
+export function ItinerarySection({ resetToken }: ItinerarySectionProps = {}) {
     const { activeTrip } = useTrips();
     const adapter = useMemo(
         () => activeTrip ? createTripAdapter(activeTrip) : undefined,
@@ -115,6 +126,32 @@ export function ItinerarySection() {
         }
     }, [activeTripId]);
 
+    const previousResetToken = useRef(resetToken);
+
+    useEffect(() => {
+        if (
+            resetToken !== undefined &&
+            previousResetToken.current !== resetToken
+        ) {
+            setSelectedDayId(null);
+            setView("current");
+            setDayDetailMode("full");
+        }
+        previousResetToken.current = resetToken;
+    }, [resetToken]);
+
+    // A mutation performed inside the (offline or online) day detail view
+    // does not otherwise cause this component to re-render: local Trip
+    // mutations go through the module-level `TripService` array, which has
+    // no subscription mechanism of its own, so nothing schedules a render
+    // after the mutation resolves. Bumping this counter forces a fresh
+    // render, which re-reads `activeTrip` from `useTrips()` and recomputes
+    // `itinerary`/`selectedDay` from the latest persisted state.
+    const [, setRefreshTick] = useState(0);
+    function refreshItinerary() {
+        setRefreshTick(tick => tick + 1);
+    }
+
     function openDayDetail(
         day: ItineraryDay,
         mode: DayDetailMode
@@ -149,24 +186,36 @@ export function ItinerarySection() {
                     editable={canEdit}
                     showRemainingOnly={showRemainingOnly}
                     onClose={goToDayList}
-                    onDayChanged={() => undefined}
+                    onDayChanged={refreshItinerary}
                 />
             </section>
         );
     }
 
     if (view === "current" && activeTrip) {
+        // An Online Trip's itinerary is fetched asynchronously (see the
+        // effect above): until it resolves, `activeTrip.itinerary` is still
+        // empty. Showing `CurrentActivityView` in that window would render
+        // its "Today's itinerary is not available" state as a false
+        // intermediate result, which then flashes/reflows once the real
+        // itinerary arrives. A neutral loading state avoids that flash.
+        const itineraryLoading = !isItineraryReady(activeTrip);
+
         return (
             <section id="itinerary-section">
                 <div className="itinerary-heading"><Heading level={2}>Itinerary</Heading><Button variant="pill" compact type="button" onClick={goToDayList}><Icon name="calendarDays" width={16} height={16} /> View whole itinerary</Button></div>
 
-                <CurrentActivityView
-                    trip={activeTrip}
-                    onViewWholeItinerary={goToDayList}
-                    onShowDay={day =>
-                        openDayDetail(day, "remaining")
-                    }
-                />
+                {itineraryLoading ? (
+                    <p>Loading itinerary…</p>
+                ) : (
+                    <CurrentActivityView
+                        trip={activeTrip}
+                        onViewWholeItinerary={goToDayList}
+                        onShowDay={day =>
+                            openDayDetail(day, "remaining")
+                        }
+                    />
+                )}
             </section>
         );
     }

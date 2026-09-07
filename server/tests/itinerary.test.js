@@ -233,6 +233,37 @@ test('single online activity mutations persist the offline chronological orderin
     saved = await getItinerary(port, headers, trip.id);
     assert.deepEqual(saved.days[0].items.map((item) => item.title), ['Early', 'Late', 'Middle', 'Untimed']);
     assert.deepEqual(saved.days[0].items.map((item) => item.sortOrder), [0, 1, 2, 3]);
+
+    // Editing "Late" (now 07:30) later again must move it after "Middle".
+    await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/items/${late.id}`, {
+      method: 'PUT', headers, body: JSON.stringify({ time: '09:00' }),
+    });
+    saved = await getItinerary(port, headers, trip.id);
+    assert.deepEqual(saved.days[0].items.map((item) => item.title), ['Early', 'Middle', 'Late', 'Untimed']);
+
+    // Deleting an Activity must remove only that Activity and leave the
+    // remaining ordering untouched.
+    const middleItem = saved.days[0].items.find((item) => item.title === 'Middle');
+    await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/items/${middleItem.id}`, {
+      method: 'DELETE', headers,
+    });
+    saved = await getItinerary(port, headers, trip.id);
+    assert.deepEqual(saved.days[0].items.map((item) => item.title), ['Early', 'Late', 'Untimed']);
+
+    // Two Activities sharing the same time keep their relative insertion
+    // order (no arbitrary tie-break by id/creation timestamp).
+    await createItem('Same B', '07:00');
+    await createItem('Same A', '07:00');
+    saved = await getItinerary(port, headers, trip.id);
+    assert.deepEqual(
+      saved.days[0].items.map((item) => item.title),
+      ['Early', 'Same B', 'Same A', 'Late', 'Untimed'],
+    );
+
+    // Reloading the itinerary again (simulating navigation/refresh) must
+    // reproduce the exact same order.
+    const reloaded = await getItinerary(port, headers, trip.id);
+    assert.deepEqual(reloaded.days[0].items.map((item) => item.title), saved.days[0].items.map((item) => item.title));
   } finally {
     await closeServer(server);
   }
