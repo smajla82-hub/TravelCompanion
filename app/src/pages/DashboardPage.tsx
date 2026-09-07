@@ -11,6 +11,8 @@ import {
     ItinerarySection,
 } from "../components/sections";
 
+import { useTrips } from "../hooks";
+import { isItineraryReady } from "../utils/isItineraryReady";
 import { TOP_BACKGROUND_URL } from "../styles/brandAssets";
 import { scrollToItinerary } from "./scrollToItinerary";
 
@@ -22,17 +24,26 @@ const brandHeaderStyle = {
 
 export default function DashboardPage() {
 
-    const [itineraryResetKey, setItineraryResetKey] =
+    const { activeTrip } = useTrips();
+
+    const [itineraryResetToken, setItineraryResetToken] =
         useState(0);
     const continueRequested = useRef(false);
 
     function continueTrip() {
-        setItineraryResetKey(value => value + 1);
+        setItineraryResetToken(value => value + 1);
         continueRequested.current = true;
     }
 
+    // An Online Trip's itinerary loads asynchronously; scrolling before it
+    // resolves would target the "Today's itinerary is not available"
+    // intermediate state and then jump once the real itinerary arrives.
+    // Offline Trips always have their itinerary available synchronously, so
+    // this only ever holds Continue Trip back for Online Trips.
+    const itineraryReady = isItineraryReady(activeTrip);
+
     useEffect(() => {
-        if (!continueRequested.current) {
+        if (!continueRequested.current || !itineraryReady) {
             return;
         }
 
@@ -52,7 +63,7 @@ export default function DashboardPage() {
                 cancelAnimationFrame(frameId);
             }
         };
-    }, [itineraryResetKey]);
+    }, [itineraryResetToken, itineraryReady]);
 
     return (
         <Container>
@@ -66,7 +77,7 @@ export default function DashboardPage() {
             </header>
 
             <ItinerarySection
-                key={itineraryResetKey}
+                resetToken={itineraryResetToken}
             />
 
         </Container>
