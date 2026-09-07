@@ -2,6 +2,7 @@ import { describe, expect, it } from "vitest";
 import * as XLSX from "xlsx";
 
 import { importXlsxRoadBook } from "./XlsxRoadBookImporter";
+import { sortItineraryItems } from "../itinerary/sortItineraryItems";
 
 function buildWorkbookFile(rows: (string | number)[][]): File {
     const sheet = XLSX.utils.aoa_to_sheet(rows);
@@ -205,5 +206,111 @@ describe("importXlsxRoadBook", () => {
         expect(warnings[0].field).toBe("Location");
         expect(warnings[0].actualLength).toBe(27);
         expect(warnings[0].maxLength).toBe(26);
+    });
+
+    it("normalizes H:mm:ss time strings to canonical HH:mm", async () => {
+        const file = buildWorkbookFile(
+            buildRows([
+                ["7:00:00", "Early start", "", "other", "MUST"],
+                ["9:35:00", "Morning stop", "", "other", "MUST"],
+                ["10:30:00", "Late morning", "", "other", "MUST"],
+                ["12:15:00", "Lunch", "", "food", "MUST"],
+            ])
+        );
+
+        const { days } = await importXlsxRoadBook(file);
+
+        expect(days[0].items.map(item => item.time)).toEqual([
+            "07:00",
+            "09:35",
+            "10:30",
+            "12:15",
+        ]);
+    });
+
+    it("normalizes Excel time-serial cells to canonical HH:mm", async () => {
+        // Real workbooks store times as numbers with a time number
+        // format; SheetJS then hands the importer strings such as
+        // "7:00:00" (formatted) or raw serials, depending on options.
+        const rows = buildRows([
+            ["7:00:00", "Early start", "", "other", "MUST"],
+            ["9:35:00", "Morning stop", "", "other", "MUST"],
+        ]);
+        const sheet = XLSX.utils.aoa_to_sheet(rows);
+        const serials = [7 / 24, 0.3993055555555556 /* 09:35 */];
+
+        serials.forEach((serial, index) => {
+            const address = XLSX.utils.encode_cell({
+                r: 5 + index,
+                c: 0,
+            });
+
+            sheet[address] = { t: "n", v: serial, z: "h:mm:ss" };
+        });
+
+        const workbook = XLSX.utils.book_new();
+
+        XLSX.utils.book_append_sheet(workbook, sheet, "Day 1 - Test");
+
+        const buffer = XLSX.write(workbook, {
+            type: "buffer",
+            bookType: "xlsx",
+        });
+        const file = new File([buffer], "roadbook.xlsx");
+
+        const { days } = await importXlsxRoadBook(file);
+
+        expect(days[0].items.map(item => item.time)).toEqual([
+            "07:00",
+            "09:35",
+        ]);
+    });
+
+    it("keeps invalid or missing imported times untimed", async () => {
+        const file = buildWorkbookFile(
+            buildRows([
+                ["~16:30", "Flexible stop", "", "other", "OPTIONAL"],
+                ["", "No time yet", "", "other", "OPTIONAL"],
+                ["not a time", "Broken cell", "", "other", "OPTIONAL"],
+            ])
+        );
+
+        const { days } = await importXlsxRoadBook(file);
+
+        expect(days[0].items.map(item => item.time)).toEqual([
+            "",
+            "",
+            "",
+        ]);
+    });
+
+    it("imports times that sort chronologically with the domain comparator", async () => {
+        const file = buildWorkbookFile(
+            buildRows([
+                ["12:15:00", "Lunch", "", "food", "MUST"],
+                ["7:00:00", "Early start", "", "other", "MUST"],
+                ["10:30:00", "Late morning", "", "other", "MUST"],
+                ["9:35:00", "Morning stop", "", "other", "MUST"],
+                ["", "Untimed", "", "other", "OPTIONAL"],
+            ])
+        );
+
+        const { days } = await importXlsxRoadBook(file);
+        const sorted = sortItineraryItems(days[0].items);
+
+        expect(sorted.map(item => item.title)).toEqual([
+            "Early start",
+            "Morning stop",
+            "Late morning",
+            "Lunch",
+            "Untimed",
+        ]);
+        expect(sorted.map(item => item.time)).toEqual([
+            "07:00",
+            "09:35",
+            "10:30",
+            "12:15",
+            "",
+        ]);
     });
 });

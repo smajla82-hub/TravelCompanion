@@ -148,7 +148,9 @@ describe("RoadBook import into online Trips", () => {
 
         expect(sentDays[0].items[0]).toMatchObject({
             date: "2026-09-10",
-            time: "7:00",
+            // Imported times are normalized to canonical HH:mm at the
+            // XLSX boundary before the itinerary is sent to the server.
+            time: "07:00",
             title: "🥐 Breakfast",
             location: "Hotel Garda",
             activityType: "food",

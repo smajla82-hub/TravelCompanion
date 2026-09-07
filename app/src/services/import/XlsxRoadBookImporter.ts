@@ -9,6 +9,8 @@ import type {
 } from "../../types";
 import { normalizeActivityType } from
     "../../domain/activity/ActivityTypeRegistry";
+import { normalizeItineraryTime } from
+    "../../domain/itinerary/normalizeItineraryTime";
 import {
     TEXT_LIMITS,
     TEXT_LIMIT_LABELS,
@@ -412,10 +414,17 @@ function createItem(
         return getString(row[column]);
     };
 
+    const timeColumn = columns.time;
+
     return {
         id: `${date}-item-${index + 1}`,
 
-        time: get("time"),
+        // Times must enter the domain in canonical HH:mm form; XLSX
+        // cells may arrive as "7:00:00" strings or Date/serial values.
+        time:
+            timeColumn === undefined || timeColumn < 0
+                ? ""
+                : normalizeItineraryTime(row[timeColumn]),
 
         title: get("activity"),
 
