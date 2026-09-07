@@ -51,6 +51,34 @@ describe("apiRequest", () => {
         );
     });
 
+    it("reports the server error message of a rejected sync request", async () => {
+        // The API rate limiter answers with JSON, so the user learns why the
+        // request failed instead of seeing a generic sync failure.
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+            new Response(
+                JSON.stringify({ error: "Too many trip requests. Please wait a moment and try again." }),
+                { status: 429 },
+            ),
+        ));
+
+        await expect(apiRequest("/trips")).rejects.toMatchObject({
+            status: 429,
+            offline: false,
+            message: "Too many trip requests. Please wait a moment and try again.",
+        });
+    });
+
+    it("names the status when a failed response carries no JSON error", async () => {
+        vi.stubGlobal("fetch", vi.fn().mockResolvedValue(
+            new Response("Too many requests, please try again later.", { status: 429 }),
+        ));
+
+        await expect(apiRequest("/trips")).rejects.toMatchObject({
+            status: 429,
+            message: "The sync request could not be completed (HTTP 429).",
+        });
+    });
+
     it("distinguishes an unreachable service", async () => {
         vi.stubGlobal("fetch", vi.fn().mockRejectedValue(new Error("offline")));
 
