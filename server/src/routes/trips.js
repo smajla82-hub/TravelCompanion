@@ -203,7 +203,7 @@ router.post('/:tripId/invitations', requireTripRole(['owner']), (req, res) => {
   }
   const expiresAt = new Date(Date.now() + config.invitationExpiresInDays * 24 * 60 * 60 * 1000).toISOString();
   const invitation = invitations.createInvitation(req.params.tripId, email, role, req.user.id, expiresAt);
-  return res.status(201).json({ ...invitation, acceptLink: `/invitations/${invitation.token}/accept` });
+  return res.status(201).json({ ...invitation, acceptLink: `/accept-invite/${invitation.token}` });
 });
 
 router.get('/:tripId/invitations', requireTripRole(['owner']), (req, res) => {

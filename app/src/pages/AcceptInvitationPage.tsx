@@ -3,8 +3,8 @@ import { useState } from "react";
 import { useParams } from "react-router-dom";
 
 import { ApiError } from "../api/client";
-import { SyncedTripApi } from "../api/trips";
 import { AuthService } from "../services/AuthService";
+import { respondToInvitation } from "./respondToInvitation";
 import { Button, Card, Container, Heading, Stack } from "../components/ui";
 
 export default function AcceptInvitationPage() {
@@ -20,9 +20,7 @@ export default function AcceptInvitationPage() {
             return;
         }
         try {
-            await (action === "accept"
-                ? SyncedTripApi.acceptInvitation(token)
-                : SyncedTripApi.rejectInvitation(token));
+            await respondToInvitation(action, token);
             setMessage(
                 action === "accept"
                     ? "Invitation accepted. The trip is now in My Trips."
