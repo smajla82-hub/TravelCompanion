@@ -125,9 +125,14 @@ export function RoadBookImport() {
             // Only a lock conflict is reported as a concurrent edit; every
             // other API failure keeps its own message so the user learns the
             // real reason the import did not persist.
-            setError(reason instanceof ApiError
-                ? `${reason.status === 409 ? lockConflictMessage(reason) : reason.message} The itinerary was not saved; retry the import.`
-                : "The Trip itinerary could not be saved. Retry the import.");
+            const cause = reason instanceof ApiError
+                ? (reason.status === 409 ? lockConflictMessage(reason) : reason.message)
+                : "The Trip itinerary could not be saved.";
+
+            setError([
+                cause.replace(/[.\s]*$/, "."),
+                "The itinerary was not saved; retry the import.",
+            ].join(" "));
         } finally {
             if (ownsLock) {
                 await adapter.releaseLock().catch(() => undefined);

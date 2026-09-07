@@ -341,6 +341,8 @@ export function replaceItinerary(tripId, days, userId) {
     return {
       ...dayData,
       items: items.map((item, index) => {
+        // Import order is authoritative: an itinerary sent as a whole keeps the
+        // position of every activity inside its day.
         const itemData = normalizeItineraryItemPayload({
           ...item,
           date: item?.date || dayData.date,
@@ -353,12 +355,20 @@ export function replaceItinerary(tripId, days, userId) {
           throw error;
         }
 
-        // Import order is authoritative: an itinerary sent as a whole keeps the
-        // position of every activity inside its day.
-        return { ...itemData, sortOrder: index };
+        return itemData;
       }),
     };
   });
+
+  const insertDay = db.prepare(
+    'INSERT INTO itinerary_days (id, trip_id, date, title, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+  );
+  const insertItem = db.prepare(
+    `INSERT INTO itinerary_items (
+      id, trip_id, day_id, date, time, title, location, description, goal, activity_type, priority, parking,
+      smart_chip, map_link, price, note, sort_order, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  );
 
   db.transaction(() => {
     db.prepare('DELETE FROM itinerary_days WHERE trip_id = ?').run(tripId);
@@ -366,17 +376,10 @@ export function replaceItinerary(tripId, days, userId) {
 
     for (const day of normalizedDays) {
       const dayId = randomUUID();
-      db.prepare(
-        'INSERT INTO itinerary_days (id, trip_id, date, title, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
-      ).run(dayId, tripId, day.date, day.title, now, now);
+      insertDay.run(dayId, tripId, day.date, day.title, now, now);
 
       for (const item of day.items) {
-        db.prepare(
-          `INSERT INTO itinerary_items (
-            id, trip_id, day_id, date, time, title, location, description, goal, activity_type, priority, parking,
-            smart_chip, map_link, price, note, sort_order, created_at, updated_at
-          ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
-        ).run(
+        insertItem.run(
           randomUUID(),
           tripId,
           dayId,
