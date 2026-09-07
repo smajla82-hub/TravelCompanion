@@ -1,4 +1,4 @@
-import { describe, expect, it, vi } from "vitest";
+import { afterEach, describe, expect, it, vi } from "vitest";
 
 vi.hoisted(() => {
     const storage = new Map<string, string>();
@@ -12,8 +12,8 @@ vi.hoisted(() => {
     });
 });
 
-import { toOnlineTrip } from "./TripAdapter";
-import type { SyncedTrip } from "../api/trips";
+import { createTripAdapter, toOnlineTrip } from "./TripAdapter";
+import { SyncedTripApi, type SyncedTrip } from "../api/trips";
 
 function serverTrip(overrides: Partial<SyncedTrip> = {}): SyncedTrip {
     return {
@@ -35,6 +35,39 @@ describe("toOnlineTrip", () => {
             status: "active",
             source: "online",
             name: "Garda",
+        });
+    });
+
+    describe("online Trip adapter", () => {
+        afterEach(() => {
+            vi.restoreAllMocks();
+        });
+
+        it("updates the server name with the edited destination for consistent labels", async () => {
+            vi.spyOn(SyncedTripApi, "acquireLock").mockResolvedValue({});
+            vi.spyOn(SyncedTripApi, "releaseLock").mockResolvedValue({});
+            const update = vi.spyOn(SyncedTripApi, "update")
+                .mockResolvedValue(serverTrip({ name: "Olomouc", destination: "Olomouc" }));
+
+            const saved = await createTripAdapter({
+                ...serverTrip({ name: "Brno", destination: "Brno" }),
+                source: "online",
+            }).updateTrip({
+                ...toOnlineTrip(serverTrip({ name: "Brno", destination: "Brno" })),
+                destination: "Olomouc",
+            });
+
+            expect(update).toHaveBeenCalledWith(
+                "trip-1",
+                expect.objectContaining({
+                    destination: "Olomouc",
+                    name: "Olomouc",
+                }),
+            );
+            expect(saved).toMatchObject({
+                destination: "Olomouc",
+                name: "Olomouc",
+            });
         });
     });
 

@@ -65,6 +65,8 @@ describe("OnlineTripStore", () => {
 
         const loaded = await OnlineTripStore.refresh();
 
+        expect(SyncedTripApi.get).not.toHaveBeenCalled();
+        expect(SyncedTripApi.itinerary).not.toHaveBeenCalled();
         expect(loaded).toHaveLength(1);
         expect(selectActiveTrip(loaded)?.id).toBe("trip-1");
         expect(OnlineTripStore.getSnapshot()[0]).toMatchObject({
@@ -112,13 +114,10 @@ describe("OnlineTripStore", () => {
     });
 
     it("keeps the cached itinerary when the server response omits it", async () => {
-        vi.spyOn(SyncedTripApi, "list").mockResolvedValue([syncedTrip({ id: "trip-1" })]);
-        vi.spyOn(SyncedTripApi, "get").mockResolvedValue(syncedTrip({ id: "trip-1" }));
-        vi.spyOn(SyncedTripApi, "itinerary").mockResolvedValue({
-            tripId: "trip-1",
-            days: [{ id: "day-1", date: "2026-09-01", title: "Arrival", items: [] }],
+        OnlineTripStore.applyTrip({
+            ...toOnlineTrip(syncedTrip({ id: "trip-1" })),
+            itinerary: [{ id: "day-1", date: "2026-09-01", title: "Arrival", items: [] }],
         });
-        await OnlineTripStore.refresh();
 
         OnlineTripStore.applyTrip({
             ...syncedTrip({ id: "trip-1", destination: "Riva" }),
@@ -129,6 +128,35 @@ describe("OnlineTripStore", () => {
         const trip = OnlineTripStore.getSnapshot()[0];
         expect(trip.destination).toBe("Riva");
         expect(trip.itinerary).toHaveLength(1);
+    });
+
+    it("does not blank the online list when optional secondary resources fail", async () => {
+        stubServer([syncedTrip({ id: "trip-1" })]);
+        vi.mocked(SyncedTripApi.itinerary).mockRejectedValue(new Error("Itinerary failed."));
+
+        await OnlineTripStore.refresh();
+
+        expect(OnlineTripStore.getSnapshot().map(trip => trip.id)).toEqual(["trip-1"]);
+        expect(SyncedTripApi.itinerary).not.toHaveBeenCalled();
+    });
+
+    it("retains the cached list when a later trips refresh fails", async () => {
+        vi.spyOn(SyncedTripApi, "list")
+            .mockResolvedValueOnce([syncedTrip({ id: "trip-1" })])
+            .mockRejectedValueOnce(new Error("The sync request could not be completed."));
+
+        await OnlineTripStore.refresh();
+        await expect(OnlineTripStore.refresh()).rejects.toThrow("The sync request could not be completed.");
+
+        expect(OnlineTripStore.getSnapshot().map(trip => trip.id)).toEqual(["trip-1"]);
+    });
+
+    it("reports an initial trips refresh failure without inventing state", async () => {
+        vi.spyOn(SyncedTripApi, "list").mockRejectedValue(new Error("Unable to load trips."));
+
+        await expect(OnlineTripStore.refresh()).rejects.toThrow("Unable to load trips.");
+
+        expect(OnlineTripStore.getSnapshot()).toEqual([]);
     });
 
     it("reconstructs the online state from the server on reload", async () => {
@@ -143,6 +171,22 @@ describe("OnlineTripStore", () => {
         await OnlineTripStore.refresh();
 
         expect(selectActiveTrip(OnlineTripStore.getSnapshot())?.id).toBe("trip-2");
+    });
+
+    it("reconstructs edited destination and label data from the server on reload", async () => {
+        stubServer([syncedTrip({ id: "trip-1", name: "Brno", destination: "Brno" })]);
+        await OnlineTripStore.refresh();
+
+        OnlineTripStore.reset();
+        stubServer([syncedTrip({ id: "trip-1", name: "Olomouc", destination: "Olomouc", isActive: true })]);
+        await OnlineTripStore.refresh();
+
+        const activeTrip = selectActiveTrip(OnlineTripStore.getSnapshot());
+        expect(OnlineTripStore.getSnapshot()[0]).toMatchObject({
+            destination: "Olomouc",
+            name: "Olomouc",
+        });
+        expect(activeTrip?.destination).toBe("Olomouc");
     });
 
     it("drops a deleted online trip from the cached state", async () => {

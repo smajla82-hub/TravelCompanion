@@ -25,6 +25,8 @@ export interface Trip {
 
     itinerary?: ItineraryDay[];
 
+    itineraryLoaded?: boolean;
+
     source?: "local" | "online";
 
     name?: string;
