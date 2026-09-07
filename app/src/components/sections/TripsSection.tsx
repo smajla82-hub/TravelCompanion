@@ -22,6 +22,7 @@ import { SyncedTripApi } from "../../api/trips";
 import { ApiError } from "../../api/client";
 import { createTripAdapter } from "../../services/TripAdapter";
 import { OnlineTripStore } from "../../services/OnlineTripStore";
+import { ActiveTripSelectionStore } from "../../services/ActiveTripSelection";
 
 import type { Trip } from "../../types";
 
@@ -114,6 +115,7 @@ export function TripsSection({
         }
 
         TripService.setActive(selectedTrip.id);
+        ActiveTripSelectionStore.selectLocal(selectedTrip.id);
 
         setSelectedTrip(null);
         onTripChanged?.();

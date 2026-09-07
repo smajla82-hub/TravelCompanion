@@ -6,6 +6,7 @@ import {
     type SyncedTrip,
     type TripMember,
 } from "../api/trips";
+import { ActiveTripSelectionStore } from "./ActiveTripSelection";
 
 export type TripSource = "local" | "online";
 export type TripAdapter = {
@@ -59,6 +60,7 @@ function localAdapter(tripId: string): TripAdapter {
         updateTrip: async trip => { TripService.update(trip); return trip; },
         setActive: async () => {
             TripService.setActive(tripId);
+            ActiveTripSelectionStore.selectLocal(tripId);
             return get() ?? Promise.reject(new Error("Trip not found."));
         },
     };
@@ -162,8 +164,12 @@ export function createTripAdapter(trip: Pick<Trip, "id" | "source"> | SyncedTrip
         revokeInvitation: async id => { await SyncedTripApi.revokeInvitation(tripId, id); },
         updateTrip: updated => withLock(async () => toOnlineTrip(await SyncedTripApi.update(tripId, {
             ...updated,
-            name: updated.name ?? updated.destination,
+            name: updated.destination ?? updated.name,
         } as SyncedTrip))),
-        setActive: () => withLock(async () => toOnlineTrip(await SyncedTripApi.setActive(tripId))),
+        setActive: () => withLock(async () => {
+            const activeTrip = toOnlineTrip(await SyncedTripApi.setActive(tripId));
+            ActiveTripSelectionStore.selectOnline();
+            return activeTrip;
+        }),
     };
 }

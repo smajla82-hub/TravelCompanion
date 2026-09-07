@@ -100,7 +100,7 @@ export function NewTripModal({
             if (initialTrip.source === "online") {
                 const saved = await createTripAdapter(initialTrip).updateTrip({
                     ...initialTrip,
-                    name: initialTrip.name ?? destination,
+                    name: destination,
                     destination,
                     country,
                     startDate,

@@ -1,6 +1,6 @@
 import { SyncedTripApi } from "../api/trips";
 import { AuthService } from "./AuthService";
-import { createTripAdapter } from "./TripAdapter";
+import { toOnlineTrip } from "./TripAdapter";
 import type { Trip } from "../types";
 
 /**
@@ -38,7 +38,7 @@ function withSingleActive(trips: Trip[], activeTripId: string): Trip[] {
 
 async function loadFromServer(): Promise<Trip[]> {
     const list = await SyncedTripApi.list();
-    return Promise.all(list.map(item => createTripAdapter(item).getTrip()));
+    return list.map(toOnlineTrip);
 }
 
 export const OnlineTripStore = {
@@ -53,7 +53,7 @@ export const OnlineTripStore = {
         return onlineTrips;
     },
 
-    /** Reloads the online Trips from the server through the existing adapter path. */
+    /** Reloads the online Trips from the server list endpoint. */
     async refresh(): Promise<Trip[]> {
         if (!AuthService.getToken()) {
             publish([]);

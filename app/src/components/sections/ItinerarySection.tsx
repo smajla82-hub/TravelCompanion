@@ -10,6 +10,7 @@ import {
 } from "../itinerary";
 
 import { createTripAdapter } from "../../services/TripAdapter";
+import { OnlineTripStore } from "../../services/OnlineTripStore";
 import { useTrips } from "../../hooks";
 import { AuthService } from "../../services/AuthService";
 
@@ -74,6 +75,16 @@ export function ItinerarySection() {
         }).catch(() => setCanEdit(false));
     }, [adapter]);
     /* eslint-enable react-hooks/set-state-in-effect */
+
+    useEffect(() => {
+        if (!activeTrip || activeTrip.source !== "online" || activeTrip.itinerary?.length) {
+            return;
+        }
+
+        void createTripAdapter(activeTrip).getTrip()
+            .then(trip => OnlineTripStore.applyTrip(trip))
+            .catch(() => undefined);
+    }, [activeTrip]);
 
     const itinerary =
         activeTrip?.itinerary ?? [];
