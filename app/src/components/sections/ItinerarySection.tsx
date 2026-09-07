@@ -77,7 +77,7 @@ export function ItinerarySection() {
     /* eslint-enable react-hooks/set-state-in-effect */
 
     useEffect(() => {
-        if (!activeTrip || activeTrip.source !== "online" || activeTrip.itinerary?.length) {
+        if (!activeTrip || activeTrip.source !== "online" || activeTrip.itineraryLoaded) {
             return;
         }
 

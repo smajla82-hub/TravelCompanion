@@ -96,6 +96,7 @@ export const OnlineTripStore = {
             ...trip,
             source: "online",
             itinerary: trip.itinerary?.length ? trip.itinerary : known?.itinerary ?? [],
+            itineraryLoaded: trip.itineraryLoaded ?? known?.itineraryLoaded ?? false,
         };
 
         const next = known

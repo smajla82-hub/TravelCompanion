@@ -131,7 +131,7 @@ export function createTripAdapter(trip: Pick<Trip, "id" | "source"> | SyncedTrip
     }
     return {
         source: "online",
-        getTrip: async () => ({ ...(await get()), itinerary: await reload() }),
+        getTrip: async () => ({ ...(await get()), itinerary: await reload(), itineraryLoaded: true }),
         setItinerary: days => withLock(async () => {
             const existing = await reload();
             for (const day of existing) await SyncedTripApi.deleteDay(tripId, day.id);

@@ -2,7 +2,7 @@ import type { Trip } from "../types";
 
 const STORAGE_KEY = "travel-companion.active-trip-selection";
 
-type ActiveTripSelection = {
+export type ActiveTripSelection = {
     source: "local";
     id: string;
 };
