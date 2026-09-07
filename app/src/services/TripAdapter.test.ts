@@ -14,6 +14,7 @@ vi.hoisted(() => {
 
 import { createTripAdapter, toOnlineTrip } from "./TripAdapter";
 import { SyncedTripApi, type SyncedTrip } from "../api/trips";
+import { ActiveTripSelectionStore } from "./ActiveTripSelection";
 
 function serverTrip(overrides: Partial<SyncedTrip> = {}): SyncedTrip {
     return {
@@ -41,6 +42,7 @@ describe("toOnlineTrip", () => {
     describe("online Trip adapter", () => {
         afterEach(() => {
             vi.restoreAllMocks();
+            ActiveTripSelectionStore.clear();
         });
 
         it("updates the server name with the edited destination for consistent labels", async () => {
@@ -67,6 +69,27 @@ describe("toOnlineTrip", () => {
             expect(saved).toMatchObject({
                 destination: "Olomouc",
                 name: "Olomouc",
+            });
+        });
+
+        it("stores the explicit current-device online selection when activated", async () => {
+            vi.spyOn(SyncedTripApi, "acquireLock").mockResolvedValue({});
+            vi.spyOn(SyncedTripApi, "releaseLock").mockResolvedValue({});
+            vi.spyOn(SyncedTripApi, "setActive")
+                .mockResolvedValue(serverTrip({ id: "online-a", isActive: true }));
+
+            const activeTrip = await createTripAdapter({
+                ...serverTrip({ id: "online-a" }),
+                source: "online",
+            }).setActive();
+
+            expect(activeTrip).toMatchObject({
+                id: "online-a",
+                status: "active",
+            });
+            expect(ActiveTripSelectionStore.get()).toEqual({
+                source: "online",
+                id: "online-a",
             });
         });
     });

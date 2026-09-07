@@ -27,11 +27,14 @@ describe("ActiveTripSelectionStore", () => {
         });
     });
 
-    it("clears the offline override when an online trip is explicitly selected", () => {
+    it("replaces the offline override when an online trip is explicitly selected", () => {
         ActiveTripSelectionStore.selectLocal("local-1");
 
-        ActiveTripSelectionStore.selectOnline();
+        ActiveTripSelectionStore.selectOnline("online-1");
 
-        expect(ActiveTripSelectionStore.get()).toBeUndefined();
+        expect(ActiveTripSelectionStore.get()).toEqual({
+            source: "online",
+            id: "online-1",
+        });
     });
 });

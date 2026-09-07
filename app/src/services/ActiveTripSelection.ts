@@ -3,7 +3,7 @@ import type { Trip } from "../types";
 const STORAGE_KEY = "travel-companion.active-trip-selection";
 
 export type ActiveTripSelection = {
-    source: "local";
+    source: "local" | "online";
     id: string;
 };
 
@@ -20,9 +20,14 @@ export const ActiveTripSelectionStore = {
 
         try {
             const selection = JSON.parse(stored) as Partial<ActiveTripSelection>;
-            return selection.source === "local" && typeof selection.id === "string"
-                ? { source: "local", id: selection.id }
-                : undefined;
+            if (
+                (selection.source === "local" || selection.source === "online")
+                && typeof selection.id === "string"
+            ) {
+                return { source: selection.source, id: selection.id };
+            }
+
+            return undefined;
         } catch {
             return undefined;
         }
@@ -35,8 +40,11 @@ export const ActiveTripSelectionStore = {
         } satisfies ActiveTripSelection));
     },
 
-    selectOnline() {
-        readStorage()?.removeItem(STORAGE_KEY);
+    selectOnline(tripId: string) {
+        readStorage()?.setItem(STORAGE_KEY, JSON.stringify({
+            source: "online",
+            id: tripId,
+        } satisfies ActiveTripSelection));
     },
 
     clear() {
@@ -50,4 +58,12 @@ export function findLocallySelectedTrip(trips: Trip[], selection = ActiveTripSel
     }
 
     return trips.find(trip => trip.source !== "online" && trip.id === selection.id);
+}
+
+export function findOnlineSelectedTrip(trips: Trip[], selection = ActiveTripSelectionStore.get()): Trip | undefined {
+    if (selection?.source !== "online") {
+        return undefined;
+    }
+
+    return trips.find(trip => trip.source === "online" && trip.id === selection.id);
 }
