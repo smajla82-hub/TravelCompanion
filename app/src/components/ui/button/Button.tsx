@@ -4,7 +4,7 @@ import type { ButtonHTMLAttributes, ReactNode } from "react";
 
 type ButtonProps = {
     children: ReactNode;
-    variant?: "default" | "pill" | "success" | "outline";
+    variant?: "default" | "pill" | "success" | "subtle-success" | "outline";
     compact?: boolean;
 } & ButtonHTMLAttributes<HTMLButtonElement>;
 

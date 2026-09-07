@@ -22,6 +22,8 @@ type ItineraryItemPayload = Omit<ItineraryItem, "id">;
 
 export type ItineraryDayPayload = Pick<ItineraryDay, "date" | "title"> & {
     items: ItineraryItemPayload[];
+    venues?: ItineraryDay["venues"];
+    parkingLocations?: ItineraryDay["parkingLocations"];
 };
 
 export type TripMember = {

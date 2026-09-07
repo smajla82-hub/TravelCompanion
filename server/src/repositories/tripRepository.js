@@ -64,6 +64,77 @@ function mapItemRow(row) {
   return mapped;
 }
 
+function mapVenueRow(row) {
+  if (!row) {
+    return null;
+  }
+
+  const mapped = {
+    ...row,
+    tripId: row.trip_id,
+    dayId: row.day_id,
+    mealType: row.meal_type,
+    smartChip: row.smart_chip,
+    mapLink: row.map_link,
+    sortOrder: row.sort_order,
+  };
+
+  delete mapped.trip_id;
+  delete mapped.day_id;
+  delete mapped.meal_type;
+  delete mapped.smart_chip;
+  delete mapped.map_link;
+  delete mapped.sort_order;
+
+  return mapped;
+}
+
+function mapParkingLocationRow(row) {
+  if (!row) {
+    return null;
+  }
+
+  const mapped = {
+    ...row,
+    tripId: row.trip_id,
+    dayId: row.day_id,
+    mapLink: row.map_link,
+    sortOrder: row.sort_order,
+  };
+
+  delete mapped.trip_id;
+  delete mapped.day_id;
+  delete mapped.map_link;
+  delete mapped.sort_order;
+
+  return mapped;
+}
+
+function normalizeVenuePayload(payload = {}) {
+  return {
+    priority: payload.priority ?? null,
+    type: payload.type ?? null,
+    mealType: payload.mealType ?? payload.meal_type ?? null,
+    subtype: payload.subtype ?? null,
+    name: String(payload.name ?? '').trim(),
+    smartChip: payload.smartChip ?? payload.smart_chip ?? null,
+    mapLink: payload.mapLink ?? payload.map_link ?? null,
+    recommendation: payload.recommendation ?? null,
+    price: payload.price ?? null,
+    reservation: payload.reservation ?? null,
+    sortOrder: Number(payload.sortOrder ?? payload.sort_order ?? 0),
+  };
+}
+
+function normalizeParkingLocationPayload(payload = {}) {
+  return {
+    code: String(payload.code ?? '').trim(),
+    name: String(payload.name ?? '').trim(),
+    mapLink: payload.mapLink ?? payload.map_link ?? null,
+    sortOrder: Number(payload.sortOrder ?? payload.sort_order ?? 0),
+  };
+}
+
 function normalizeTripPayload(payload = {}) {
   return {
     name: String(payload.name ?? '').trim(),
@@ -320,17 +391,29 @@ export function listItemsForTrip(tripId) {
   return db.prepare('SELECT * FROM itinerary_items WHERE trip_id = ? ORDER BY sort_order ASC, created_at ASC').all(tripId).map(mapItemRow);
 }
 
+export function listVenuesForTrip(tripId) {
+  return db.prepare('SELECT * FROM venues WHERE trip_id = ? ORDER BY sort_order ASC, created_at ASC').all(tripId).map(mapVenueRow);
+}
+
+export function listParkingLocationsForTrip(tripId) {
+  return db.prepare('SELECT * FROM parking_locations WHERE trip_id = ? ORDER BY sort_order ASC, created_at ASC').all(tripId).map(mapParkingLocationRow);
+}
+
 export function getItinerary(tripId) {
   const days = listItineraryDaysForTrip(tripId);
   const items = listItemsForTrip(tripId);
+  const venues = listVenuesForTrip(tripId);
+  const parkingLocations = listParkingLocationsForTrip(tripId);
 
   return {
     tripId,
     days: days.map((day) => ({
       ...day,
-      // `mapItemRow` renames `day_id` to `dayId`; grouping on the raw column
-      // name silently produced empty days.
+      // `mapItemRow`/`mapVenueRow`/`mapParkingLocationRow` rename `day_id` to
+      // `dayId`; grouping on the raw column name silently produced empty days.
       items: items.filter((item) => item.dayId === day.id),
+      venues: venues.filter((venue) => venue.dayId === day.id),
+      parkingLocations: parkingLocations.filter((location) => location.dayId === day.id),
     })),
   };
 }
@@ -364,6 +447,8 @@ export function replaceItinerary(tripId, days, userId) {
     }
 
     const items = Array.isArray(day?.items) ? day.items : [];
+    const venues = Array.isArray(day?.venues) ? day.venues : [];
+    const parkingLocations = Array.isArray(day?.parkingLocations) ? day.parkingLocations : [];
 
     return {
       ...dayData,
@@ -384,6 +469,34 @@ export function replaceItinerary(tripId, days, userId) {
 
         return itemData;
       }),
+      // Recommended venues carry no cross-references from `itinerary_items`,
+      // so persisting them is order-preserving but otherwise independent of
+      // the day's activities.
+      venues: venues.map((venue, index) => {
+        const venueData = normalizeVenuePayload({ ...venue, sortOrder: index });
+
+        if (!venueData.name) {
+          const error = new Error('Recommended venue name is required.');
+          error.statusCode = 400;
+          throw error;
+        }
+
+        return venueData;
+      }),
+      // `code` is the stable, user-facing key that `itinerary_items.parking`
+      // references (see schema.sql); it must be preserved exactly as
+      // imported/edited so existing P1-P8 references keep resolving.
+      parkingLocations: parkingLocations.map((location, index) => {
+        const locationData = normalizeParkingLocationPayload({ ...location, sortOrder: index });
+
+        if (!locationData.code || !locationData.name) {
+          const error = new Error('Parking location code and name are required.');
+          error.statusCode = 400;
+          throw error;
+        }
+
+        return locationData;
+      }),
     };
   });
 
@@ -396,10 +509,23 @@ export function replaceItinerary(tripId, days, userId) {
       smart_chip, map_link, price, note, sort_order, created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
+  const insertVenue = db.prepare(
+    `INSERT INTO venues (
+      id, trip_id, day_id, priority, type, meal_type, subtype, name, smart_chip, map_link, recommendation,
+      price, reservation, sort_order, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  );
+  const insertParkingLocation = db.prepare(
+    `INSERT INTO parking_locations (
+      id, trip_id, day_id, code, name, map_link, sort_order, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+  );
 
   db.transaction(() => {
     db.prepare('DELETE FROM itinerary_days WHERE trip_id = ?').run(tripId);
     db.prepare('DELETE FROM itinerary_items WHERE trip_id = ?').run(tripId);
+    db.prepare('DELETE FROM venues WHERE trip_id = ?').run(tripId);
+    db.prepare('DELETE FROM parking_locations WHERE trip_id = ?').run(tripId);
 
     for (const day of normalizedDays) {
       const dayId = randomUUID();
@@ -424,6 +550,41 @@ export function replaceItinerary(tripId, days, userId) {
           item.price,
           item.note,
           item.sortOrder,
+          now,
+          now,
+        );
+      }
+
+      for (const venue of day.venues) {
+        insertVenue.run(
+          randomUUID(),
+          tripId,
+          dayId,
+          venue.priority,
+          venue.type,
+          venue.mealType,
+          venue.subtype,
+          venue.name,
+          venue.smartChip,
+          venue.mapLink,
+          venue.recommendation,
+          venue.price,
+          venue.reservation,
+          venue.sortOrder,
+          now,
+          now,
+        );
+      }
+
+      for (const location of day.parkingLocations) {
+        insertParkingLocation.run(
+          randomUUID(),
+          tripId,
+          dayId,
+          location.code,
+          location.name,
+          location.mapLink,
+          location.sortOrder,
           now,
           now,
         );

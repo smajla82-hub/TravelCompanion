@@ -268,3 +268,170 @@ test('single online activity mutations persist the offline chronological orderin
     await closeServer(server);
   }
 });
+
+test('an imported itinerary persists recommended venues and parking locations, day-scoped and with server-generated IDs', async () => {
+  const { server, port } = await startServer();
+  try {
+    const headers = await signIn(port, 'itinerary-venues-parking@example.com');
+    const trip = await createTrip(port, headers, 'Garda');
+    await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, { method: 'POST', headers });
+
+    const daysWithVenuesAndParking = [
+      {
+        date: '2026-09-01',
+        title: 'DAY 1',
+        items: [
+          { date: '2026-09-01', title: 'Breakfast', activityType: 'food', parking: 'P1' },
+          { date: '2026-09-01', title: 'Lunch', activityType: 'food', parking: 'P1' },
+          { date: '2026-09-01', title: 'Museum', activityType: 'sightseeing', parking: 'P2' },
+        ],
+        venues: [
+          {
+            priority: 'MUST',
+            mealType: 'breakfast',
+            name: 'Caffe Roma',
+            smartChip: 'Caffe Roma',
+            mapLink: 'https://maps.example.com/caffe-roma',
+            recommendation: 'Great espresso',
+            price: '5 EUR',
+          },
+          { name: 'Trattoria Bella' },
+        ],
+        parkingLocations: [
+          { code: 'P1', name: 'Central Garage', mapLink: 'https://maps.example.com/p1' },
+          { code: 'P2', name: 'Lakeside Lot' },
+        ],
+      },
+      {
+        // A day with no venues/parking must round-trip as empty, not omitted
+        // or defaulted from another day.
+        date: '2026-09-02',
+        title: 'DAY 2',
+        items: [{ date: '2026-09-02', title: 'Departure', activityType: 'transfer' }],
+      },
+    ];
+
+    const saved = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/itinerary`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ days: daysWithVenuesAndParking }),
+    });
+    assert.equal(saved.status, 200);
+
+    const itinerary = await getItinerary(port, headers, trip.id);
+    const day1 = itinerary.days.find((day) => day.date === '2026-09-01');
+    const day2 = itinerary.days.find((day) => day.date === '2026-09-02');
+
+    // Venues persisted with server-generated stable IDs and every field intact.
+    assert.equal(day1.venues.length, 2);
+    assert.ok(day1.venues[0].id);
+    assert.equal(day1.venues[0].name, 'Caffe Roma');
+    assert.equal(day1.venues[0].priority, 'MUST');
+    assert.equal(day1.venues[0].mealType, 'breakfast');
+    assert.equal(day1.venues[0].mapLink, 'https://maps.example.com/caffe-roma');
+    assert.equal(day1.venues[0].recommendation, 'Great espresso');
+    assert.equal(day1.venues[0].price, '5 EUR');
+    assert.equal(day1.venues[1].name, 'Trattoria Bella');
+
+    // Parking locations persisted with server-generated stable IDs, keeping
+    // `code` as the existing user-facing/reference key.
+    assert.equal(day1.parkingLocations.length, 2);
+    assert.ok(day1.parkingLocations[0].id);
+    assert.equal(day1.parkingLocations[0].code, 'P1');
+    assert.equal(day1.parkingLocations[0].name, 'Central Garage');
+    assert.equal(day1.parkingLocations[0].mapLink, 'https://maps.example.com/p1');
+    assert.equal(day1.parkingLocations[1].code, 'P2');
+    assert.equal(day1.parkingLocations[1].name, 'Lakeside Lot');
+
+    // Both "Breakfast" and "Lunch" reference the same parking code (P1) and
+    // must both keep resolving against the same day-scoped parking location.
+    const p1Items = day1.items.filter((item) => item.parking === 'P1');
+    assert.equal(p1Items.length, 2);
+    assert.deepEqual(p1Items.map((item) => item.title).sort(), ['Breakfast', 'Lunch']);
+    const p1Location = day1.parkingLocations.find((location) => location.code === 'P1');
+    assert.equal(p1Location.name, 'Central Garage');
+
+    const museumItem = day1.items.find((item) => item.title === 'Museum');
+    assert.equal(museumItem.parking, 'P2');
+    const p2Location = day1.parkingLocations.find((location) => location.code === 'P2');
+    assert.equal(p2Location.name, 'Lakeside Lot');
+
+    // A day without venues/parking round-trips as empty arrays, never
+    // inheriting data from another day.
+    assert.deepEqual(day2.venues, []);
+    assert.deepEqual(day2.parkingLocations, []);
+
+    // Re-replacing the itinerary with fewer venues/parking locations must
+    // fully replace the previous set, not accumulate duplicates.
+    const replaced = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/itinerary`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({
+        days: [
+          {
+            date: '2026-09-01',
+            title: 'DAY 1',
+            items: [{ date: '2026-09-01', title: 'Only activity' }],
+            venues: [{ name: 'Only Venue' }],
+            parkingLocations: [],
+          },
+        ],
+      }),
+    });
+    assert.equal(replaced.status, 200);
+
+    const afterReplace = await getItinerary(port, headers, trip.id);
+    assert.equal(afterReplace.days.length, 1);
+    assert.equal(afterReplace.days[0].venues.length, 1);
+    assert.equal(afterReplace.days[0].venues[0].name, 'Only Venue');
+    assert.deepEqual(afterReplace.days[0].parkingLocations, []);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('a recommended venue with no name and a parking location with no code/name are rejected without persisting a partial itinerary', async () => {
+  const { server, port } = await startServer();
+  try {
+    const headers = await signIn(port, 'itinerary-venue-validation@example.com');
+    const trip = await createTrip(port, headers, 'Garda');
+    await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, { method: 'POST', headers });
+
+    const invalidVenue = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/itinerary`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({
+        days: [
+          {
+            date: '2026-09-01',
+            title: 'DAY 1',
+            items: [{ date: '2026-09-01', title: 'Kept' }],
+            venues: [{ name: '' }],
+          },
+        ],
+      }),
+    });
+    assert.equal(invalidVenue.status, 400);
+
+    const invalidParking = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/itinerary`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({
+        days: [
+          {
+            date: '2026-09-01',
+            title: 'DAY 1',
+            items: [{ date: '2026-09-01', title: 'Kept' }],
+            parkingLocations: [{ code: '', name: 'Missing code' }],
+          },
+        ],
+      }),
+    });
+    assert.equal(invalidParking.status, 400);
+
+    const unchanged = await getItinerary(port, headers, trip.id);
+    assert.deepEqual(unchanged.days, []);
+  } finally {
+    await closeServer(server);
+  }
+});
