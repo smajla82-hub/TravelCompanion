@@ -158,11 +158,9 @@ export const SyncedTripApi = {
         tripId: string,
         dayId: string,
         parkingId: string,
-        options?: { clearReferences?: boolean },
     ) =>
         apiRequest(
-            `/trips/${tripId}/itinerary/days/${dayId}/parking/${parkingId}` +
-                (options?.clearReferences ? "?clearReferences=true" : ""),
+            `/trips/${tripId}/itinerary/days/${dayId}/parking/${parkingId}`,
             { method: "DELETE" },
         ),
     acceptInvitation: (token: string) =>

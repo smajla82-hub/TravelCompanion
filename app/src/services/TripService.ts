@@ -702,18 +702,16 @@ export const TripService = {
     },
 
     /**
-     * Deletes a parking location. When `clearReferences` is not set and the
-     * code is still referenced by an activity in the same day, the deletion
-     * is rejected instead of silently orphaning `ItineraryItem.parking`
-     * values. When `clearReferences` is set, the parking location is removed
-     * and every referencing activity's `parking` field is cleared in the
-     * same update.
+     * Deletes a parking location. When the code is still referenced by an
+     * activity in the same day, the deletion is rejected instead of
+     * silently orphaning `ItineraryItem.parking` values. There is no
+     * "clear references" alternative: referencing activities must be
+     * removed or reassigned before the parking location can be deleted.
      */
     deleteParkingLocation(
         tripId: string,
         date: string,
-        parkingId: string,
-        options: { clearReferences?: boolean } = {}
+        parkingId: string
     ) {
         const index = trips.findIndex(
             trip => trip.id === tripId
@@ -740,25 +738,16 @@ export const TripService = {
             item => item.parking === existing.code
         );
 
-        if (referencingItems.length > 0 && !options.clearReferences) {
+        if (referencingItems.length > 0) {
             throw new Error(
                 `Parking ${existing.code} is referenced by ${referencingItems.length} ` +
-                "activity/activities. Remove or reassign them before deleting, " +
-                "or delete and clear references."
+                "activity/activities. Remove or reassign them before deleting."
             );
         }
 
         const newParkingLocations = (day.parkingLocations ?? []).filter(
             location => location.id !== parkingId
         );
-
-        const newItems = options.clearReferences
-            ? day.items.map(item =>
-                item.parking === existing.code
-                    ? { ...item, parking: undefined }
-                    : item
-            )
-            : day.items;
 
         trips[index] = {
             ...trip,
@@ -768,7 +757,6 @@ export const TripService = {
                         ? {
                             ...day,
                             parkingLocations: newParkingLocations,
-                            items: newItems,
                         }
                         : current
             ),

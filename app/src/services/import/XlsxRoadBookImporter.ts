@@ -234,6 +234,8 @@ function parseParkingLocations(
         code: findColumn(headers, "Označení"),
         name: findColumn(headers, "Místo"),
         smartChip: findColumnStartingWith(headers, "📍"),
+        price: findColumn(headers, "💰 Cena"),
+        note: findColumn(headers, "📝 Poznámka"),
     };
     const parkingLocations: ParkingLocation[] = [];
 
@@ -264,6 +266,8 @@ function parseParkingLocations(
                 rowIndex,
                 columns.smartChip
             ),
+            price: getString(row[columns.price]),
+            note: getString(row[columns.note]),
         });
     }
 

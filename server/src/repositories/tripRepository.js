@@ -970,13 +970,13 @@ export function updateParkingLocation(tripId, dayId, parkingId, payload = {}) {
 }
 
 /**
- * Deletes a parking location. When `clearReferences` is falsy and the code
- * is still referenced by an activity in the same day, the deletion is
- * rejected instead of silently orphaning `itinerary_items.parking` values.
- * When `clearReferences` is truthy, the parking location is removed and
- * every referencing activity's `parking` field is cleared atomically.
+ * Deletes a parking location. When the code is still referenced by an
+ * activity in the same day, the deletion is rejected instead of silently
+ * orphaning `itinerary_items.parking` values. There is no "clear
+ * references" alternative: referencing activities must be removed or
+ * reassigned before the parking location can be deleted.
  */
-export function deleteParkingLocation(tripId, dayId, parkingId, { clearReferences = false } = {}) {
+export function deleteParkingLocation(tripId, dayId, parkingId) {
   const existing = getParkingLocationById(tripId, parkingId);
   if (!existing) {
     const error = new Error('Parking location not found.');
@@ -995,25 +995,17 @@ export function deleteParkingLocation(tripId, dayId, parkingId, { clearReference
     .all(tripId, dayId, existing.code)
     .map(mapItemRow);
 
-  if (referencingItems.length > 0 && !clearReferences) {
+  if (referencingItems.length > 0) {
     const error = new Error(
       `Parking ${existing.code} is referenced by ${referencingItems.length} activity/activities. `
-      + 'Remove or reassign them before deleting, or delete and clear references.',
+      + 'Remove or reassign them before deleting.',
     );
     error.statusCode = 409;
     error.referencingItems = referencingItems;
     throw error;
   }
 
-  db.transaction(() => {
-    if (clearReferences && referencingItems.length > 0) {
-      db.prepare(
-        'UPDATE itinerary_items SET parking = NULL WHERE trip_id = ? AND day_id = ? AND parking = ?',
-      ).run(tripId, dayId, existing.code);
-    }
-
-    db.prepare('DELETE FROM parking_locations WHERE trip_id = ? AND day_id = ? AND id = ?').run(tripId, dayId, parkingId);
-  })();
+  db.prepare('DELETE FROM parking_locations WHERE trip_id = ? AND day_id = ? AND id = ?').run(tripId, dayId, parkingId);
 
   return existing;
 }

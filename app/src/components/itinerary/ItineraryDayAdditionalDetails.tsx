@@ -114,17 +114,12 @@ export function ItineraryDayAdditionalDetails({
         onDayChanged();
     }
 
-    async function handleParkingDelete(
-        parkingId: string,
-        options?: { clearReferences?: boolean }
-    ) {
-        if (!options?.clearReferences) {
-            if (!window.confirm("Delete this parking location?")) {
-                return;
-            }
+    async function handleParkingDelete(parkingId: string) {
+        if (!window.confirm("Delete this parking location?")) {
+            return;
         }
 
-        if (adapter) await adapter.deleteParking(day, parkingId, options);
+        if (adapter) await adapter.deleteParking(day, parkingId);
 
         onDayChanged();
     }
@@ -356,14 +351,6 @@ export function ItineraryDayAdditionalDetails({
                     if (!parkingInActions) return;
 
                     handleParkingDelete(parkingInActions.id);
-                    setParkingActionsId(null);
-                }}
-                onDeleteAndClearReferences={() => {
-                    if (!parkingInActions) return;
-
-                    handleParkingDelete(parkingInActions.id, {
-                        clearReferences: true,
-                    });
                     setParkingActionsId(null);
                 }}
             />

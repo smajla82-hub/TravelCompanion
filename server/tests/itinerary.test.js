@@ -562,7 +562,7 @@ test('editing a recommended venue updates its fields and editing a parking locat
   }
 });
 
-test('deleting a referenced parking location is blocked by default but succeeds with clearReferences', async () => {
+test('deleting a referenced parking location is always blocked until the reference is removed', async () => {
   const { server, port } = await startServer();
   try {
     const headers = await signIn(port, 'parking-delete-safety@example.com');
@@ -595,16 +595,28 @@ test('deleting a referenced parking location is blocked by default but succeeds 
     const stillThere = await getItinerary(port, headers, trip.id);
     assert.equal(stillThere.days[0].parkingLocations.length, 1);
 
-    const cleared = await fetch(
+    // There is no "clear references" alternative: the request is rejected
+    // outright and the query string has no effect on this behavior.
+    const blockedEvenWithQueryParam = await fetch(
       `http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/parking/${parking.id}?clearReferences=true`,
       { method: 'DELETE', headers },
     );
-    assert.equal(cleared.status, 200);
+    assert.equal(blockedEvenWithQueryParam.status, 409);
 
-    const afterClear = await getItinerary(port, headers, trip.id);
-    assert.equal(afterClear.days[0].parkingLocations.length, 0);
-    const clearedItem = afterClear.days[0].items.find((current) => current.id === item.id);
-    assert.equal(clearedItem.parking, null);
+    // Once the referencing activity itself is removed, deletion succeeds.
+    await fetch(
+      `http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/items/${item.id}`,
+      { method: 'DELETE', headers },
+    );
+
+    const deleted = await fetch(
+      `http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/parking/${parking.id}`,
+      { method: 'DELETE', headers },
+    );
+    assert.equal(deleted.status, 200);
+
+    const afterDelete = await getItinerary(port, headers, trip.id);
+    assert.equal(afterDelete.days[0].parkingLocations.length, 0);
   } finally {
     await closeServer(server);
   }

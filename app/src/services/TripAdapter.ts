@@ -26,7 +26,7 @@ export type TripAdapter = {
     deleteVenue: (day: ItineraryDay, venueId: string) => Promise<void>;
     addParking: (day: ItineraryDay, parking: Omit<ParkingLocation, "id">) => Promise<void>;
     updateParking: (day: ItineraryDay, parkingId: string, updates: Partial<ParkingLocation>) => Promise<void>;
-    deleteParking: (day: ItineraryDay, parkingId: string, options?: { clearReferences?: boolean }) => Promise<void>;
+    deleteParking: (day: ItineraryDay, parkingId: string) => Promise<void>;
     acquireLock: () => Promise<void>;
     heartbeat: () => Promise<void>;
     releaseLock: () => Promise<void>;
@@ -62,7 +62,7 @@ function localAdapter(tripId: string): TripAdapter {
         deleteVenue: async (day, venueId) => TripService.deleteVenue(tripId, day.date, venueId),
         addParking: async (day, parking) => { TripService.addParkingLocation(tripId, day.date, parking); },
         updateParking: async (day, parkingId, updates) => TripService.updateParkingLocation(tripId, day.date, parkingId, updates),
-        deleteParking: async (day, parkingId, options) => TripService.deleteParkingLocation(tripId, day.date, parkingId, options),
+        deleteParking: async (day, parkingId) => TripService.deleteParkingLocation(tripId, day.date, parkingId),
         acquireLock: async () => undefined,
         heartbeat: async () => undefined,
         releaseLock: async () => undefined,
@@ -217,8 +217,8 @@ export function createTripAdapter(trip: Pick<Trip, "id" | "source"> | SyncedTrip
             await SyncedTripApi.updateParking(tripId, day.id, parkingId, updates);
             await syncItinerary();
         }),
-        deleteParking: (day, parkingId, options) => withLock(async () => {
-            await SyncedTripApi.deleteParking(tripId, day.id, parkingId, options);
+        deleteParking: (day, parkingId) => withLock(async () => {
+            await SyncedTripApi.deleteParking(tripId, day.id, parkingId);
             await syncItinerary();
         }),
         acquireLock: acquire,

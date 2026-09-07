@@ -313,4 +313,76 @@ describe("importXlsxRoadBook", () => {
             "",
         ]);
     });
+
+    it("imports parking price and note alongside code, name and map link", async () => {
+        const venueParkingHeaderRow = [
+            "Priorita",
+            "Typ",
+            "Podnik",
+            "📍",
+            "⭐ Doporučení",
+            "💰 Cena/os.",
+            "🅿",
+            "⏰ Rez.",
+            "Poznámka",
+            "",
+            "",
+            "Označení",
+            "Místo",
+            "📍",
+            "💰 Cena",
+            "📝 Poznámka",
+        ];
+        const rows = [
+            ["Day 1 - Test"],
+            ["10.9.2026 Thursday"],
+            [],
+            [],
+            HEADER_ROW,
+            [
+                "7:00",
+                "Snídaně",
+                "Praha",
+                "food",
+                "FOOD",
+            ],
+            [],
+            ["🍴 DOPORUČENÉ PODNIKY"],
+            venueParkingHeaderRow,
+            [
+                "", "", "", "", "", "", "", "", "", "", "",
+                "P1",
+                "Prague Airport Garage",
+                "",
+                "10 USD/day",
+                "Covered, near Terminal 2",
+            ],
+            [
+                "", "", "", "", "", "", "", "", "", "", "",
+                "P2",
+                "LAX Rental Car Center",
+                "",
+                "Included",
+                "",
+            ],
+        ];
+        const file = buildWorkbookFile(rows);
+
+        const { days } = await importXlsxRoadBook(file);
+
+        expect(days[0].parkingLocations).toEqual([
+            expect.objectContaining({
+                code: "P1",
+                name: "Prague Airport Garage",
+                price: "10 USD/day",
+                note: "Covered, near Terminal 2",
+            }),
+            expect.objectContaining({
+                code: "P2",
+                name: "LAX Rental Car Center",
+                price: "Included",
+                note: "",
+            }),
+        ]);
+    });
 });

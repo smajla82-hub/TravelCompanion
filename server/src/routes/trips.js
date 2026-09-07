@@ -234,13 +234,11 @@ router.put('/:tripId/itinerary/days/:dayId/parking/:parkingId', requireTripRole(
 });
 
 router.delete('/:tripId/itinerary/days/:dayId/parking/:parkingId', requireTripRole(['owner', 'editor']), requireActiveLock(currentParking), (req, res, next) => {
-  const clearReferences = req.query.clearReferences === 'true';
   try {
     const deletedParking = repo.deleteParkingLocation(
       req.params.tripId,
       req.params.dayId,
       req.params.parkingId,
-      { clearReferences },
     );
     repo.touchTrip(req.params.tripId);
     return res.json({ deleted: true, parking: deletedParking });

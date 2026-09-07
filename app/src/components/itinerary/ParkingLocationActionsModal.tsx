@@ -11,8 +11,6 @@ type ParkingLocationActionsModalProps = {
     onEdit: () => void;
     /** Delete only when nothing references this parking location. */
     onDelete: () => void;
-    /** Delete and clear the `parking` field of every referencing activity. */
-    onDeleteAndClearReferences: () => void;
 };
 
 export function ParkingLocationActionsModal({
@@ -22,7 +20,6 @@ export function ParkingLocationActionsModal({
     onClose,
     onEdit,
     onDelete,
-    onDeleteAndClearReferences,
 }: ParkingLocationActionsModalProps) {
     const isReferenced = referencingItems.length > 0;
 
@@ -38,28 +35,18 @@ export function ParkingLocationActionsModal({
                 </Button>
 
                 {isReferenced ? (
-                    <Stack gap="sm">
-                        <p>
-                            {referencingItems.length} activit
-                            {referencingItems.length === 1 ? "y" : "ies"}{" "}
-                            reference{" "}
-                            {referencingItems.length === 1 ? "s" : ""}{" "}
-                            {parking?.code}: {" "}
-                            {referencingItems
-                                .map((item) => item.title)
-                                .join(", ")}
-                            . Remove or reassign them before deleting, or
-                            delete and clear these references.
-                        </p>
-
-                        <Button
-                            type="button"
-                            variant="outline"
-                            onClick={onDeleteAndClearReferences}
-                        >
-                            Delete and clear references
-                        </Button>
-                    </Stack>
+                    <p>
+                        {referencingItems.length} activit
+                        {referencingItems.length === 1 ? "y" : "ies"}{" "}
+                        reference{" "}
+                        {referencingItems.length === 1 ? "s" : ""}{" "}
+                        {parking?.code}: {" "}
+                        {referencingItems
+                            .map((item) => item.title)
+                            .join(", ")}
+                        . Remove or reassign them before deleting this
+                        parking location.
+                    </p>
                 ) : (
                     <Button type="button" onClick={onDelete}>
                         Delete
