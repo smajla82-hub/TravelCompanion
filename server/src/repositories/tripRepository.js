@@ -123,6 +123,18 @@ function mapParkingLocationRow(row) {
   return mapped;
 }
 
+function mapDayStatRow(row) {
+  if (!row) {
+    return null;
+  }
+
+  return {
+    dayId: row.day_id,
+    label: row.label,
+    value: row.value,
+  };
+}
+
 function normalizeVenuePayload(payload = {}) {
   return {
     priority: payload.priority ?? null,
@@ -169,6 +181,14 @@ function normalizeItineraryDayPayload(payload = {}) {
   return {
     date: payload.date ?? '',
     title: String(payload.title ?? '').trim(),
+  };
+}
+
+function normalizeDayStatPayload(payload = {}) {
+  return {
+    label: String(payload.label ?? '').trim(),
+    value: String(payload.value ?? '').trim(),
+    sortOrder: Number(payload.sortOrder ?? payload.sort_order ?? 0),
   };
 }
 
@@ -341,7 +361,12 @@ export function listItineraryDaysForTrip(tripId) {
 }
 
 export function getDayById(tripId, dayId) {
-  return mapDayRow(db.prepare('SELECT * FROM itinerary_days WHERE trip_id = ? AND id = ?').get(tripId, dayId));
+  const day = mapDayRow(db.prepare('SELECT * FROM itinerary_days WHERE trip_id = ? AND id = ?').get(tripId, dayId));
+  if (!day) {
+    return null;
+  }
+
+  return { ...day, stats: listDayStats(tripId, dayId) };
 }
 
 export function createItineraryDay(tripId, payload = {}, userId) {
@@ -365,6 +390,7 @@ export function createItineraryDay(tripId, payload = {}, userId) {
   db.prepare(
     'INSERT INTO itinerary_days (id, trip_id, date, title, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
   ).run(dayId, tripId, data.date, data.title, now, now);
+  writeDayStats(tripId, dayId, payload?.stats, now);
 
   return getDayById(tripId, dayId);
 }
@@ -383,6 +409,7 @@ export function updateItineraryDay(tripId, dayId, payload = {}) {
   db.prepare(
     'UPDATE itinerary_days SET date = ?, title = ?, updated_at = ? WHERE trip_id = ? AND id = ?'
   ).run(data.date, data.title, now, tripId, dayId);
+  writeDayStats(tripId, dayId, payload?.stats, now);
 
   return getDayById(tripId, dayId);
 }
@@ -415,11 +442,62 @@ export function listParkingLocationsForTrip(tripId) {
   return db.prepare('SELECT * FROM parking_locations WHERE trip_id = ? ORDER BY sort_order ASC, created_at ASC').all(tripId).map(mapParkingLocationRow);
 }
 
+export function listDayStats(tripId, dayId) {
+  return db.prepare(
+    'SELECT * FROM day_stats WHERE trip_id = ? AND day_id = ? ORDER BY sort_order ASC, created_at ASC',
+  ).all(tripId, dayId).map(mapDayStatRow).map(({ label, value }) => ({ label, value }));
+}
+
+export function listDayStatsForTrip(tripId) {
+  return db.prepare('SELECT * FROM day_stats WHERE trip_id = ? ORDER BY sort_order ASC, created_at ASC').all(tripId).map(mapDayStatRow);
+}
+
+/**
+ * Replaces the statistics of a single day. `stats` may be omitted (undefined),
+ * in which case the existing statistics are left untouched, so day updates that
+ * do not carry statistics cannot silently drop them.
+ */
+function writeDayStats(tripId, dayId, stats, now) {
+  if (stats === undefined || stats === null) {
+    return;
+  }
+
+  if (!Array.isArray(stats)) {
+    const error = new Error('Day statistics must be an array.');
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const normalized = stats.map((stat, index) => {
+    const statData = normalizeDayStatPayload({ ...stat, sortOrder: index });
+    if (!statData.label) {
+      const error = new Error('Day statistic label is required.');
+      error.statusCode = 400;
+      throw error;
+    }
+
+    return statData;
+  });
+
+  const insertStat = db.prepare(
+    `INSERT INTO day_stats (id, trip_id, day_id, label, value, sort_order, created_at, updated_at)
+     VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+  );
+
+  db.transaction(() => {
+    db.prepare('DELETE FROM day_stats WHERE trip_id = ? AND day_id = ?').run(tripId, dayId);
+    for (const stat of normalized) {
+      insertStat.run(randomUUID(), tripId, dayId, stat.label, stat.value, stat.sortOrder, now, now);
+    }
+  })();
+}
+
 export function getItinerary(tripId) {
   const days = listItineraryDaysForTrip(tripId);
   const items = listItemsForTrip(tripId);
   const venues = listVenuesForTrip(tripId);
   const parkingLocations = listParkingLocationsForTrip(tripId);
+  const stats = listDayStatsForTrip(tripId);
 
   return {
     tripId,
@@ -429,6 +507,9 @@ export function getItinerary(tripId) {
       // `dayId`; grouping on the raw column name silently produced empty days.
       items: items.filter((item) => item.dayId === day.id),
       venues: venues.filter((venue) => venue.dayId === day.id),
+      // Statistics are plain label/value pairs in the domain model, so the
+      // grouping key is dropped again on the way out.
+      stats: stats.filter((stat) => stat.dayId === day.id).map(({ label, value }) => ({ label, value })),
       parkingLocations: parkingLocations.filter((location) => location.dayId === day.id),
     })),
   };
@@ -465,6 +546,7 @@ export function replaceItinerary(tripId, days, userId) {
     const items = Array.isArray(day?.items) ? day.items : [];
     const venues = Array.isArray(day?.venues) ? day.venues : [];
     const parkingLocations = Array.isArray(day?.parkingLocations) ? day.parkingLocations : [];
+    const stats = Array.isArray(day?.stats) ? day.stats : [];
 
     if (venues.length > MAX_VENUES_PER_DAY) {
       const error = new Error(`A day may have at most ${MAX_VENUES_PER_DAY} recommended venues.`);
@@ -518,6 +600,20 @@ export function replaceItinerary(tripId, days, userId) {
 
         return venueData;
       }),
+      // Day statistics are imported label/value pairs; the whole-Trip
+      // replacement must carry them so a synchronized Trip keeps the
+      // statistics parsed from its RoadBook.
+      stats: stats.map((stat, index) => {
+        const statData = normalizeDayStatPayload({ ...stat, sortOrder: index });
+
+        if (!statData.label) {
+          const error = new Error('Day statistic label is required.');
+          error.statusCode = 400;
+          throw error;
+        }
+
+        return statData;
+      }),
       // `code` is the stable, user-facing key that `itinerary_items.parking`
       // references (see schema.sql); it must be preserved exactly as
       // imported/edited so existing P1-P8 references keep resolving.
@@ -556,6 +652,11 @@ export function replaceItinerary(tripId, days, userId) {
       price, reservation, sort_order, created_at, updated_at
     ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
+  const insertDayStat = db.prepare(
+    `INSERT INTO day_stats (
+      id, trip_id, day_id, label, value, sort_order, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+  );
   const insertParkingLocation = db.prepare(
     `INSERT INTO parking_locations (
       id, trip_id, day_id, code, name, smart_chip, map_link, price, note, sort_order, created_at, updated_at
@@ -567,6 +668,7 @@ export function replaceItinerary(tripId, days, userId) {
     db.prepare('DELETE FROM itinerary_items WHERE trip_id = ?').run(tripId);
     db.prepare('DELETE FROM venues WHERE trip_id = ?').run(tripId);
     db.prepare('DELETE FROM parking_locations WHERE trip_id = ?').run(tripId);
+    db.prepare('DELETE FROM day_stats WHERE trip_id = ?').run(tripId);
 
     for (const day of normalizedDays) {
       const dayId = randomUUID();
@@ -612,6 +714,19 @@ export function replaceItinerary(tripId, days, userId) {
           venue.price,
           venue.reservation,
           venue.sortOrder,
+          now,
+          now,
+        );
+      }
+
+      for (const stat of day.stats) {
+        insertDayStat.run(
+          randomUUID(),
+          tripId,
+          dayId,
+          stat.label,
+          stat.value,
+          stat.sortOrder,
           now,
           now,
         );

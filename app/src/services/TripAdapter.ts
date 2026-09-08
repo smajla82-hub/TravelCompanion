@@ -162,6 +162,7 @@ export function createTripAdapter(trip: Pick<Trip, "id" | "source"> | SyncedTrip
                     return payload;
                 }),
                 venues: day.venues,
+                stats: day.stats,
                 parkingLocations: day.parkingLocations,
             })));
             OnlineTripStore.applyItinerary(tripId, itinerary.days);
