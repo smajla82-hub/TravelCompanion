@@ -109,12 +109,14 @@ function mapParkingLocationRow(row) {
     ...row,
     tripId: row.trip_id,
     dayId: row.day_id,
+    smartChip: row.smart_chip,
     mapLink: row.map_link,
     sortOrder: row.sort_order,
   };
 
   delete mapped.trip_id;
   delete mapped.day_id;
+  delete mapped.smart_chip;
   delete mapped.map_link;
   delete mapped.sort_order;
 
@@ -141,6 +143,7 @@ function normalizeParkingLocationPayload(payload = {}) {
   return {
     code: String(payload.code ?? '').trim(),
     name: String(payload.name ?? '').trim(),
+    smartChip: payload.smartChip ?? payload.smart_chip ?? null,
     mapLink: payload.mapLink ?? payload.map_link ?? null,
     price: payload.price ?? null,
     note: payload.note ?? null,
@@ -555,8 +558,8 @@ export function replaceItinerary(tripId, days, userId) {
   );
   const insertParkingLocation = db.prepare(
     `INSERT INTO parking_locations (
-      id, trip_id, day_id, code, name, map_link, price, note, sort_order, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, trip_id, day_id, code, name, smart_chip, map_link, price, note, sort_order, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
   db.transaction(() => {
@@ -621,6 +624,7 @@ export function replaceItinerary(tripId, days, userId) {
           dayId,
           location.code,
           location.name,
+          location.smartChip,
           location.mapLink,
           location.price,
           location.note,
@@ -917,10 +921,10 @@ export function createParkingLocation(tripId, dayId, payload = {}) {
 
   db.prepare(
     `INSERT INTO parking_locations (
-      id, trip_id, day_id, code, name, map_link, price, note, sort_order, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      id, trip_id, day_id, code, name, smart_chip, map_link, price, note, sort_order, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
-    parkingId, tripId, dayId, data.code, data.name, data.mapLink, data.price, data.note,
+    parkingId, tripId, dayId, data.code, data.name, data.smartChip, data.mapLink, data.price, data.note,
     existingParking.length, now, now,
   );
 
@@ -962,9 +966,9 @@ export function updateParkingLocation(tripId, dayId, parkingId, payload = {}) {
 
   db.prepare(
     `UPDATE parking_locations
-     SET name = ?, map_link = ?, price = ?, note = ?, updated_at = ?
+     SET name = ?, smart_chip = ?, map_link = ?, price = ?, note = ?, updated_at = ?
      WHERE trip_id = ? AND day_id = ? AND id = ?`,
-  ).run(data.name, data.mapLink, data.price, data.note, now, tripId, dayId, parkingId);
+  ).run(data.name, data.smartChip, data.mapLink, data.price, data.note, now, tripId, dayId, parkingId);
 
   return getParkingLocationById(tripId, parkingId);
 }
@@ -1009,4 +1013,3 @@ export function deleteParkingLocation(tripId, dayId, parkingId) {
 
   return existing;
 }
-

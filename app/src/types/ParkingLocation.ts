@@ -6,6 +6,8 @@ export interface ParkingLocation {
 
     name: string;
 
+    smartChip?: string;
+
     mapLink?: string;
 
     price?: string;

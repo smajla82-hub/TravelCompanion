@@ -14,16 +14,22 @@ export function ParkingLocationSummary({
                 {parking.code}:
             </strong>
             {" "}
-            {parking.mapLink ? (
-                <a
-                    href={parking.mapLink}
-                    target="_blank"
-                    rel="noreferrer"
-                >
-                    {parking.name}
-                </a>
-            ) : (
-                parking.name
+            {parking.name}
+
+            {parking.smartChip && (
+                <div>
+                    {parking.mapLink ? (
+                        <a
+                            href={parking.mapLink}
+                            target="_blank"
+                            rel="noreferrer"
+                        >
+                            {parking.smartChip}
+                        </a>
+                    ) : (
+                        parking.smartChip
+                    )}
+                </div>
             )}
 
             {parking.price && (

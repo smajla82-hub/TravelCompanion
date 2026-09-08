@@ -377,6 +377,7 @@ function parseParkingLocations(
             id: `${date}-parking-${parkingLocations.length + 1}`,
             code,
             name,
+            smartChip: getString(row[columns.smartChip]),
             mapLink: getCellLink(
                 sheet,
                 rowIndex,

@@ -154,6 +154,7 @@ CREATE TABLE IF NOT EXISTS parking_locations (
   day_id TEXT NOT NULL,
   code TEXT NOT NULL,
   name TEXT NOT NULL,
+  smart_chip TEXT,
   map_link TEXT,
   price TEXT,
   note TEXT,

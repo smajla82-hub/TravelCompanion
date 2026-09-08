@@ -92,11 +92,19 @@ function comparableItem(item: Omit<ItineraryItem, "id">) {
     };
 }
 
-function comparableDays(days: { date: string; title: string; items: Omit<ItineraryItem, "id">[] }[]) {
+function comparableDays(days: {
+    date: string;
+    title: string;
+    items: Omit<ItineraryItem, "id">[];
+    venues?: unknown[];
+    parkingLocations?: unknown[];
+}[]) {
     return days.map(day => ({
         date: day.date,
         title: day.title,
         items: day.items.map(comparableItem),
+        venues: day.venues,
+        parkingLocations: day.parkingLocations,
     }));
 }
 

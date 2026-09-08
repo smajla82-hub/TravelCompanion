@@ -53,4 +53,23 @@ describe("RecommendedVenueForm", () => {
 
         expect(markup).toContain('<option value="Backup" selected');
     });
+
+    it("renders an enabled Smart Chip-based Find on Map action without changing imported fields", () => {
+        const markup = renderToStaticMarkup(
+            <RecommendedVenueForm
+                venue={{
+                    id: "v1",
+                    name: "The Kettle Manhattan Beach",
+                    smartChip: "The Kettle",
+                    mapLink: "https://maps.example.com/the-kettle",
+                    parking: "P4",
+                }}
+                onSubmit={() => {}}
+            />,
+        );
+
+        expect(markup).toContain("Find on Map");
+        expect(markup).toContain('value="The Kettle"');
+        expect(markup).toContain('value="https://maps.example.com/the-kettle"');
+    });
 });
