@@ -4,7 +4,6 @@ import { useNavigate } from "react-router-dom";
 
 import {
     Grid,
-    Heading,
     Modal,
     Stack,
     Button,
@@ -127,12 +126,6 @@ export function TripsSection({
 
     return (
         <>
-            <div className="my-trips-heading">
-                <Heading level={2}>
-                    My Trips
-                </Heading>
-            </div>
-
             {onlineLoading && <p aria-live="polite">Loading trips…</p>}
             {!onlineLoading && trips.length === 0 && syncedTrips.length === 0 && !syncedError && (
                 <p>No trips yet. Create a new trip to get started.</p>

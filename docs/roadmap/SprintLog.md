@@ -7,8 +7,12 @@ It is a human-readable history, not an archive of every Git commit. Git remains 
 ## Feature FP-4 — My Trips
 **Status:** DONE
 
-My Trips now has bounded branded artwork using the existing top background, a
-Dashboard-aligned title, responsive equal-row Trip cards, and distinct semantic
+My Trips now has a white, Dashboard-aligned title on the same row as the "+
+New Trip" action, matching the Home Dashboard header's visual hierarchy. The
+page background reuses the existing `trips_background_1440x3200.webp`
+artwork as a full-width, aspect-ratio-preserving page background that scrolls
+naturally with the page content instead of a cropped/right-aligned hero
+image. Trip cards remain responsive equal-row cards with distinct semantic
 Online (green) and Offline (neutral) source indicators. Loading, empty, and
 online-error states are explicit.
 

@@ -1,53 +1,35 @@
 .my-trips-page {
     position: relative;
     isolation: isolate;
-    overflow: hidden;
-    min-height: 360px;
-    padding: var(--space-lg);
-    background:
-        var(--tc-brand-gradient-soft),
-        var(--surface-primary);
-    border: 1px solid color-mix(in srgb, var(--color-purple) 18%, var(--border-color));
-    border-radius: var(--radius-xl);
-}
 
-.my-trips-page::before {
-    content: "";
-    position: absolute;
-    z-index: -1;
-    top: 0;
-    right: 0;
-    width: min(420px, 85%);
-    height: 360px;
-    pointer-events: none;
-    opacity: var(--tc-brand-artwork-opacity);
+    padding: var(--space-lg);
+    border-radius: var(--radius-xl);
+
+    background-color: var(--surface-primary);
     background-image: var(--tc-my-trips-artwork);
     background-repeat: no-repeat;
-    background-position: top right;
-    background-size: contain;
-    mix-blend-mode: multiply;
-}
-
-[data-theme="dark"] .my-trips-page::before {
-    opacity: 0.5;
+    background-position: top center;
+    /*
+     * Scale the artwork to the page width while preserving its natural
+     * 1440x3200 aspect ratio (no cropping, no fixed hero height). It simply
+     * scrolls with the page content beneath it; if the page is shorter than
+     * the artwork the surrounding border-radius clips it cleanly, and if the
+     * page grows taller the layout continues on the plain surface color
+     * below the artwork instead of stretching/repeating the image.
+     */
+    background-size: 100% auto;
 }
 
 .my-trips-header {
     display: flex;
-    justify-content: flex-end;
-    margin-bottom: 16px;
-}
-
-.my-trips-heading {
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
     margin-bottom: var(--space-lg);
 }
 
-.my-trips-heading h2 {
-    color: var(--color-text);
-    font-size: 30px;
-    font-weight: 700;
-    line-height: 36px;
-    letter-spacing: -0.01em;
+.my-trips-header .tc-hero-title {
+    margin: 0;
 }
 
 @media (max-width: 480px) {
@@ -55,8 +37,7 @@
         padding: var(--space-lg) 12px;
     }
 
-    .my-trips-heading h2 {
-        font-size: 26px;
-        line-height: 32px;
+    .my-trips-header {
+        flex-wrap: wrap;
     }
 }
