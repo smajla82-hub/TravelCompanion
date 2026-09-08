@@ -69,14 +69,15 @@ export default function AccountPage() {
             setSubmitting(false);
         }
 
-        function submitAuth(event: React.FormEvent<HTMLFormElement>) {
-            event.preventDefault();
-            if (mode === "register" && password !== confirmPassword) {
-                setError("Passwords do not match.");
-                return;
-            }
-            void submit();
+    }
+
+    function submitAuth(event: React.FormEvent<HTMLFormElement>) {
+        event.preventDefault();
+        if (mode === "register" && password !== confirmPassword) {
+            setError("Passwords do not match.");
+            return;
         }
+        void submit();
     }
 
     async function submitForgotPassword() {

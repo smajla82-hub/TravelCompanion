@@ -24,7 +24,7 @@ function mapUserRow(row) {
     email: row.email,
     firstName: row.first_name ?? '',
     lastName: row.last_name ?? '',
-    displayName: [row.first_name, row.last_name].filter(Boolean).join(' ') || row.display_name || row.email,
+    displayName: row.display_name ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
