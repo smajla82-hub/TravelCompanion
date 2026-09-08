@@ -7,7 +7,7 @@ import "./CurrentTripCard.css";
 import type { Trip } from "../../types";
 
 import { formatDate } from "../../utils/formatDate";
-import { getCountryFlag } from "../../utils/getCountryFlag";
+import { getCountryFlag } from "../../utils/country";
 
 import { HERO_BACKGROUND_URL } from "../../styles/brandAssets";
 

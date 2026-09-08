@@ -4,6 +4,20 @@ This file records the completed development history of the Travel Companion appl
 
 It is a human-readable history, not an archive of every Git commit. Git remains authoritative for exact commit history.
 
+## Feature FP-4 — My Trips
+**Status:** DONE
+
+My Trips now has bounded branded artwork using the existing top background, a
+Dashboard-aligned title, responsive equal-row Trip cards, and distinct semantic
+Online (green) and Offline (neutral) source indicators. Loading, empty, and
+online-error states are explicit.
+
+Trip countries are selected through a shared searchable selector and persist as
+uppercase ISO 3166-1 alpha-2 codes. Country metadata supplies canonical English
+names and emoji flags across Trip cards. Known legacy names/codes normalize
+idempotently in offline storage, backup imports, online mapping, and an
+additive SQLite startup migration; unknown values are preserved for correction.
+
 ## Technical Fix TF-1 — Online Trip Statistics persistence
 **Status:** DONE
 

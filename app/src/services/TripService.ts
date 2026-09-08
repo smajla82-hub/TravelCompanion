@@ -20,6 +20,7 @@ import {
     isDuplicateParkingCode,
 } from
     "../domain/itinerary/venueParkingLimits";
+import { normalizeCountry } from "../utils/country";
 
 const STORAGE_KEY =
     "travel-companion.trips";
@@ -44,7 +45,10 @@ function loadTrips() {
         trips.splice(
             0,
             trips.length,
-            ...parsed
+            ...parsed.map(trip => ({
+                ...trip,
+                country: normalizeCountry(trip.country),
+            }))
         );
     } catch {
         console.warn(
@@ -105,7 +109,10 @@ export const TripService = {
         trips.splice(
             0,
             trips.length,
-            ...parsed.trips as Trip[]
+            ...(parsed.trips as Trip[]).map(trip => ({
+                ...trip,
+                country: normalizeCountry(trip.country),
+            }))
         );
 
         persistTrips();
@@ -122,7 +129,7 @@ export const TripService = {
     },
 
     add(trip: Trip) {
-        trips.push(trip);
+        trips.push({ ...trip, country: normalizeCountry(trip.country) });
         persistTrips();
     },
 
@@ -135,7 +142,7 @@ export const TripService = {
             return;
         }
 
-        trips[index] = trip;
+        trips[index] = { ...trip, country: normalizeCountry(trip.country) };
         persistTrips();
     },
 

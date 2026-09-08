@@ -9,6 +9,8 @@ import { AuthService } from "../../services/AuthService";
 import { SyncedTripApi } from "../../api/trips";
 import { createTripAdapter, toOnlineTrip } from "../../services/TripAdapter";
 import { OnlineTripStore } from "../../services/OnlineTripStore";
+import { CountrySelector } from "./CountrySelector";
+import { isCountryCode, normalizeCountry } from "../../utils/country";
 import {
     counterClassName,
     exceedsTextLimit,
@@ -69,6 +71,12 @@ export function NewTripModal({
             return;
         }
 
+        const normalizedCountry = normalizeCountry(country);
+        if (!isCountryCode(normalizedCountry)) {
+            alert("Please select a country from the list.");
+            return;
+        }
+
         if (exceedsTextLimit(destination, "tripName")) {
             alert(
                 `${TEXT_LIMIT_LABELS.tripName} exceeds the maximum allowed length (${formatCharacterCounter(destination, "tripName")}).`
@@ -91,7 +99,7 @@ export function NewTripModal({
             const updatedTrip: Trip = {
                 ...initialTrip,
                 destination,
-                country,
+                country: normalizedCountry,
                 startDate,
                 endDate,
                 travellers,
@@ -102,7 +110,7 @@ export function NewTripModal({
                     ...initialTrip,
                     name: destination,
                     destination,
-                    country,
+                    country: normalizedCountry,
                     startDate,
                     endDate,
                     travellers,
@@ -117,7 +125,7 @@ export function NewTripModal({
             const trip: Trip = {
                 id: crypto.randomUUID(),
                 destination,
-                country,
+                country: normalizedCountry,
                 startDate,
                 endDate,
                 travellers,
@@ -175,13 +183,9 @@ export function NewTripModal({
                 <label>
                     Country
 
-                    <input
-                        type="text"
+                    <CountrySelector
                         value={country}
-                        onChange={event =>
-                            setCountry(event.target.value)
-                        }
-                        placeholder="Italy"
+                        onChange={setCountry}
                     />
                 </label>
 

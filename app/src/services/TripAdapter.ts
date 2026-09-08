@@ -8,6 +8,7 @@ import {
 } from "../api/trips";
 import { ActiveTripSelectionStore } from "./ActiveTripSelection";
 import { OnlineTripStore } from "./OnlineTripStore";
+import { normalizeCountry } from "../utils/country";
 
 export type TripSource = "local" | "online";
 export type TripAdapter = {
@@ -100,7 +101,7 @@ export function toOnlineTrip(trip: SyncedTrip): Trip {
     return {
         id: trip.id,
         destination: trip.destination,
-        country: trip.country,
+        country: normalizeCountry(trip.country),
         startDate: trip.startDate,
         endDate: trip.endDate,
         travellers: trip.travellers,

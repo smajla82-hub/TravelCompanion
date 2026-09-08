@@ -15,3 +15,13 @@
 .tc-grid > * {
     min-width: 0;
 }
+
+.trips-grid {
+    align-items: stretch;
+}
+
+@media (max-width: 640px) {
+    .trips-grid {
+        grid-template-columns: 1fr !important;
+    }
+}
