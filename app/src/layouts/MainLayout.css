@@ -1,5 +1,58 @@
 .tc-main { min-height: 100vh; padding: 0 0 104px; }
 
+/*
+ * Top application header: intentionally holds only the dedicated Account
+ * action. Settings / New Trip / My Trips must not be added back here —
+ * Settings lives in the bottom navigation and New Trip in My Trips.
+ */
+.tc-top-header {
+    display: flex;
+    justify-content: flex-end;
+    align-items: center;
+
+    max-width: 1280px;
+    margin: 0 auto;
+    padding: max(var(--space-md), env(safe-area-inset-top)) var(--space-xl) var(--space-xs);
+}
+
+.tc-top-header-account {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+
+    min-height: 44px;
+    padding: 8px 16px;
+    border-radius: var(--tc-radius-pill);
+
+    background: var(--tc-brand-gradient);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--color-text) 16%, transparent);
+
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+
+    transition: box-shadow .2s;
+}
+
+.tc-top-header-account svg { width: 18px; height: 18px; }
+
+.tc-top-header-account.active {
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--color-text) 16%, transparent),
+        inset 0 0 0 2px rgba(255, 255, 255, .65);
+}
+
+@media (max-width: 480px) {
+    .tc-top-header {
+        padding: max(var(--space-md), env(safe-area-inset-top)) 12px var(--space-xs);
+    }
+
+    .tc-top-header-account {
+        padding: 8px 14px;
+        font-size: 13px;
+    }
+}
+
 .tc-bottom-nav {
     position: fixed;
     z-index: 10;

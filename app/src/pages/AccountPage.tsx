@@ -1,11 +1,18 @@
 import { useId, useState } from "react";
+import type { CSSProperties } from "react";
 
 import { ApiError } from "../api/client";
 import { AuthService } from "../services/AuthService";
 import { TripService } from "../services/TripService";
 import { OnlineTripStore } from "../services/OnlineTripStore";
+import { SETTINGS_BACKGROUND_URL } from "../styles/brandAssets";
 import { Button, Card, Container, Heading, Icon, Stack } from "../components/ui";
 import "./AccountPage.css";
+
+// The Account page reuses the approved Settings artwork — no new asset.
+const pageStyle = {
+    "--tc-settings-artwork": `url("${SETTINGS_BACKGROUND_URL}")`,
+} as CSSProperties;
 
 export default function AccountPage() {
     const [user, setUser] = useState(AuthService.getUser());
@@ -51,8 +58,9 @@ export default function AccountPage() {
 
     return (
         <Container>
+            <section className="settings-page" style={pageStyle}>
             <Stack gap="lg">
-                <Heading level={1}>Account & Sync</Heading>
+                <Heading level={1} className="tc-hero-title">Account &amp; Sync</Heading>
 
                 <Card>
                     <Stack gap="md">
@@ -156,6 +164,7 @@ export default function AccountPage() {
                     </Stack>
                 </Card>
             </Stack>
+            </section>
         </Container>
     );
 }
