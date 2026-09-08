@@ -1,7 +1,5 @@
 import { describe, expect, it } from "vitest";
 import * as XLSX from "xlsx";
-import { readFile } from "node:fs/promises";
-import { basename, resolve } from "node:path";
 
 import { importXlsxRoadBook } from "./XlsxRoadBookImporter";
 import { sortItineraryItems } from "../itinerary/sortItineraryItems";
@@ -55,11 +53,14 @@ function buildWorkbookFile(
     return new File([buffer], "roadbook.xlsx");
 }
 
-async function readFixtureFile(filename: string): Promise<File> {
-    const fixturePath = resolve("..", filename);
-    const buffer = await readFile(fixturePath);
+function readFixtureFile(filename: string): File {
+    const workbook = XLSX.readFile(`../${filename}`);
+    const buffer = XLSX.write(workbook, {
+        type: "buffer",
+        bookType: "xlsx",
+    });
 
-    return new File([new Uint8Array(buffer)], basename(fixturePath));
+    return new File([buffer], filename);
 }
 
 const HEADER_ROW = [
@@ -154,7 +155,7 @@ function buildCanonicalRows(
 
 describe("importXlsxRoadBook", () => {
     it("imports the MASTER_TEMPLATE v4.3 Day sheet without CONFIG and ignores its instruction sheet", async () => {
-        const file = await readFixtureFile("MASTER_TEMPLATE_V_4.3.xlsx");
+        const file = readFixtureFile("MASTER_TEMPLATE_V_4.3.xlsx");
 
         const { days } = await importXlsxRoadBook(file);
 
@@ -342,7 +343,7 @@ describe("importXlsxRoadBook", () => {
     });
 
     it("keeps the legacy BlizzCon RoadBook multi-day import functional while ignoring non-Day sheets", async () => {
-        const file = await readFixtureFile("BlizzCon 2026 plan.xlsx");
+        const file = readFixtureFile("BlizzCon 2026 plan.xlsx");
 
         const { days } = await importXlsxRoadBook(file);
 
