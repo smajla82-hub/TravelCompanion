@@ -309,7 +309,9 @@ export function listTrips(userId) {
     FROM trips
     LEFT JOIN trip_members ON trip_members.trip_id = trips.id AND trip_members.user_id = ?
     LEFT JOIN user_active_trips ON user_active_trips.user_id = ? AND user_active_trips.trip_id = trips.id
-    WHERE trip_members.user_id IS NOT NULL OR trips.user_id IS NULL
+    WHERE trip_members.user_id IS NOT NULL
+      OR (trips.user_id IS NULL
+          AND NOT EXISTS (SELECT 1 FROM trip_members WHERE trip_id = trips.id))
     ORDER BY trips.updated_at DESC`,
   ).all(userId, userId).map(mapTripRow);
 }
@@ -320,7 +322,10 @@ export function getTripById(tripId, userId) {
     FROM trips
     LEFT JOIN trip_members ON trip_members.trip_id = trips.id AND trip_members.user_id = ?
     LEFT JOIN user_active_trips ON user_active_trips.user_id = ? AND user_active_trips.trip_id = trips.id
-    WHERE trips.id = ? AND (trip_members.user_id IS NOT NULL OR trips.user_id IS NULL)`,
+    WHERE trips.id = ?
+      AND (trip_members.user_id IS NOT NULL
+           OR (trips.user_id IS NULL
+               AND NOT EXISTS (SELECT 1 FROM trip_members WHERE trip_id = trips.id)))`,
   ).get(userId, userId, tripId));
 }
 
@@ -330,7 +335,9 @@ export function getActiveTrip(userId) {
     JOIN trips ON trips.id = user_active_trips.trip_id
     LEFT JOIN trip_members ON trip_members.trip_id = trips.id AND trip_members.user_id = user_active_trips.user_id
     WHERE user_active_trips.user_id = ?
-      AND (trip_members.user_id IS NOT NULL OR trips.user_id IS NULL)
+      AND (trip_members.user_id IS NOT NULL
+           OR (trips.user_id IS NULL
+               AND NOT EXISTS (SELECT 1 FROM trip_members WHERE trip_id = trips.id)))
     LIMIT 1`,
   ).get(userId));
 }

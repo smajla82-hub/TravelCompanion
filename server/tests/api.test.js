@@ -448,6 +448,24 @@ test('legacy unowned trips remain authenticated ownerless shared data', async ()
       headers: firstUser,
       body: JSON.stringify({ email: 'anyone@example.com', role: 'viewer' }),
     })).status, 403);
+
+    const explicitlySharedTripId = randomUUID();
+    getDb().prepare(
+      `INSERT INTO trips (id, name, destination, country, start_date, end_date, travellers, status, is_active, user_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+    ).run(explicitlySharedTripId, 'Explicit legacy trip', '', '', '2026-11-01', '2026-11-02', 1, 'planning', 0);
+    const explicitMemberId = getDb().prepare('SELECT id FROM users WHERE email = ?').get('legacy-first@example.com').id;
+    getDb().prepare(
+      `INSERT INTO trip_members (trip_id, user_id, role, created_at, updated_at)
+       VALUES (?, ?, 'viewer', datetime('now'), datetime('now'))`,
+    ).run(explicitlySharedTripId, explicitMemberId);
+
+    assert.equal((await fetch(`http://127.0.0.1:${port}/trips/${explicitlySharedTripId}`, {
+      headers: firstUser,
+    })).status, 200);
+    assert.equal((await fetch(`http://127.0.0.1:${port}/trips/${explicitlySharedTripId}`, {
+      headers: secondUser,
+    })).status, 404);
   } finally {
     await new Promise((resolve, reject) => {
       server.close((error) => (error ? reject(error) : resolve()));

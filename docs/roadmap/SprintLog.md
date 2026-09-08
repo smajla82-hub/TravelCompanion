@@ -14,9 +14,11 @@ device data; exports include a read-only snapshot of currently accessible
 online trips, while restore deliberately changes local data only and never
 overwrites server-backed/shared trips.
 
-The database migration is additive: historical ownerless trips remain
-ownerless (no caller is assigned ownership) and are accessible as legacy shared
-editor data to authenticated users. Legacy global active selections are copied
+The database migration is additive: historical ownerless trips with no explicit
+membership remain ownerless (no caller is assigned ownership) and are
+intentionally recoverable as legacy shared editor data to authenticated users.
+Explicit memberships remain authoritative; owner-only operations stay closed.
+Legacy global active selections are copied
 per member deterministically; new selections are per user. Existing duplicate
 day dates and parking codes remain readable, while new duplicates are
 prevented. Day/stat writes are atomic, updates apply domain validation, parking

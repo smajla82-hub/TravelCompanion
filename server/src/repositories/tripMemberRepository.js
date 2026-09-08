@@ -28,11 +28,15 @@ export function getTripMember(tripId, userId) {
     return member;
   }
 
-  // Trips created before authentication have no accountable owner. Do not
-  // assign the first caller as owner; expose them only to authenticated users
-  // as ownerless shared editor data, keeping destructive/owner actions closed.
+  // Intentional family-data recovery policy: a pre-authentication trip with no
+  // owner *and no explicit members* is recoverable shared data. Authenticated
+  // callers receive editor-level access only; no ownership is invented and
+  // owner-only operations remain closed. Once memberships exist, they are the
+  // authoritative access policy.
   const ownerlessTrip = db.prepare(
-    'SELECT 1 FROM trips WHERE id = ? AND user_id IS NULL',
+    `SELECT 1 FROM trips
+     WHERE id = ? AND user_id IS NULL
+       AND NOT EXISTS (SELECT 1 FROM trip_members WHERE trip_id = trips.id)`,
   ).get(tripId);
   return ownerlessTrip ? { userId, role: 'editor', legacyOwnerless: true } : null;
 }
