@@ -1,0 +1,38 @@
+.account-form label {
+    display: flex;
+    flex-direction: column;
+    gap: 6px;
+    font-weight: 600;
+}
+
+.account-form input {
+    padding: 12px;
+    border: 1px solid var(--border-color);
+    border-radius: 10px;
+    font-size: 15px;
+}
+
+.account-form input:focus {
+    outline: none;
+    border-color: var(--color-primary);
+}
+
+.account-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-weight: 600;
+}
+
+.account-status--signed-in {
+    color: var(--color-success);
+}
+
+.account-status--signed-out {
+    color: var(--color-text-secondary);
+}
+
+.account-status--error {
+    color: var(--color-danger);
+    font-weight: 500;
+}
