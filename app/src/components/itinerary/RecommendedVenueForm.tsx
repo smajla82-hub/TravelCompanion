@@ -112,10 +112,6 @@ export function RecommendedVenueForm({
             return;
         }
 
-        function handleFindOnMap() {
-            openMapSearch(smartChip);
-        }
-
         const mealType = resolvedMealType();
 
         onSubmit({
@@ -137,6 +133,10 @@ export function RecommendedVenueForm({
             reservation,
             recommendation,
         });
+    }
+
+    function handleFindOnMap() {
+        openMapSearch(smartChip);
     }
 
     return (
