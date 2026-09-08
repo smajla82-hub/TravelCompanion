@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Button, Stack } from "../ui";
+import { Button, Icon, Stack } from "../ui";
 import "../trips/NewTripModal.css";
 
 import type { RecommendedVenue } from "../../types";
@@ -20,6 +20,7 @@ import {
     exceedsTextLimit,
     formatCharacterCounter,
 } from "../../domain/validation/textLimits";
+import { openMapSearch } from "../../utils/mapSearchUrl";
 
 export type RecommendedVenueFields = Omit<RecommendedVenue, "id">;
 
@@ -109,6 +110,10 @@ export function RecommendedVenueForm({
 
         if (!validate()) {
             return;
+        }
+
+        function handleFindOnMap() {
+            openMapSearch(smartChip);
         }
 
         const mealType = resolvedMealType();
@@ -234,6 +239,15 @@ export function RecommendedVenueForm({
                         value={smartChip}
                         onChange={(event) => setSmartChip(event.target.value)}
                     />
+                    <Button
+                        type="button"
+                        variant="outline"
+                        compact
+                        disabled={!smartChip.trim()}
+                        onClick={handleFindOnMap}
+                    >
+                        <Icon name="mapPin" width={16} height={16} /> Find on Map
+                    </Button>
                 </label>
 
                 <label>

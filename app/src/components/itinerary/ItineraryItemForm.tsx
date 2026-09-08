@@ -109,7 +109,7 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
   }
 
   function handleFindOnMap() {
-    openMapSearch(title, location);
+    openMapSearch(smartChip);
   }
 
   return (
@@ -144,15 +144,6 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
           <span className={counterClassName(location, "location")}>
             {formatCharacterCounter(location, "location")}
           </span>
-          <Button
-            type="button"
-            variant="outline"
-            compact
-            disabled={!title.trim() && !location.trim()}
-            onClick={handleFindOnMap}
-          >
-            <Icon name="mapPin" width={16} height={16} /> Find on Map
-          </Button>
         </label>
         <label>
           Activity Type
@@ -201,6 +192,15 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
             value={smartChip}
             onChange={(event) => setSmartChip(event.target.value)}
           />
+          <Button
+            type="button"
+            variant="outline"
+            compact
+            disabled={!smartChip.trim()}
+            onClick={handleFindOnMap}
+          >
+            <Icon name="mapPin" width={16} height={16} /> Find on Map
+          </Button>
         </label>
         <label>
           Map Link

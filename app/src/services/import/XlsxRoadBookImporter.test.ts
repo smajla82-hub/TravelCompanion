@@ -263,6 +263,7 @@ describe("importXlsxRoadBook", () => {
             expect.objectContaining({
                 code: "P1",
                 name: "Parking display name",
+                smartChip: "Parking Smart Place",
                 mapLink: parkingLink,
                 price: "10 USD/day",
                 note: "Covered lot",
@@ -272,6 +273,48 @@ describe("importXlsxRoadBook", () => {
             { label: "🚗 Celkem km", value: "~60 km" },
             { label: "🍽 Podniky", value: "1" },
         ]);
+    });
+
+    it("keeps DAY 2 American Icons venue and parking Smart Chips independent", async () => {
+        const { days } = await importXlsxRoadBook(
+            readFixtureFile("BlizzCon 2026 plan.xlsx"),
+        );
+        const day = days.find((candidate) => candidate.title.includes("DAY 2"));
+
+        expect(day?.venues?.filter((venue) => [
+            "The Kettle Manhattan Beach",
+            "Hopdoddy Burger Bar",
+            "Pitfire Pizza",
+            "Two Guns Espresso",
+        ].includes(venue.name))).toEqual([
+            expect.objectContaining({
+                name: "The Kettle Manhattan Beach",
+                parking: "P4",
+                smartChip: "The Kettle",
+            }),
+            expect.objectContaining({
+                name: "Hopdoddy Burger Bar",
+                parking: "P4",
+                smartChip: "Hopdoddy Burger Bar",
+            }),
+            expect.objectContaining({
+                name: "Pitfire Pizza",
+                parking: "P4",
+                smartChip: "Manhattan Beach",
+            }),
+            expect.objectContaining({
+                name: "Two Guns Espresso",
+                parking: "P4",
+                smartChip: "Two Guns Espresso",
+            }),
+        ]);
+        expect(day?.parkingLocations?.find((parking) => parking.code === "P4"))
+            .toMatchObject({
+                code: "P4",
+                name: "Manhattan Beach Pier Parking",
+                smartChip: "Manhattan Beach Pier",
+                mapLink: "https://www.google.com/maps/place/Manhattan+Beach+Pier/data=!4m2!3m1!19sChIJ7U-BHeuzwoARAvYAqFtEc2A",
+            });
     });
 
     it("imports multiple Day sheets using canonical v4.3 headers", async () => {

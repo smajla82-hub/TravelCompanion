@@ -5,9 +5,9 @@ This file records the completed development history of the Travel Companion appl
 It is a human-readable history, not an archive of every Git commit. Git remains authoritative for exact commit history.
 
 ## Feature FP-3 — Find on Map
-**Status:** DONE
+**Status:** IN PROGRESS
 
-Added a frontend-only Find on Map action to the Activity Location field. It opens a fixed, URL-encoded Google Maps search using the activity title and/or location, without changing the activity data model, Smart Chip behavior, or existing map links.
+Find on Map is being corrected to use the distinct Smart Chip field for Activity, Recommended Venue and Parking records. Location/name remains general place information; Smart Chip is the exact Google Maps query and Map Link is its independent result. ParkingLocation now retains the canonical template's optional Smart Chip text and map link independently of its immutable P1–P8 code.
 
 ## Sprint 7.5.x
 **Status:** DONE

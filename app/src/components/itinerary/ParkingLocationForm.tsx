@@ -1,6 +1,6 @@
 import { useState } from "react";
 
-import { Button, Stack } from "../ui";
+import { Button, Icon, Stack } from "../ui";
 import "../trips/NewTripModal.css";
 
 import type { ParkingLocation } from "../../types";
@@ -13,6 +13,7 @@ import {
     exceedsTextLimit,
     formatCharacterCounter,
 } from "../../domain/validation/textLimits";
+import { openMapSearch } from "../../utils/mapSearchUrl";
 
 export type ParkingLocationFields = Omit<ParkingLocation, "id">;
 
@@ -38,6 +39,7 @@ export function ParkingLocationForm({
         parking?.code ?? selectableCodes[0] ?? ""
     );
     const [name, setName] = useState(parking?.name ?? "");
+    const [smartChip, setSmartChip] = useState(parking?.smartChip ?? "");
     const [mapLink, setMapLink] = useState(parking?.mapLink ?? "");
     const [price, setPrice] = useState(parking?.price ?? "");
     const [note, setNote] = useState(parking?.note ?? "");
@@ -91,10 +93,15 @@ export function ParkingLocationForm({
         onSubmit({
             code,
             name,
+            smartChip,
             mapLink,
             price,
             note,
         });
+    }
+
+    function handleFindOnMap() {
+        openMapSearch(smartChip);
     }
 
     return (
@@ -136,6 +143,24 @@ export function ParkingLocationForm({
                         value={name}
                         onChange={(event) => setName(event.target.value)}
                     />
+                </label>
+
+                <label>
+                    Smart Chip
+                    <input
+                        type="text"
+                        value={smartChip}
+                        onChange={(event) => setSmartChip(event.target.value)}
+                    />
+                    <Button
+                        type="button"
+                        variant="outline"
+                        compact
+                        disabled={!smartChip.trim()}
+                        onClick={handleFindOnMap}
+                    >
+                        <Icon name="mapPin" width={16} height={16} /> Find on Map
+                    </Button>
                 </label>
 
                 <label>

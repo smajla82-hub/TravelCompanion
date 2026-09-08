@@ -2,24 +2,15 @@ const GOOGLE_MAPS_SEARCH_ORIGIN =
     "https://www.google.com/maps/search/?api=1&query=";
 
 export function buildMapSearchQuery(
-    title: string,
-    location: string,
+    smartChip: string,
 ): string {
-    const trimmedTitle = title.trim();
-    const trimmedLocation = location.trim();
-
-    if (trimmedTitle && trimmedLocation) {
-        return `${trimmedTitle} ${trimmedLocation}`;
-    }
-
-    return trimmedLocation || trimmedTitle;
+    return smartChip.trim();
 }
 
 export function getMapSearchUrl(
-    title: string,
-    location: string,
+    smartChip: string,
 ): string | undefined {
-    const query = buildMapSearchQuery(title, location);
+    const query = buildMapSearchQuery(smartChip);
 
     if (!query) {
         return undefined;
@@ -29,8 +20,7 @@ export function getMapSearchUrl(
 }
 
 export function openMapSearch(
-    title: string,
-    location: string,
+    smartChip: string,
     openWindow: (
         url: string,
         target: string,
@@ -39,7 +29,7 @@ export function openMapSearch(
         window.open(url, target, features);
     },
 ): boolean {
-    const url = getMapSearchUrl(title, location);
+    const url = getMapSearchUrl(smartChip);
 
     if (!url) {
         return false;

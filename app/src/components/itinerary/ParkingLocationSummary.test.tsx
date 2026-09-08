@@ -25,11 +25,12 @@ describe("ParkingLocationSummary", () => {
         expect(markup).toContain("Covered parking");
     });
 
-    it("links the name to the map link when present", () => {
+    it("links the Smart Chip to the map link without replacing the location name", () => {
         const parking: ParkingLocation = {
             id: "p1",
             code: "P1",
             name: "Central Garage",
+            smartChip: "Central Garage Entrance",
             mapLink: "https://maps.example.com/p1",
         };
 
@@ -38,5 +39,6 @@ describe("ParkingLocationSummary", () => {
         );
 
         expect(markup).toContain('href="https://maps.example.com/p1"');
+        expect(markup).toContain("Central Garage Entrance");
     });
 });

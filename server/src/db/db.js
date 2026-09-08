@@ -63,6 +63,10 @@ const hasParkingNote = parkingLocationColumns.some((column) => column.name === '
 if (!hasParkingNote) {
   db.exec('ALTER TABLE parking_locations ADD COLUMN note TEXT');
 }
+const hasParkingSmartChip = parkingLocationColumns.some((column) => column.name === 'smart_chip');
+if (!hasParkingSmartChip) {
+  db.exec('ALTER TABLE parking_locations ADD COLUMN smart_chip TEXT');
+}
 
 export function getDb() {
   return db;

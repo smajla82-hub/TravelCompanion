@@ -298,7 +298,12 @@ test('an imported itinerary persists recommended venues and parking locations, d
           { name: 'Trattoria Bella' },
         ],
         parkingLocations: [
-          { code: 'P1', name: 'Central Garage', mapLink: 'https://maps.example.com/p1' },
+          {
+            code: 'P1',
+            name: 'Central Garage',
+            smartChip: 'Central Garage Entrance',
+            mapLink: 'https://maps.example.com/p1',
+          },
           { code: 'P2', name: 'Lakeside Lot' },
         ],
       },
@@ -339,6 +344,7 @@ test('an imported itinerary persists recommended venues and parking locations, d
     assert.ok(day1.parkingLocations[0].id);
     assert.equal(day1.parkingLocations[0].code, 'P1');
     assert.equal(day1.parkingLocations[0].name, 'Central Garage');
+    assert.equal(day1.parkingLocations[0].smartChip, 'Central Garage Entrance');
     assert.equal(day1.parkingLocations[0].mapLink, 'https://maps.example.com/p1');
     assert.equal(day1.parkingLocations[1].code, 'P2');
     assert.equal(day1.parkingLocations[1].name, 'Lakeside Lot');

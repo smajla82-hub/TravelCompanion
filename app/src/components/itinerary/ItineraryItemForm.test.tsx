@@ -10,13 +10,13 @@ describe("ItineraryItemForm", () => {
     it("opens the expected Google Maps search URL", () => {
         const openWindow = (url: string, target: string, features: string) => {
             expect(url).toBe(
-                "https://www.google.com/maps/search/?api=1&query=Old%20Town%20Prague",
+                "https://www.google.com/maps/search/?api=1&query=Old%20Town",
             );
             expect(target).toBe("_blank");
             expect(features).toBe("noopener,noreferrer");
         };
 
-        expect(openMapSearch("Old Town", "Prague", openWindow)).toBe(true);
+        expect(openMapSearch("Old Town", openWindow)).toBe(true);
     });
 
     it("renders Find on Map without changing imported Smart Chip fields", () => {
@@ -41,12 +41,15 @@ describe("ItineraryItemForm", () => {
         );
     });
 
-    it("disables Find on Map when title and location are empty", () => {
+    it("places Find on Map below Smart Chip and disables it when empty", () => {
         const markup = renderToStaticMarkup(
             <ItineraryItemForm onSubmit={() => {}} />,
         );
 
         expect(markup).toContain("Find on Map");
         expect(markup).toContain("disabled");
+        expect(markup.indexOf("Smart Chip")).toBeLessThan(
+            markup.indexOf("Find on Map"),
+        );
     });
 });
