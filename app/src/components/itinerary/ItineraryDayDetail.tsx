@@ -249,7 +249,7 @@ export function ItineraryDayDetail({
                     Add Activity
                 </Button>}
 
-                <p>
+                <p className="itinerary-list-summary">
                     {visibleItems.length} activities
                 </p>
 

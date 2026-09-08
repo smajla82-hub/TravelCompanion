@@ -141,13 +141,15 @@ export function ItineraryDayAdditionalDetails({
                 <Card variant="outlined">
                     <Stack gap="md">
                         <div>
-                            <strong>
+                            <div className="itinerary-list-summary">
+                                <strong>
                                 Recommended venues
-                            </strong>
-                            {" "}
-                            <span>
-                                ({venues.length}/{MAX_VENUES_PER_DAY})
-                            </span>
+                                </strong>
+                                {" "}
+                                <span>
+                                    ({venues.length}/{MAX_VENUES_PER_DAY})
+                                </span>
+                            </div>
 
                             {venues.length > 0 && (
                                 <Stack gap="sm">
@@ -166,13 +168,15 @@ export function ItineraryDayAdditionalDetails({
                         </div>
 
                         <div>
-                            <strong>
-                                Parking
-                            </strong>
-                            {" "}
-                            <span>
-                                ({parkingLocations.length}/{MAX_PARKING_PER_DAY})
-                            </span>
+                            <div className="itinerary-list-summary">
+                                <strong>
+                                    Parking
+                                </strong>
+                                {" "}
+                                <span>
+                                    ({parkingLocations.length}/{MAX_PARKING_PER_DAY})
+                                </span>
+                            </div>
 
                             {parkingLocations.length > 0 && (
                                 <Stack gap="sm">
