@@ -19,12 +19,6 @@ type MainLayoutProps = {
 export default function MainLayout({ children }: MainLayoutProps) {
     return (
         <main className="tc-main">
-            <header className="tc-top-header">
-                <NavLink to="/account" className="tc-top-header-account">
-                    <Icon name="idCard" />
-                    <span>Account</span>
-                </NavLink>
-            </header>
             {children}
             <nav className="tc-bottom-nav" style={bottomNavStyle}>
                 <NavLink to="/" end>

@@ -1,9 +1,12 @@
 import { useEffect, useRef, useState } from "react";
 import type { CSSProperties } from "react";
 
+import { NavLink } from "react-router-dom";
+
 import {
     Container,
     Heading,
+    Icon,
 } from "../components/ui";
 
 import {
@@ -69,7 +72,14 @@ export default function DashboardPage() {
         <Container>
 
             <header className="tc-brand-header" style={brandHeaderStyle}>
-                <Heading level={1} className="tc-hero-title">Travel Companion</Heading>
+                <div className="tc-hero-header-row">
+                    <Heading level={1} className="tc-hero-title">Travel Companion</Heading>
+
+                    <NavLink to="/account" className="tc-hero-account">
+                        <Icon name="idCard" />
+                        <span>Account</span>
+                    </NavLink>
+                </div>
 
                 <CurrentTripSection
                     onContinue={continueTrip}
