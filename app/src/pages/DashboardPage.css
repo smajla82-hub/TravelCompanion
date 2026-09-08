@@ -37,12 +37,6 @@
     z-index: 1;
 
     margin: 0 0 var(--space-lg);
-
-    color: #ffffff;
-    font-size: 30px;
-    font-weight: 700;
-    line-height: 36px;
-    letter-spacing: -0.01em;
     text-align: left;
 }
 
@@ -54,10 +48,5 @@
 @media (max-width: 480px) {
     .tc-brand-header {
         padding-bottom: var(--space-lg);
-    }
-
-    .tc-brand-header h1 {
-        font-size: 26px;
-        line-height: 32px;
     }
 }

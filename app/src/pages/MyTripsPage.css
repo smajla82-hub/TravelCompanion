@@ -2,61 +2,82 @@
     position: relative;
     isolation: isolate;
     overflow: hidden;
-    min-height: 360px;
-    padding: var(--space-lg);
-    background:
-        var(--tc-brand-gradient-soft),
-        var(--surface-primary);
-    border: 1px solid color-mix(in srgb, var(--color-purple) 18%, var(--border-color));
-    border-radius: var(--radius-xl);
-}
 
-.my-trips-page::before {
-    content: "";
-    position: absolute;
-    z-index: -1;
-    top: 0;
-    right: 0;
-    width: min(420px, 85%);
-    height: 360px;
-    pointer-events: none;
-    opacity: var(--tc-brand-artwork-opacity);
+    padding: var(--space-lg);
+    border-radius: var(--radius-xl);
+
+    background-color: var(--surface-primary);
     background-image: var(--tc-my-trips-artwork);
     background-repeat: no-repeat;
-    background-position: top right;
-    background-size: contain;
-    mix-blend-mode: multiply;
-}
-
-[data-theme="dark"] .my-trips-page::before {
-    opacity: 0.5;
+    background-position: top center;
+    /*
+     * Scale the artwork to the page width while preserving its natural
+     * 1440x3200 aspect ratio (no cropping, no fixed hero height). It simply
+     * scrolls with the page content beneath it; if the page is shorter than
+     * the artwork the surrounding border-radius clips it cleanly, and if the
+     * page grows taller the layout continues on the plain surface color
+     * below the artwork instead of stretching/repeating the image.
+     */
+    background-size: 100% auto;
 }
 
 .my-trips-header {
     display: flex;
-    justify-content: flex-end;
-    margin-bottom: 16px;
-}
-
-.my-trips-heading {
+    flex-wrap: nowrap;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
     margin-bottom: var(--space-lg);
 }
 
-.my-trips-heading h2 {
-    color: var(--color-text);
-    font-size: 30px;
-    font-weight: 700;
-    line-height: 36px;
-    letter-spacing: -0.01em;
+.my-trips-header .tc-hero-title {
+    margin: 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.my-trips-header .tc-button {
+    flex-shrink: 0;
 }
 
 @media (max-width: 480px) {
     .my-trips-page {
         padding: var(--space-lg) 12px;
+        /*
+         * The artwork's tall (1440x3200) aspect ratio means a full-width
+         * render on a narrow phone is only ~800-900px tall — shorter than
+         * several stacked Trip cards — so the branded background appears to
+         * "end early". Uniformly scaling it up (same factor applied to both
+         * width and height, so the aspect ratio and proportions stay
+         * intact — no distortion) keeps it visually present further down
+         * the page; the page's own `overflow: hidden` trims only the
+         * symmetric left/right overscan introduced by the up-scale, not the
+         * artwork's height, so nothing is cropped into a shorter box.
+         */
+        background-position: top center;
+        background-size: 160% auto;
     }
 
-    .my-trips-heading h2 {
-        font-size: 26px;
-        line-height: 32px;
+    .my-trips-header {
+        gap: var(--space-sm);
+    }
+
+    .my-trips-header .tc-button {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 360px) {
+    .my-trips-header .tc-hero-title {
+        font-size: 22px;
+        line-height: 28px;
+    }
+
+    .my-trips-header .tc-button {
+        padding: 8px 10px;
+        font-size: 12px;
     }
 }
