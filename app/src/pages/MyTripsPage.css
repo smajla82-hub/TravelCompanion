@@ -1,6 +1,7 @@
 .my-trips-page {
     position: relative;
     isolation: isolate;
+    overflow: hidden;
 
     padding: var(--space-lg);
     border-radius: var(--radius-xl);
@@ -22,6 +23,7 @@
 
 .my-trips-header {
     display: flex;
+    flex-wrap: nowrap;
     align-items: center;
     justify-content: space-between;
     gap: var(--space-md);
@@ -30,14 +32,52 @@
 
 .my-trips-header .tc-hero-title {
     margin: 0;
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
+.my-trips-header .tc-button {
+    flex-shrink: 0;
 }
 
 @media (max-width: 480px) {
     .my-trips-page {
         padding: var(--space-lg) 12px;
+        /*
+         * The artwork's tall (1440x3200) aspect ratio means a full-width
+         * render on a narrow phone is only ~800-900px tall — shorter than
+         * several stacked Trip cards — so the branded background appears to
+         * "end early". Uniformly scaling it up (same factor applied to both
+         * width and height, so the aspect ratio and proportions stay
+         * intact — no distortion) keeps it visually present further down
+         * the page; the page's own `overflow: hidden` trims only the
+         * symmetric left/right overscan introduced by the up-scale, not the
+         * artwork's height, so nothing is cropped into a shorter box.
+         */
+        background-position: top center;
+        background-size: 160% auto;
     }
 
     .my-trips-header {
-        flex-wrap: wrap;
+        gap: var(--space-sm);
+    }
+
+    .my-trips-header .tc-button {
+        padding: 10px 12px;
+        font-size: 13px;
+    }
+}
+
+@media (max-width: 360px) {
+    .my-trips-header .tc-hero-title {
+        font-size: 22px;
+        line-height: 28px;
+    }
+
+    .my-trips-header .tc-button {
+        padding: 8px 10px;
+        font-size: 12px;
     }
 }
