@@ -5,8 +5,9 @@ import { getDb } from '../db/db.js';
 const db = getDb();
 
 const SALT_ROUNDS = 10;
-const MIN_PASSWORD_LENGTH = 8;
+export const MIN_PASSWORD_LENGTH = 8;
 const MAX_EMAIL_LENGTH = 254;
+const MAX_DISPLAY_NAME_LENGTH = 80;
 // Basic structural check (local-part@domain-with-a-dot), not a full RFC 5322
 // validator — good enough to reject obviously malformed/malicious input
 // without rejecting legitimate addresses.
@@ -20,6 +21,7 @@ function mapUserRow(row) {
   return {
     id: row.id,
     email: row.email,
+    displayName: row.display_name ?? null,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
   };
@@ -93,4 +95,35 @@ export function verifyPassword(user, password) {
   }
 
   return bcrypt.compareSync(password, user.password_hash);
+}
+
+/**
+ * Updates a user's display name. Passing an empty/whitespace-only value
+ * clears it back to `null`, which falls back to the email address wherever
+ * a display name is shown (trip members, edit-lock holders, etc).
+ */
+export function updateDisplayName(userId, displayName) {
+  const trimmed = String(displayName ?? '').trim();
+  if (trimmed.length > MAX_DISPLAY_NAME_LENGTH) {
+    const error = new Error(`Display name must be at most ${MAX_DISPLAY_NAME_LENGTH} characters long.`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  db.prepare('UPDATE users SET display_name = ?, updated_at = ? WHERE id = ?')
+    .run(trimmed || null, new Date().toISOString(), userId);
+  return getUserById(userId);
+}
+
+export function updatePasswordHash(userId, password) {
+  if (String(password).length < MIN_PASSWORD_LENGTH) {
+    const error = new Error(`Password must be at least ${MIN_PASSWORD_LENGTH} characters long.`);
+    error.statusCode = 400;
+    throw error;
+  }
+
+  const passwordHash = bcrypt.hashSync(password, SALT_ROUNDS);
+  db.prepare('UPDATE users SET password_hash = ?, updated_at = ? WHERE id = ?')
+    .run(passwordHash, new Date().toISOString(), userId);
+  return getUserById(userId);
 }

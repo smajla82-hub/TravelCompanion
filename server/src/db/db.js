@@ -26,6 +26,14 @@ if (!hasUserId) {
   db.exec('CREATE INDEX IF NOT EXISTS idx_trips_user_id ON trips (user_id)');
 }
 
+// Migration: add `display_name` to `users` for databases created before FP-7
+// (Account email/profile). Additive/nullable — existing accounts simply fall
+// back to their email address for display until they set a name.
+const userColumns = db.prepare("PRAGMA table_info(users)").all();
+if (!userColumns.some((column) => column.name === 'display_name')) {
+  db.exec('ALTER TABLE users ADD COLUMN display_name TEXT');
+}
+
 // Normalize known historical country names to ISO 3166-1 alpha-2 codes.
 // Unknown values are deliberately preserved for later user correction.
 const countryAliases = {

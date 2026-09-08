@@ -13,13 +13,13 @@ function mapLockRow(row) {
     acquiredAt: row.acquired_at,
     lastHeartbeatAt: row.last_heartbeat_at,
     expiresAt: row.expires_at,
-    ...(row.email ? { email: row.email } : {}),
+    ...(row.email ? { email: row.email, displayName: row.display_name ?? null } : {}),
   };
 }
 
 function getLockRow(tripId) {
   return db.prepare(
-    `SELECT trip_locks.*, users.email
+    `SELECT trip_locks.*, users.email, users.display_name
      FROM trip_locks JOIN users ON users.id = trip_locks.user_id
      WHERE trip_locks.trip_id = ?`,
   ).get(tripId);

@@ -10,6 +10,7 @@ function mapMemberRow(row) {
   return {
     userId: row.user_id,
     email: row.email,
+    displayName: row.display_name ?? null,
     role: row.role,
     createdAt: row.created_at,
     updatedAt: row.updated_at,
@@ -19,7 +20,7 @@ function mapMemberRow(row) {
 export function getTripMember(tripId, userId) {
   const member = mapMemberRow(
     db.prepare(
-      `SELECT trip_members.*, users.email
+      `SELECT trip_members.*, users.email, users.display_name
        FROM trip_members JOIN users ON users.id = trip_members.user_id
        WHERE trip_id = ? AND user_id = ?`,
     ).get(tripId, userId),
@@ -43,7 +44,7 @@ export function getTripMember(tripId, userId) {
 
 export function listTripMembers(tripId) {
   return db.prepare(
-    `SELECT trip_members.*, users.email
+    `SELECT trip_members.*, users.email, users.display_name
      FROM trip_members JOIN users ON users.id = trip_members.user_id
      WHERE trip_id = ? ORDER BY CASE role WHEN 'owner' THEN 0 ELSE 1 END, users.email`,
   ).all(tripId).map(mapMemberRow);

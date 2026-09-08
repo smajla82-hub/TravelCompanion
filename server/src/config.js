@@ -8,6 +8,7 @@ const DEV_ONLY_JWT_SECRET = 'dev-only-insecure-secret-change-me';
 const INSECURE_JWT_SECRET_ALLOWED_ENVS = new Set(['development', 'test']);
 const configuredInvitationExpiry = Number(process.env.INVITATION_EXPIRES_IN_DAYS || 7);
 const configuredTripLockTtl = Number(process.env.TRIP_LOCK_TTL_MS || 120000);
+const configuredPasswordResetExpiry = Number(process.env.PASSWORD_RESET_EXPIRES_IN_MINUTES || 60);
 
 if (
   !INSECURE_JWT_SECRET_ALLOWED_ENVS.has(nodeEnv) &&
@@ -33,4 +34,20 @@ export const config = {
   tripLockTtlMs: Number.isFinite(configuredTripLockTtl) && configuredTripLockTtl > 0
     ? configuredTripLockTtl
     : 120000,
+  passwordResetExpiresInMinutes: Number.isFinite(configuredPasswordResetExpiry) && configuredPasswordResetExpiry > 0
+    ? configuredPasswordResetExpiry
+    : 60,
+  // The frontend origin (including any sub-path, no trailing slash) used to
+  // build the password reset link sent by email. Falls back to the
+  // production GitHub Pages deployment so a missing/unset value in
+  // production still points somewhere real instead of `undefined/...`.
+  appBaseUrl: (process.env.APP_BASE_URL || 'https://smajla82-hub.github.io/TravelCompanion').replace(/\/+$/, ''),
+  smtp: {
+    host: process.env.SMTP_HOST || '',
+    port: Number(process.env.SMTP_PORT || 587),
+    secure: process.env.SMTP_SECURE === 'true',
+    user: process.env.SMTP_USER || '',
+    pass: process.env.SMTP_PASS || '',
+    from: process.env.SMTP_FROM || 'Travel Companion <no-reply@travel-companion.local>',
+  },
 };
