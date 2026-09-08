@@ -4,6 +4,17 @@ This file records the completed development history of the Travel Companion appl
 
 It is a human-readable history, not an archive of every Git commit. Git remains authoritative for exact commit history.
 
+## Technical Fix TF-1 — Online Trip Statistics persistence
+**Status:** DONE
+
+Day statistics (`ItineraryDay.stats`) were parsed by the RoadBook importer and kept
+by Offline Trips, but were dropped once a Trip was synchronized because the online
+itinerary payload and the server never carried them. `stats` is now sent with the
+atomic itinerary replacement and with day updates, persisted in the additive
+`day_stats` table (day-scoped label/value pairs with preserved order) and returned
+by the itinerary endpoints, so an imported Trip keeps its statistics Online.
+Trips without statistics keep loading unchanged and no database reset is needed.
+
 ## Feature FP-3 — Find on Map
 **Status:** IN PROGRESS
 

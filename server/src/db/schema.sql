@@ -168,3 +168,24 @@ CREATE TABLE IF NOT EXISTS parking_locations (
 CREATE INDEX IF NOT EXISTS idx_parking_locations_trip_id ON parking_locations (trip_id);
 CREATE INDEX IF NOT EXISTS idx_parking_locations_day_id ON parking_locations (day_id);
 CREATE INDEX IF NOT EXISTS idx_parking_locations_sort ON parking_locations (day_id, sort_order);
+
+-- Day statistics are day-scoped label/value pairs imported from the RoadBook
+-- ("Statistiky"), matching the offline `ItineraryDay.stats` domain model.
+-- They carry no identity of their own, so `sort_order` preserves the imported
+-- order and the row id exists only as a primary key.
+CREATE TABLE IF NOT EXISTS day_stats (
+  id TEXT PRIMARY KEY,
+  trip_id TEXT NOT NULL,
+  day_id TEXT NOT NULL,
+  label TEXT NOT NULL,
+  value TEXT NOT NULL DEFAULT '',
+  sort_order INTEGER NOT NULL DEFAULT 0,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (trip_id) REFERENCES trips (id) ON DELETE CASCADE,
+  FOREIGN KEY (day_id) REFERENCES itinerary_days (id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_day_stats_trip_id ON day_stats (trip_id);
+CREATE INDEX IF NOT EXISTS idx_day_stats_day_id ON day_stats (day_id);
+CREATE INDEX IF NOT EXISTS idx_day_stats_sort ON day_stats (day_id, sort_order);

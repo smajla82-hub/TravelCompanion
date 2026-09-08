@@ -195,6 +195,46 @@ describe("toOnlineTrip", () => {
                 expect.objectContaining({ venues: undefined, parkingLocations: undefined }),
             ]);
         });
+
+        it("sends the statistics of every day and reapplies the persisted ones", async () => {
+            const adapter = createTripAdapter({
+                ...serverTrip(),
+                source: "online",
+            });
+            OnlineTripStore.applyTrip({
+                ...toOnlineTrip(serverTrip()),
+                itinerary: [],
+                itineraryLoaded: true,
+            });
+            vi.spyOn(SyncedTripApi, "acquireLock").mockResolvedValue({});
+            vi.spyOn(SyncedTripApi, "releaseLock").mockResolvedValue({});
+
+            const dayOneStats = [
+                { label: "Kilometry", value: "120 km" },
+                { label: "Kroky", value: "15 000" },
+            ];
+            const dayTwoStats = [{ label: "Kilometry", value: "80 km" }];
+            const persistedDays = [
+                { id: "day-1", date: "2026-09-01", title: "Day 1", items: [], stats: dayOneStats },
+                { id: "day-2", date: "2026-09-02", title: "Day 2", items: [], stats: dayTwoStats },
+                { id: "day-3", date: "2026-09-03", title: "Day 3", items: [], stats: [] },
+            ];
+            const replaceItinerary = vi.spyOn(SyncedTripApi, "replaceItinerary")
+                .mockResolvedValue({ tripId: "trip-1", days: persistedDays });
+
+            await adapter.setItinerary([
+                { id: "local-day-1", date: "2026-09-01", title: "Day 1", items: [], stats: dayOneStats },
+                { id: "local-day-2", date: "2026-09-02", title: "Day 2", items: [], stats: dayTwoStats },
+                { id: "local-day-3", date: "2026-09-03", title: "Day 3", items: [] },
+            ]);
+
+            expect(replaceItinerary).toHaveBeenCalledWith("trip-1", [
+                expect.objectContaining({ stats: dayOneStats }),
+                expect.objectContaining({ stats: dayTwoStats }),
+                expect.objectContaining({ stats: undefined }),
+            ]);
+            expect(OnlineTripStore.getSnapshot()[0].itinerary).toEqual(persistedDays);
+        });
     });
 
     it("does not treat a non active trip as active", () => {

@@ -23,6 +23,7 @@ type ItineraryItemPayload = Omit<ItineraryItem, "id">;
 export type ItineraryDayPayload = Pick<ItineraryDay, "date" | "title"> & {
     items: ItineraryItemPayload[];
     venues?: ItineraryDay["venues"];
+    stats?: ItineraryDay["stats"];
     parkingLocations?: ItineraryDay["parkingLocations"];
 };
 
@@ -94,7 +95,7 @@ export const SyncedTripApi = {
             method: "POST",
             body: JSON.stringify(day),
         }),
-    updateDay: (tripId: string, dayId: string, day: Pick<ItineraryDay, "date" | "title">) =>
+    updateDay: (tripId: string, dayId: string, day: Pick<ItineraryDay, "date" | "title"> & Pick<ItineraryDay, "stats">) =>
         apiRequest<ItineraryDay>(`/trips/${tripId}/itinerary/days/${dayId}`, {
             method: "PUT",
             body: JSON.stringify(day),

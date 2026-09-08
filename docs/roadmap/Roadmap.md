@@ -378,3 +378,8 @@ Repository documentation is part of project continuity.
   conflict feedback, active-trip dashboard state, authenticated creation, and
   full RoadBook replacement are routed through that adapter. **10.5 — Data
   migration** is next; server changes remain out of scope.
+- **TF-1 — Online Trip Statistics persistence** — **DONE**. `ItineraryDay.stats`
+  is now part of the online itinerary payload and is persisted server-side in the
+  additive `day_stats` table, so imported day statistics survive synchronization
+  and are restored when an Online Trip is loaded. Trips without statistics remain
+  unaffected and no database reset is required.

@@ -653,3 +653,108 @@ test('deleting a recommended venue removes it without affecting other venues or 
     await closeServer(server);
   }
 });
+
+test('an imported itinerary persists day statistics per day and keeps days without statistics compatible', async () => {
+  const { server, port } = await startServer();
+  try {
+    const headers = await signIn(port, 'itinerary-stats@example.com');
+    const trip = await createTrip(port, headers, 'Stats');
+
+    await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, { method: 'POST', headers });
+
+    const days = [
+      {
+        date: '2026-09-01',
+        title: 'DAY 1',
+        items: [{ date: '2026-09-01', title: 'Breakfast' }],
+        stats: [
+          { label: 'Kilometry', value: '120 km' },
+          { label: 'Kroky', value: '15 000' },
+        ],
+      },
+      {
+        date: '2026-09-02',
+        title: 'DAY 2',
+        items: [{ date: '2026-09-02', title: 'Departure' }],
+        stats: [{ label: 'Kilometry', value: '80 km' }],
+      },
+      {
+        date: '2026-09-03',
+        title: 'DAY 3',
+        items: [{ date: '2026-09-03', title: 'Flight' }],
+      },
+    ];
+
+    const saved = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/itinerary`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ days }),
+    });
+    assert.equal(saved.status, 200);
+
+    const savedItinerary = await saved.json();
+    assert.deepEqual(savedItinerary.days[0].stats, days[0].stats);
+
+    const itinerary = await getItinerary(port, headers, trip.id);
+    assert.deepEqual(itinerary.days[0].stats, [
+      { label: 'Kilometry', value: '120 km' },
+      { label: 'Kroky', value: '15 000' },
+    ]);
+    assert.deepEqual(itinerary.days[1].stats, [{ label: 'Kilometry', value: '80 km' }]);
+    assert.deepEqual(itinerary.days[2].stats, []);
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('replacing an itinerary without statistics clears them and a day update preserves untouched statistics', async () => {
+  const { server, port } = await startServer();
+  try {
+    const headers = await signIn(port, 'itinerary-stats-update@example.com');
+    const trip = await createTrip(port, headers, 'Stats update');
+
+    await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, { method: 'POST', headers });
+
+    await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/itinerary`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({
+        days: [{
+          date: '2026-09-01',
+          title: 'DAY 1',
+          items: [],
+          stats: [{ label: 'Kilometry', value: '120 km' }],
+        }],
+      }),
+    });
+
+    const withStats = await getItinerary(port, headers, trip.id);
+    const dayId = withStats.days[0].id;
+
+    const renamed = await (await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${dayId}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ date: '2026-09-01', title: 'DAY ONE' }),
+    })).json();
+    assert.equal(renamed.title, 'DAY ONE');
+    assert.deepEqual(renamed.stats, [{ label: 'Kilometry', value: '120 km' }]);
+
+    const updated = await (await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${dayId}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ date: '2026-09-01', title: 'DAY ONE', stats: [{ label: 'Kroky', value: '9 000' }] }),
+    })).json();
+    assert.deepEqual(updated.stats, [{ label: 'Kroky', value: '9 000' }]);
+
+    await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/itinerary`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ days: [{ date: '2026-09-01', title: 'DAY 1', items: [] }] }),
+    });
+
+    const cleared = await getItinerary(port, headers, trip.id);
+    assert.deepEqual(cleared.days[0].stats, []);
+  } finally {
+    await closeServer(server);
+  }
+});
