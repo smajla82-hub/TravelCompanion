@@ -69,7 +69,7 @@ export default function DashboardPage() {
         <Container>
 
             <header className="tc-brand-header" style={brandHeaderStyle}>
-                <Heading level={1}>Travel Companion</Heading>
+                <Heading level={1} className="tc-hero-title">Travel Companion</Heading>
 
                 <CurrentTripSection
                     onContinue={continueTrip}

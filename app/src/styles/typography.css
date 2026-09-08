@@ -16,3 +16,24 @@
     --font-weight-bold: 700;
 
 }
+
+/*
+ * Shared "hero" page-title treatment (Sprint FP-4): white text on the
+ * branded/artwork header used by the Home Dashboard and My Trips pages, so
+ * both headings keep the same visual hierarchy instead of each page
+ * inventing its own heading style.
+ */
+.tc-hero-title {
+    color: #ffffff;
+    font-size: 30px;
+    font-weight: var(--font-weight-bold);
+    line-height: 36px;
+    letter-spacing: -0.01em;
+}
+
+@media (max-width: 480px) {
+    .tc-hero-title {
+        font-size: 26px;
+        line-height: 32px;
+    }
+}

@@ -39,6 +39,10 @@ export default defineConfig({
       },
       workbox: {
         globPatterns: ['**/*.{js,css,html,ico,png,svg,webp,webmanifest}'],
+        // The My Trips page background artwork
+        // (trips_background_1440x3200.webp) is a large full-page image that
+        // exceeds workbox's 2 MiB default precache limit.
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
       },
     }),
   ],
