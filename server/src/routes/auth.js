@@ -52,7 +52,11 @@ router.post('/register', authAttemptLimiter, (req, res) => {
   const { email, password, firstName, lastName } = req.body ?? {};
   const user = repo.createUser({ email, password, firstName, lastName });
   const token = issueToken(user);
-  void sendAccountCreatedEmail(user.email).catch(() => undefined);
+  void sendAccountCreatedEmail(user.email).catch((error) => {
+    // Registration remains successful, but delivery/configuration failures must
+    // be visible to operators rather than silently swallowed.
+    console.error(`[mailer] Account-created email failed: ${error.message}`);
+  });
   return res.status(201).json({ token, user: repo.toPublicUser(user), message: 'Account created successfully.' });
 });
 
@@ -106,7 +110,9 @@ router.post('/forgot-password', forgotPasswordLimiter, (req, res) => {
   const resetLink = `${config.appBaseUrl}/reset-password/${resetToken.token}`;
 
   return sendPasswordResetEmail(user.email, resetLink, config.passwordResetExpiresInMinutes)
-    .catch(() => undefined)
+    .catch((error) => {
+      console.error(`[mailer] Password-reset email failed: ${error.message}`);
+    })
     .then(respondGeneric);
 });
 

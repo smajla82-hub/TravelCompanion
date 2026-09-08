@@ -14,6 +14,7 @@ const { createApp } = await import(`../src/app.js?test=${Date.now()}`);
 // used internally by the repositories app.js already pulled in, so it shares
 // that single `better-sqlite3` connection instead of opening a second one.
 const { getDb } = await import('../src/db/db.js');
+const passwordResets = await import('../src/repositories/passwordResetRepository.js');
 
 function startServer() {
   const app = createApp();
@@ -29,6 +30,10 @@ function latestResetToken() {
   return getDb()
     .prepare('SELECT * FROM password_reset_tokens ORDER BY created_at DESC LIMIT 1')
     .get();
+}
+
+function createTestResetToken(userId, expiresAt = new Date(Date.now() + 60_000).toISOString()) {
+  return passwordResets.createResetToken(userId, expiresAt).token;
 }
 
 test('PUT /auth/profile sets and clears a display name', async () => {
@@ -80,7 +85,7 @@ test('PUT /auth/profile sets and clears a display name', async () => {
 test('forgot-password always answers with the same generic message', async () => {
   const { server, port } = await startServer();
   try {
-    await fetch(`http://127.0.0.1:${port}/auth/register`, {
+    const registration = await fetch(`http://127.0.0.1:${port}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: 'forgot-owner@example.com', password: 'correct-horse' }),
@@ -106,6 +111,8 @@ test('forgot-password always answers with the same generic message', async () =>
     // Only the real account should have produced an actual reset token.
     const row = latestResetToken();
     assert.ok(row);
+    assert.equal(row.token, undefined);
+    assert.ok(row.token_hash);
   } finally {
     await new Promise((resolve, reject) => {
       server.close((error) => (error ? reject(error) : resolve()));
@@ -116,18 +123,14 @@ test('forgot-password always answers with the same generic message', async () =>
 test('reset-password consumes a single-use token and updates the password', async () => {
   const { server, port } = await startServer();
   try {
-    await fetch(`http://127.0.0.1:${port}/auth/register`, {
+    const registration = await fetch(`http://127.0.0.1:${port}/auth/register`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ email: 'reset-owner@example.com', password: 'original-pass' }),
     });
 
-    await fetch(`http://127.0.0.1:${port}/auth/forgot-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'reset-owner@example.com' }),
-    });
-    const { token: resetToken } = latestResetToken();
+    const { user } = await registration.json();
+    const resetToken = createTestResetToken(user.id);
 
     const badToken = await fetch(`http://127.0.0.1:${port}/auth/reset-password`, {
       method: 'POST',
@@ -186,28 +189,48 @@ test('requesting a new reset token invalidates the previous one', async () => {
       body: JSON.stringify({ email: 'double-reset@example.com', password: 'original-pass' }),
     });
 
-    await fetch(`http://127.0.0.1:${port}/auth/forgot-password`, {
+    const login = await fetch(`http://127.0.0.1:${port}/auth/login`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'double-reset@example.com' }),
+      body: JSON.stringify({ email: 'double-reset@example.com', password: 'original-pass' }),
     });
-    const { token: firstToken } = latestResetToken();
-
-    await fetch(`http://127.0.0.1:${port}/auth/forgot-password`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ email: 'double-reset@example.com' }),
-    });
+    const { user } = await login.json();
+    const firstToken = createTestResetToken(user.id);
+    createTestResetToken(user.id);
 
     const usingFirstToken = await fetch(`http://127.0.0.1:${port}/auth/reset-password`, {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ token: firstToken, password: 'new-password-1' }),
     });
+
     assert.equal(usingFirstToken.status, 400);
   } finally {
     await new Promise((resolve, reject) => {
       server.close((error) => (error ? reject(error) : resolve()));
+    });
+
+    test('expired reset tokens are rejected', async () => {
+      const { server, port } = await startServer();
+      try {
+        const registration = await fetch(`http://127.0.0.1:${port}/auth/register`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ email: 'expired-reset@example.com', password: 'original-pass' }),
+        });
+        const { user } = await registration.json();
+        const expiredToken = createTestResetToken(user.id, new Date(Date.now() - 1_000).toISOString());
+        const response = await fetch(`http://127.0.0.1:${port}/auth/reset-password`, {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ token: expiredToken, password: 'new-password-1' }),
+        });
+        assert.equal(response.status, 400);
+      } finally {
+        await new Promise((resolve, reject) => {
+          server.close((error) => (error ? reject(error) : resolve()));
+        });
+      }
     });
   }
 });

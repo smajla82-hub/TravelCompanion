@@ -1,4 +1,5 @@
 import fs from 'node:fs';
+import { createHash } from 'node:crypto';
 import path from 'node:path';
 import { fileURLToPath } from 'node:url';
 import Database from 'better-sqlite3';
@@ -39,6 +40,35 @@ if (!userColumns.some((column) => column.name === 'first_name')) {
 if (!userColumns.some((column) => column.name === 'last_name')) {
   db.exec("ALTER TABLE users ADD COLUMN last_name TEXT NOT NULL DEFAULT ''");
 }
+
+// Migration: replace the pre-FP-7 raw reset-token column with a one-way hash.
+const resetTokenColumns = db.prepare("PRAGMA table_info(password_reset_tokens)").all();
+if (resetTokenColumns.some((column) => column.name === 'token')) {
+  db.exec('ALTER TABLE password_reset_tokens ADD COLUMN token_hash TEXT');
+  const legacyTokens = db.prepare('SELECT id, token FROM password_reset_tokens WHERE token_hash IS NULL').all();
+  const updateTokenHash = db.prepare('UPDATE password_reset_tokens SET token_hash = ? WHERE id = ?');
+  for (const row of legacyTokens) {
+    updateTokenHash.run(createHash('sha256').update(row.token).digest('hex'), row.id);
+  }
+  db.exec(`
+    CREATE TABLE password_reset_tokens_hashed (
+      id TEXT PRIMARY KEY,
+      user_id TEXT NOT NULL,
+      token_hash TEXT NOT NULL UNIQUE,
+      expires_at TEXT NOT NULL,
+      used_at TEXT,
+      created_at TEXT NOT NULL DEFAULT (datetime('now')),
+      FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE
+    );
+    INSERT INTO password_reset_tokens_hashed (id, user_id, token_hash, expires_at, used_at, created_at)
+      SELECT id, user_id, token_hash, expires_at, used_at, created_at FROM password_reset_tokens;
+    DROP TABLE password_reset_tokens;
+    ALTER TABLE password_reset_tokens_hashed RENAME TO password_reset_tokens;
+    CREATE INDEX idx_password_reset_tokens_user_id ON password_reset_tokens (user_id);
+    CREATE INDEX idx_password_reset_tokens_token_hash ON password_reset_tokens (token_hash);
+  `);
+}
+db.exec('CREATE INDEX IF NOT EXISTS idx_password_reset_tokens_token_hash ON password_reset_tokens (token_hash)');
 
 // Normalize known historical country names to ISO 3166-1 alpha-2 codes.
 // Unknown values are deliberately preserved for later user correction.

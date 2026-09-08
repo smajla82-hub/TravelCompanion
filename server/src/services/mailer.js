@@ -3,10 +3,8 @@ import { config } from '../config.js';
 
 // Thin SMTP abstraction: a single `sendMail` entry point backed by a
 // transport that is created lazily (and only once) from `config.smtp`. When
-// no SMTP host is configured — local development, tests, or a server that
-// has not been given credentials yet — mail is logged to the console instead
-// of being sent, so the rest of the account flow (registration, password
-// reset) keeps working without requiring real SMTP infrastructure.
+// no SMTP host is configured in development/test, mail is logged to the
+// console instead of being sent so local account flows remain usable.
 let cachedTransport;
 let cachedTransportIsConsole = false;
 
@@ -16,6 +14,11 @@ function getTransport() {
   }
 
   if (!config.smtp.host) {
+    if (!['development', 'test'].includes(config.nodeEnv)) {
+      const error = new Error('SMTP is not configured for this production environment.');
+      error.code = 'SMTP_NOT_CONFIGURED';
+      throw error;
+    }
     cachedTransportIsConsole = true;
     cachedTransport = {
       sendMail: async (message) => {
@@ -25,6 +28,17 @@ function getTransport() {
       },
     };
     return cachedTransport;
+  }
+
+  if (
+    !config.smtp.user
+    || !config.smtp.pass
+    || !config.smtp.from
+    || config.smtp.from === 'Travel Companion <no-reply@travel-companion.local>'
+  ) {
+    const error = new Error('SMTP credentials and sender address are required in production.');
+    error.code = 'SMTP_NOT_CONFIGURED';
+    throw error;
   }
 
   cachedTransport = nodemailer.createTransport({
