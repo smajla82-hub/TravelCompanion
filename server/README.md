@@ -11,6 +11,7 @@ The backend uses:
 - A thin repository layer to keep DB access isolated from route handlers
 - `bcryptjs` for password hashing (pure-JS, chosen so we don't need to manage a second native-module toolchain alongside `better-sqlite3`'s existing native bindings)
 - `jsonwebtoken` for issuing/verifying JWTs used to authenticate API requests
+- `nodemailer` for sending password reset emails through the SMTP abstraction in `src/services/mailer.js` (falls back to logging to the console when SMTP isn't configured)
 
 This choice matches the existing project decision in `docs/decisions/ADR-003-Backend-Architecture.md`: small self-hosted deployment, low operational overhead, and a single SQLite file on the user's server.
 
@@ -47,9 +48,9 @@ Expected response:
 
 ## Authentication
 
-Feature 10.2 adds simple email + password accounts, backend-only (the frontend `app/` is not wired up to it yet and continues to use `localStorage`).
+Feature 10.2 added simple email + password accounts; FP-7 extends this with first/last names, informational registration email, and a self-service password reset flow delivered by email (still no OAuth/social login and no email verification/activation gate on registration).
 
-- Passwords are hashed with `bcryptjs` before being stored — plaintext passwords are never persisted. A minimum password length of 8 characters is enforced on registration.
+- Passwords are hashed with `bcryptjs` before being stored — plaintext passwords are never persisted. A minimum password length of 8 characters is enforced on registration and password reset.
 - On successful register/login, the API issues a JSON Web Token (JWT) signed with the `JWT_SECRET` environment variable. Tokens expire after `JWT_EXPIRES_IN` (defaults to `7d`, i.e. 7 days).
 - All `/trips` routes (including nested itinerary routes) require a valid JWT.
 - `GET /health` remains public and unauthenticated (used by Caddy/infra monitoring).
@@ -58,7 +59,19 @@ Feature 10.2 adds simple email + password accounts, backend-only (the frontend `
 
 - `POST /auth/register` — body `{ "email": string, "password": string }`. Validates a basic email format and an 8+ character password, creates a user (email is stored lower-cased, unique case-insensitively), and returns `{ token, user }`. `user` never includes the password hash.
 - `POST /auth/login` — body `{ "email": string, "password": string }`. Returns `{ token, user }` on success, `401` on invalid credentials.
-- `GET /auth/me` — requires an `Authorization` header with the JWT in bearer-token format (`Authorization: bearer <token>`). Returns the current user's public profile (`id`, `email`, `createdAt`, `updatedAt`).
+- `GET /auth/me` — requires an `Authorization` header with the JWT in bearer-token format (`Authorization: bearer <token>`). Returns the current user's public profile (`id`, `email`, `displayName`, `createdAt`, `updatedAt`).
+- `PUT /auth/profile` — requires authentication. Body `{ "firstName": string, "lastName": string }`. Updates the caller's names and returns the updated public profile. Members prefer both names, then either name, then email.
+- `POST /auth/forgot-password` — body `{ "email": string }`. **Always** responds `200` with the same generic message (`"If an account exists for that email address, a password reset link has been sent."`), whether or not the email matches an account, so this endpoint cannot be used to enumerate registered users. When it does match an account, a single-use reset token is created (invalidating any earlier unused token for that user) and emailed via the SMTP abstraction described below.
+- `POST /auth/reset-password` — body `{ "token": string, "password": string }`. Consumes the single-use token from the emailed link and sets a new password (subject to the same 8+ character minimum). Responds `400` with a generic "invalid or expired" error for an unknown, already-used, or expired token — this doesn't leak whether the token was ever valid for a real account, only that the token isn't currently usable.
+
+### Password reset email (SMTP)
+
+`POST /auth/forgot-password` sends its email through a small abstraction in `src/services/mailer.js` built on `nodemailer`:
+
+- If `SMTP_HOST` is set, mail is sent through that SMTP server using `SMTP_PORT`/`SMTP_SECURE`/`SMTP_USERNAME`/`SMTP_PASSWORD`/`SMTP_FROM`. Registration mail is informational only.
+- If `SMTP_HOST` is left empty (the `.env.example` default), the email is logged to the server console instead of being sent. This keeps local development and automated tests working without real SMTP infrastructure — it must **not** be relied on in production, since nobody will actually receive the reset link.
+- The reset link is built as `${APP_BASE_URL}/reset-password/<token>`, so `APP_BASE_URL` must point at wherever the frontend is deployed (including any sub-path, e.g. `https://smajla82-hub.github.io/TravelCompanion`) and the frontend must have a route at `/reset-password/:token` (it does, see `app/src/routes/AppRouter.tsx`).
+- Reset tokens expire after `PASSWORD_RESET_EXPIRES_IN_MINUTES` (default 60) and are single-use: requesting a new one invalidates any earlier unused token for the same account.
 
 ### Calling protected routes
 
@@ -69,11 +82,11 @@ curl http://localhost:3001/trips \
 
 ### `JWT_SECRET`
 
-`JWT_SECRET` **must** be set to a long, random, unique value in production — never deploy with the `.env.example` placeholder. This follows the same pattern as `ALLOWED_CORS_ORIGIN`: the placeholder ships in `.env.example` for local development only, and the real production value is set manually by the user on their server (see the deployment runbook below). If `NODE_ENV=production` and `JWT_SECRET` is missing or still set to the development placeholder, the server refuses to start, so misconfiguration fails loudly instead of silently issuing forgeable tokens. There is no password reset / email verification flow in this initial version, and no OAuth/social login — both are explicitly out of scope for 10.2 per the roadmap.
+`JWT_SECRET` **must** be set to a long, random, unique value in production — never deploy with the `.env.example` placeholder. This follows the same pattern as `ALLOWED_CORS_ORIGIN`: the placeholder ships in `.env.example` for local development only, and the real production value is set manually by the user on their server (see the deployment runbook below). If `NODE_ENV=production` and `JWT_SECRET` is missing or still set to the development placeholder, the server refuses to start, so misconfiguration fails loudly instead of silently issuing forgeable tokens. There is no OAuth/social login and no email verification/activation gate on registration — both remain explicitly out of scope.
 
 ### Rate limiting
 
-`POST /auth/register` and `POST /auth/login` are rate-limited per IP (20 requests / 15 minutes) to reduce brute-force/credential-stuffing risk. `GET /auth/me` and all `/trips` routes use a more permissive general limiter, since they already require a valid JWT.
+`POST /auth/register` and `POST /auth/login` are rate-limited per IP (20 requests / 15 minutes) to reduce brute-force/credential-stuffing risk. `POST /auth/reset-password` shares that same limiter. `POST /auth/forgot-password` uses its own stricter limiter (5 requests / 15 minutes per IP), since each request can trigger an outbound email. `GET /auth/me`, `PUT /auth/profile` and all `/trips` routes use a more permissive general limiter, since they already require a valid JWT.
 
 ## API surface
 
@@ -164,7 +177,8 @@ On startup, the app creates the SQLite database file at the configured `DB_PATH`
 
 The initial schema covers:
 
-- `users` — accounts (email unique, case-insensitive; password stored only as a bcrypt hash)
+- `users` — accounts (email unique, case-insensitive; password stored only as a bcrypt hash; optional `display_name`)
+- `password_reset_tokens` — single-use, expiring password reset tokens (FP-7)
 - `trips` — now includes a nullable `user_id` foreign key linking a trip to its owning account
 - `trip_members` — one Owner membership for each Trip plus optional Editor/Viewer memberships
 - `invitations` — email-bound, expiring invitation tokens and their status
@@ -173,7 +187,7 @@ The initial schema covers:
 - `itinerary_items`
 - active-trip state via `trips.is_active`
 
-Since `trips` existed before Feature 10.2, `src/db/db.js` also runs a small idempotent migration on every startup: if the `trips` table doesn't yet have a `user_id` column (i.e. a database created under 10.1), it adds the column via `ALTER TABLE` and creates its index. It also backfills an Owner `trip_members` row for every existing Trip whose `user_id` is set.
+Since `trips` existed before Feature 10.2, `src/db/db.js` also runs a small idempotent migration on every startup: if the `trips` table doesn't yet have a `user_id` column (i.e. a database created under 10.1), it adds the column via `ALTER TABLE` and creates its index. It also backfills an Owner `trip_members` row for every existing Trip whose `user_id` is set. Similarly, since `users` existed before FP-7, the same startup migration adds a nullable `display_name` column to `users` if it isn't already present.
 
 This is intentionally a minimal schema evolution for the backend foundation; future features such as shared Trip access (10.3) will extend it further without a rewrite of the existing route structure.
 

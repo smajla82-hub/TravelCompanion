@@ -4,6 +4,38 @@ This file records the completed development history of the Travel Companion appl
 
 It is a human-readable history, not an archive of every Git commit. Git remains authoritative for exact commit history.
 
+## Feature FP-7 — Account Profile & Email Password Reset
+**Status:** DONE
+
+Extended Feature 10.2's email + password accounts with first/last names
+and a self-service password reset flow, without touching existing JWT
+authentication, roles, or invitations. Deliberately still has **no**
+account-activation / email-verification gate on registration — accounts
+remain usable immediately after signup, per the existing product decision.
+
+- **Backend:** `users.display_name` (additive, nullable) and a new
+  `password_reset_tokens` table (single-use, expiring) were added via
+  idempotent startup migrations. `PUT /auth/profile` lets a signed-in user
+  set or clear their display name. `POST /auth/forgot-password` always
+  answers with the same generic message regardless of whether the email
+  matches an account (no user enumeration) and, when it does, emails a
+  single-use reset link; requesting a new one invalidates any earlier unused
+  token for that account. `POST /auth/reset-password` consumes the token and
+  sets a new password. `forgot-password` has its own stricter per-IP rate
+  limit, since it can trigger outbound email.
+- **SMTP:** a small `src/services/mailer.js` abstraction sends the reset
+  email via `nodemailer` when `SMTP_HOST` is configured, and otherwise logs
+  the email to the console — local development and the automated test suite
+  never need real SMTP infrastructure.
+- **Member display names:** trip members, edit-lock holders and lock-conflict
+  errors now surface `displayName` (falling back to email) everywhere a
+  collaborator's identity is shown, both in the API responses and the
+  frontend (`TripDetail`, `lockConflictMessage`).
+- **Frontend:** the Account page gained a "Forgot password?" flow and a
+  Profile card for editing the display name; a new `/reset-password/:token`
+  route/page completes the loop from the emailed link. Existing
+  login/registration, JWT handling, roles and invitations are unchanged.
+
 ## Feature FP-6.1 — Full Project Audit Remediation
 **Status:** DONE
 

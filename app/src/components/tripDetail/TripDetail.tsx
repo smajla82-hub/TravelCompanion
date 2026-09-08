@@ -100,7 +100,7 @@ export function TripDetail({
             </Stack>
             {adapter.source === "online" && <>
                 <Heading level={2}>Members</Heading>
-                {members.map(member => <p key={member.userId}>{member.email} — {member.role}</p>)}
+                {members.map(member => <p key={member.userId}>{member.displayName || member.email} — {member.role}</p>)}
                 {role === "owner" && <><Heading level={2}>Invite collaborator</Heading>
                     <form onSubmit={invite}><Stack gap="sm"><input name="email" type="email" required placeholder="collaborator@example.com" /><select name="role" defaultValue="editor"><option value="editor">Editor</option><option value="viewer">Viewer</option></select><Button type="submit">Create invitation</Button></Stack></form>
                     {invitations.map(invitation => {

@@ -30,6 +30,7 @@ export type ItineraryDayPayload = Pick<ItineraryDay, "date" | "title"> & {
 export type TripMember = {
     userId: string;
     email: string;
+    displayName?: string | null;
     role: "owner" | "editor" | "viewer";
 };
 
@@ -45,6 +46,7 @@ export type Invitation = {
 export type LockConflict = {
     lockedBy?: {
         email: string;
+        displayName?: string | null;
     };
 };
 

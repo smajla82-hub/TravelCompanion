@@ -139,7 +139,7 @@ Proposed scope:
   - `server/src/middleware/auth.js` verifies the `Authorization` header's bearer-token JWT and is applied to all `/trips` routes (and nested itinerary routes); `GET /health` remains public.
   - Basic account-level data isolation implemented: a `user_id` column was added to `trips` (via an idempotent startup migration in `server/src/db/db.js`), and all Trip reads/writes are scoped to `req.user.id`.
   - This is backend-only, per the roadmap: the frontend (`app/`) is unchanged and continues to operate fully offline-first on `localStorage`; no login UI or API wiring was added to the frontend in this feature. Actual frontend integration remains deferred to a later step.
-  - No OAuth/social login and no password reset / email verification flow — out of scope for this initial version, as planned.
+  - No OAuth/social login and no email verification/activation flow — out of scope for this initial version, as planned. Self-service password reset was added later in FP-7 (see `SprintLog.md`).
 
 - **10.3 — Shared Trip access** — **DONE** (backend-only)
   - Trips have one Owner and optional Editor/Viewer members. Owners create expiring, email-bound invitations and manually share the returned token/accept link; delivery by email/SMS is out of scope. Server-side roles protect Trip, itinerary, membership and invitation actions.

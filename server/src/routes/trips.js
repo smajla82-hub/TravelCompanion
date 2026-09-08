@@ -92,7 +92,7 @@ router.post('/', (req, res) => {
 router.get('/:id/lock', requireTripRole(['owner', 'editor', 'viewer']), (req, res) => {
   const lock = locks.getActiveLock(req.params.id);
   return res.json(lock
-    ? { locked: true, tripId: lock.tripId, userId: lock.userId, email: lock.email, acquiredAt: lock.acquiredAt, expiresAt: lock.expiresAt }
+    ? { locked: true, tripId: lock.tripId, userId: lock.userId, email: lock.email, displayName: lock.displayName, acquiredAt: lock.acquiredAt, expiresAt: lock.expiresAt }
     : { locked: false });
 });
 
@@ -102,7 +102,7 @@ router.post('/:id/lock', requireTripRole(['owner', 'editor']), (req, res) => {
   if (!result.acquired) {
     return res.status(409).json({
       error: 'Trip is currently being edited by another user.',
-      lockedBy: { userId: result.lock.userId, email: result.lock.email },
+      lockedBy: { userId: result.lock.userId, email: result.lock.email, displayName: result.lock.displayName },
       expiresAt: result.lock.expiresAt,
     });
   }
