@@ -33,10 +33,7 @@
 }
 
 .tc-brand-header h1 {
-    position: relative;
-    z-index: 1;
-
-    margin: 0 0 var(--space-lg);
+    margin: 0;
     text-align: left;
 }
 
@@ -45,8 +42,72 @@
     z-index: 1;
 }
 
+/*
+ * Shared hero row: keeps the "Travel Companion" title and the Account
+ * action on the same line, both inside the hero background.
+ */
+.tc-hero-header-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: var(--space-md);
+    flex-wrap: nowrap;
+
+    margin: 0 0 var(--space-lg);
+}
+
+.tc-hero-account {
+    display: inline-flex;
+    flex-shrink: 0;
+    align-items: center;
+    gap: 6px;
+
+    min-height: 44px;
+    padding: 8px 16px;
+    border-radius: var(--tc-radius-pill);
+
+    background: var(--color-blue);
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--color-text) 16%, transparent);
+
+    color: #ffffff;
+    text-decoration: none;
+    font-size: 14px;
+    font-weight: 600;
+    white-space: nowrap;
+
+    transition: box-shadow .2s;
+}
+
+.tc-hero-account svg { width: 18px; height: 18px; color: #ffffff; }
+
+.tc-hero-account.active {
+    box-shadow: 0 4px 12px color-mix(in srgb, var(--color-text) 16%, transparent),
+        inset 0 0 0 2px rgba(255, 255, 255, .65);
+}
+
+.tc-hero-account:focus-visible {
+    outline: 2px solid #ffffff;
+    outline-offset: 2px;
+}
+
+.tc-hero-header-row .tc-hero-title {
+    min-width: 0;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+}
+
 @media (max-width: 480px) {
     .tc-brand-header {
         padding-bottom: var(--space-lg);
+    }
+
+    .tc-hero-header-row {
+        gap: var(--space-sm);
+    }
+
+    .tc-hero-account {
+        padding: 8px 12px;
+        font-size: 13px;
     }
 }
