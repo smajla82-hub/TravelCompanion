@@ -20,10 +20,7 @@ function getTransport() {
     cachedTransport = {
       sendMail: async (message) => {
         // eslint-disable-next-line no-console
-        console.log(
-          `[mailer] SMTP is not configured; logging email instead of sending it.\n` +
-            `To: ${message.to}\nSubject: ${message.subject}\n${message.text}`,
-        );
+        console.log(`[mailer] SMTP is not configured; email delivery skipped for ${message.subject}.`);
         return { messageId: 'console-transport' };
       },
     };
