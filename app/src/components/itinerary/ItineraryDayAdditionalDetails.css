@@ -1,0 +1,11 @@
+.venue-parking-actions-row {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    gap: 12px;
+}
+
+.venue-parking-actions-row > .tc-button {
+    flex: 1 1 auto;
+    min-width: 0;
+}

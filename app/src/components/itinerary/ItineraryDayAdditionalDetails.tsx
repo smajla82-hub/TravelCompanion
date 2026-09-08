@@ -1,18 +1,19 @@
 import { useState } from "react";
 
 import { Button, Card, Stack } from "../ui";
-import { RecommendedVenueList } from "./RecommendedVenueList";
+import { RecommendedVenueManageRow } from "./RecommendedVenueManageRow";
 import { RecommendedVenueModal } from "./RecommendedVenueModal";
 import { RecommendedVenueActionsModal } from
     "./RecommendedVenueActionsModal";
+import { ParkingLocationManageRow } from "./ParkingLocationManageRow";
 import { ParkingLocationModal } from "./ParkingLocationModal";
 import { ParkingLocationActionsModal } from
     "./ParkingLocationActionsModal";
+import { VenueParkingActionsRow } from "./VenueParkingActionsRow";
+import "./ItineraryDayAdditionalDetails.css";
 import {
     MAX_VENUES_PER_DAY,
     MAX_PARKING_PER_DAY,
-    canAddVenue,
-    canAddParkingLocation,
 } from "../../domain/itinerary/venueParkingLimits";
 
 import type {
@@ -151,48 +152,16 @@ export function ItineraryDayAdditionalDetails({
                             {venues.length > 0 && (
                                 <Stack gap="sm">
                                     {venues.map((venue) => (
-                                        <div
+                                        <RecommendedVenueManageRow
                                             key={venue.id}
-                                            className="itinerary-activity-row"
-                                        >
-                                            <RecommendedVenueList
-                                                venues={[venue]}
-                                            />
-
-                                            {editable && (
-                                                <Button
-                                                    type="button"
-                                                    compact
-                                                    onClick={() =>
-                                                        setVenueActionsId(
-                                                            venue.id
-                                                        )
-                                                    }
-                                                >
-                                                    Manage
-                                                </Button>
-                                            )}
-                                        </div>
+                                            venue={venue}
+                                            editable={editable}
+                                            onManage={() =>
+                                                setVenueActionsId(venue.id)
+                                            }
+                                        />
                                     ))}
                                 </Stack>
-                            )}
-
-                            {editable && (
-                                <Button
-                                    type="button"
-                                    compact
-                                    disabled={
-                                        !canAddVenue(venues.length)
-                                    }
-                                    onClick={() => {
-                                        setEditingVenue(undefined);
-                                        setVenueModalOpen(true);
-                                    }}
-                                >
-                                    {canAddVenue(venues.length)
-                                        ? "Add Venue"
-                                        : `Limit reached (${MAX_VENUES_PER_DAY}/day)`}
-                                </Button>
                             )}
                         </div>
 
@@ -209,86 +178,36 @@ export function ItineraryDayAdditionalDetails({
                                 <Stack gap="sm">
                                     {parkingLocations.map(
                                         (parkingLocation) => (
-                                            <div
-                                                className="itinerary-activity-row"
+                                            <ParkingLocationManageRow
                                                 key={parkingLocation.id}
-                                            >
-                                                <div>
-                                                    <strong>
-                                                        {parkingLocation.code}:
-                                                    </strong>
-                                                    {" "}
-                                                    {parkingLocation.mapLink ? (
-                                                        <a
-                                                            href={
-                                                                parkingLocation
-                                                                    .mapLink
-                                                            }
-                                                            target="_blank"
-                                                            rel="noreferrer"
-                                                        >
-                                                            {
-                                                                parkingLocation
-                                                                    .name
-                                                            }
-                                                        </a>
-                                                    ) : (
-                                                        parkingLocation.name
-                                                    )}
-                                                    {parkingLocation.price && (
-                                                        <div>
-                                                            Price:{" "}
-                                                            {parkingLocation.price}
-                                                        </div>
-                                                    )}
-                                                    {parkingLocation.note && (
-                                                        <div>
-                                                            {parkingLocation.note}
-                                                        </div>
-                                                    )}
-                                                </div>
-
-                                                {editable && (
-                                                    <Button
-                                                        type="button"
-                                                        compact
-                                                        onClick={() =>
-                                                            setParkingActionsId(
-                                                                parkingLocation.id
-                                                            )
-                                                        }
-                                                    >
-                                                        Manage
-                                                    </Button>
-                                                )}
-                                            </div>
+                                                parking={parkingLocation}
+                                                editable={editable}
+                                                onManage={() =>
+                                                    setParkingActionsId(
+                                                        parkingLocation.id
+                                                    )
+                                                }
+                                            />
                                         )
                                     )}
                                 </Stack>
                             )}
-
-                            {editable && (
-                                <Button
-                                    type="button"
-                                    compact
-                                    disabled={
-                                        !canAddParkingLocation(
-                                            parkingLocations.length
-                                        )
-                                    }
-                                    onClick={() => {
-                                        setEditingParking(undefined);
-                                        setParkingModalOpen(true);
-                                    }}
-                                >
-                                    {canAddParkingLocation(
-                                        parkingLocations.length
-                                    )
-                                        ? "Add Parking"
-                                        : `Limit reached (${MAX_PARKING_PER_DAY}/day)`}
-                                </Button>
-                            )}
                         </div>
+
+                        {editable && (
+                            <VenueParkingActionsRow
+                                venueCount={venues.length}
+                                parkingCount={parkingLocations.length}
+                                onAddParking={() => {
+                                    setEditingParking(undefined);
+                                    setParkingModalOpen(true);
+                                }}
+                                onAddVenue={() => {
+                                    setEditingVenue(undefined);
+                                    setVenueModalOpen(true);
+                                }}
+                            />
+                        )}
                     </Stack>
                 </Card>
             )}

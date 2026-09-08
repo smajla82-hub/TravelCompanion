@@ -1,0 +1,40 @@
+/*
+ * Blocked-delete warning shown in Manage Parking when the parking location
+ * is still referenced by itinerary activities. Visually distinct from the
+ * plain Edit/Delete controls: a prominent green reference-count heading,
+ * a readable list of referencing activities, and a light-blue explanatory
+ * sentence separated from the list by spacing.
+ */
+
+.parking-actions-warning {
+    display: flex;
+    flex-direction: column;
+    gap: 8px;
+    min-width: 0;
+}
+
+.parking-actions-warning__heading {
+    margin: 0;
+    color: var(--color-success);
+    font-weight: 700;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.parking-actions-warning__list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    margin: 0;
+    padding: 0;
+    list-style: none;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}
+
+.parking-actions-warning__note {
+    margin: 8px 0 0;
+    color: var(--color-blue);
+    overflow-wrap: anywhere;
+    word-break: break-word;
+}

@@ -33,6 +33,10 @@
     /* Parking semantic color */
     --color-parking: var(--color-blue);
 
+    /* Venue Priority semantic colors */
+    --color-venue-priority-main: var(--color-success);
+    --color-venue-priority-backup: var(--color-blue);
+
     /* Radius */
 
     --radius-sm: 8px;
