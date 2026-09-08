@@ -8,6 +8,8 @@ import {
 export type AuthUser = {
     id: string;
     email: string;
+    firstName?: string;
+    lastName?: string;
     displayName?: string | null;
 };
 
@@ -51,10 +53,10 @@ export const AuthService = {
         return response.user;
     },
 
-    async register(email: string, password: string) {
+    async register(email: string, password: string, firstName = "", lastName = "") {
         const response = await apiRequest<AuthResponse>("/auth/register", {
             method: "POST",
-            body: JSON.stringify({ email, password }),
+            body: JSON.stringify({ email, password, firstName, lastName }),
         });
         setAuthToken(response.token);
         storeUser(response.user);
@@ -66,10 +68,10 @@ export const AuthService = {
      * wherever other trip members/collaborators see their identity). Passing
      * an empty string clears it back to falling back on the email address.
      */
-    async updateProfile(displayName: string) {
+    async updateProfile(firstName: string, lastName?: string) {
         const user = await apiRequest<AuthUser>("/auth/profile", {
             method: "PUT",
-            body: JSON.stringify({ displayName }),
+            body: JSON.stringify(lastName === undefined ? { displayName: firstName } : { firstName, lastName }),
         });
         storeUser(user);
         return user;

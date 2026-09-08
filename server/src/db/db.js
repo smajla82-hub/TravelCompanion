@@ -33,6 +33,12 @@ const userColumns = db.prepare("PRAGMA table_info(users)").all();
 if (!userColumns.some((column) => column.name === 'display_name')) {
   db.exec('ALTER TABLE users ADD COLUMN display_name TEXT');
 }
+if (!userColumns.some((column) => column.name === 'first_name')) {
+  db.exec("ALTER TABLE users ADD COLUMN first_name TEXT NOT NULL DEFAULT ''");
+}
+if (!userColumns.some((column) => column.name === 'last_name')) {
+  db.exec("ALTER TABLE users ADD COLUMN last_name TEXT NOT NULL DEFAULT ''");
+}
 
 // Normalize known historical country names to ISO 3166-1 alpha-2 codes.
 // Unknown values are deliberately preserved for later user correction.

@@ -15,7 +15,7 @@ const pageStyle = {
 } as CSSProperties;
 
 const GENERIC_FORGOT_PASSWORD_MESSAGE =
-    "If an account exists for that email address, a password reset link has been sent.";
+    "If an account exists for this email, a reset link has been sent.";
 
 type Mode = "login" | "register" | "forgot-password";
 
@@ -24,31 +24,40 @@ export default function AccountPage() {
     const [mode, setMode] = useState<Mode>("login");
     const [email, setEmail] = useState("");
     const [password, setPassword] = useState("");
+    const [confirmPassword, setConfirmPassword] = useState("");
+    const [firstName, setFirstName] = useState(user?.firstName ?? "");
+    const [lastName, setLastName] = useState(user?.lastName ?? "");
     const [error, setError] = useState("");
+    const [successMessage, setSuccessMessage] = useState("");
     const [submitting, setSubmitting] = useState(false);
     const [forgotPasswordMessage, setForgotPasswordMessage] = useState("");
 
-    const [displayName, setDisplayName] = useState(user?.displayName ?? "");
     const [profileMessage, setProfileMessage] = useState("");
     const [profileError, setProfileError] = useState("");
     const [savingProfile, setSavingProfile] = useState(false);
 
     const emailFieldId = useId();
     const passwordFieldId = useId();
-    const displayNameFieldId = useId();
+    const firstNameFieldId = useId();
+    const lastNameFieldId = useId();
+    const confirmPasswordFieldId = useId();
 
     const localTripCount = TripService.getAll().length;
 
     async function submit() {
         setError("");
+        setSuccessMessage("");
         setSubmitting(true);
         try {
             const authenticatedUser = mode === "register"
-                ? await AuthService.register(email, password)
+                ? await AuthService.register(email, password, firstName, lastName)
                 : await AuthService.login(email, password);
             setUser(authenticatedUser);
-            setDisplayName(authenticatedUser.displayName ?? "");
+            if (mode === "register") setSuccessMessage("Account created successfully.");
+            setFirstName(authenticatedUser.firstName ?? "");
+            setLastName(authenticatedUser.lastName ?? "");
             setPassword("");
+            setConfirmPassword("");
             void OnlineTripStore.refresh().catch(() => undefined);
         } catch (reason) {
             setError(
@@ -58,6 +67,15 @@ export default function AccountPage() {
             );
         } finally {
             setSubmitting(false);
+        }
+
+        function submitAuth(event: React.FormEvent<HTMLFormElement>) {
+            event.preventDefault();
+            if (mode === "register" && password !== confirmPassword) {
+                setError("Passwords do not match.");
+                return;
+            }
+            void submit();
         }
     }
 
@@ -88,9 +106,10 @@ export default function AccountPage() {
         setProfileMessage("");
         setSavingProfile(true);
         try {
-            const updated = await AuthService.updateProfile(displayName);
+            const updated = await AuthService.updateProfile(firstName, lastName);
             setUser(updated);
-            setDisplayName(updated.displayName ?? "");
+            setFirstName(updated.firstName ?? "");
+            setLastName(updated.lastName ?? "");
             setProfileMessage("Display name saved.");
         } catch (reason) {
             setProfileError(
@@ -106,7 +125,6 @@ export default function AccountPage() {
     function logout() {
         AuthService.logout();
         setUser(undefined);
-        setDisplayName("");
         // The cached Online Trips belong to the signed-out account; clearing
         // them keeps My Trips consistent with the now-unauthenticated state.
         void OnlineTripStore.refresh().catch(() => undefined);
@@ -168,6 +186,7 @@ export default function AccountPage() {
                                             {error}
                                         </p>
                                     )}
+                                    {successMessage && <p className="account-status account-status--signed-in" role="status">{successMessage}</p>}
 
                                     <Button
                                         type="button"
@@ -202,6 +221,7 @@ export default function AccountPage() {
                                     account.
                                 </p>
 
+                                <form onSubmit={submitAuth}>
                                 <Stack gap="sm" className="account-form">
                                     <label htmlFor={emailFieldId}>
                                         Email
@@ -213,6 +233,10 @@ export default function AccountPage() {
                                             onChange={event => setEmail(event.target.value)}
                                         />
                                     </label>
+                                    {mode === "register" && <>
+                                        <label htmlFor={firstNameFieldId}>First Name<input id={firstNameFieldId} type="text" autoComplete="given-name" maxLength={80} value={firstName} onChange={event => setFirstName(event.target.value)} /></label>
+                                        <label htmlFor={lastNameFieldId}>Last Name<input id={lastNameFieldId} type="text" autoComplete="family-name" maxLength={80} value={lastName} onChange={event => setLastName(event.target.value)} /></label>
+                                    </>}
                                     <label htmlFor={passwordFieldId}>
                                         Password
                                         <input
@@ -224,7 +248,9 @@ export default function AccountPage() {
                                             value={password}
                                             onChange={event => setPassword(event.target.value)}
                                         />
+                                        {mode === "register" && <small>* At least 8 characters</small>}
                                     </label>
+                                    {mode === "register" && <label htmlFor={confirmPasswordFieldId}>Confirm Password<input id={confirmPasswordFieldId} type="password" autoComplete="new-password" value={confirmPassword} onChange={event => setConfirmPassword(event.target.value)} aria-invalid={confirmPassword.length > 0 && password !== confirmPassword} />{confirmPassword.length > 0 && password !== confirmPassword && <span role="alert">Passwords do not match.</span>}</label>}
 
                                     {error && (
                                         <p className="account-status account-status--error" role="alert">
@@ -232,8 +258,9 @@ export default function AccountPage() {
                                             {error}
                                         </p>
                                     )}
+                                    {successMessage && <p className="account-status account-status--signed-in" role="status">{successMessage}</p>}
 
-                                    <Button type="button" onClick={submit} disabled={submitting}>
+                                    <Button type="submit" disabled={submitting || (mode === "register" && password !== confirmPassword)}>
                                         {submitting
                                             ? "Please wait…"
                                             : mode === "register"
@@ -267,6 +294,7 @@ export default function AccountPage() {
                                             : "Create an account"}
                                     </Button>
                                 </Stack>
+                                </form>
                             </>
                         )}
                     </Stack>
@@ -276,25 +304,16 @@ export default function AccountPage() {
                     <Card>
                         <Stack gap="md">
                             <Heading level={2}>Profile</Heading>
+                            <p><strong>Email:</strong> {user.email}</p>
                             <p>
-                                Your display name is shown to collaborators on shared
-                                Trips instead of your email address.
+                                Your first and last names are shown to collaborators;
+                                when unavailable, your email address is used.
                             </p>
 
                             <form onSubmit={saveProfile}>
                                 <Stack gap="sm" className="account-form">
-                                    <label htmlFor={displayNameFieldId}>
-                                        Display name
-                                        <input
-                                            id={displayNameFieldId}
-                                            type="text"
-                                            autoComplete="name"
-                                            maxLength={80}
-                                            placeholder={user.email}
-                                            value={displayName}
-                                            onChange={event => setDisplayName(event.target.value)}
-                                        />
-                                    </label>
+                                    <label htmlFor={firstNameFieldId}>First Name<input id={firstNameFieldId} type="text" maxLength={80} value={firstName} onChange={event => setFirstName(event.target.value)} /></label>
+                                    <label htmlFor={lastNameFieldId}>Last Name<input id={lastNameFieldId} type="text" maxLength={80} value={lastName} onChange={event => setLastName(event.target.value)} /></label>
 
                                     {profileMessage && (
                                         <p className="account-status account-status--signed-in" role="status">
@@ -310,7 +329,7 @@ export default function AccountPage() {
                                     )}
 
                                     <Button type="submit" disabled={savingProfile}>
-                                        {savingProfile ? "Saving…" : "Save display name"}
+                                        {savingProfile ? "Saving…" : "Save profile"}
                                     </Button>
                                 </Stack>
                             </form>

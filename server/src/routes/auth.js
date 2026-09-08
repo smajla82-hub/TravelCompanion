@@ -6,7 +6,7 @@ import { requireAuth } from '../middleware/auth.js';
 import { RATE_LIMIT_WINDOW_MS } from '../middleware/rateLimitWindow.js';
 import * as repo from '../repositories/userRepository.js';
 import * as passwordResets from '../repositories/passwordResetRepository.js';
-import { sendPasswordResetEmail } from '../services/mailer.js';
+import { sendAccountCreatedEmail, sendPasswordResetEmail } from '../services/mailer.js';
 
 const router = express.Router();
 
@@ -40,7 +40,7 @@ const forgotPasswordLimiter = rateLimit({
 });
 
 const GENERIC_FORGOT_PASSWORD_MESSAGE =
-  'If an account exists for that email address, a password reset link has been sent.';
+  'If an account exists for this email, a reset link has been sent.';
 
 function issueToken(user) {
   return jwt.sign({ sub: user.id, email: user.email }, config.jwtSecret, {
@@ -49,10 +49,11 @@ function issueToken(user) {
 }
 
 router.post('/register', authAttemptLimiter, (req, res) => {
-  const { email, password } = req.body ?? {};
-  const user = repo.createUser({ email, password });
+  const { email, password, firstName, lastName } = req.body ?? {};
+  const user = repo.createUser({ email, password, firstName, lastName });
   const token = issueToken(user);
-  return res.status(201).json({ token, user: repo.toPublicUser(user) });
+  void sendAccountCreatedEmail(user.email).catch(() => undefined);
+  return res.status(201).json({ token, user: repo.toPublicUser(user), message: 'Account created successfully.' });
 });
 
 router.post('/login', authAttemptLimiter, (req, res) => {
@@ -77,8 +78,10 @@ router.get('/me', meLimiter, requireAuth, (req, res) => {
 });
 
 router.put('/profile', meLimiter, requireAuth, (req, res) => {
-  const { displayName } = req.body ?? {};
-  const user = repo.updateDisplayName(req.user.id, displayName);
+  const { firstName, lastName, displayName } = req.body ?? {};
+  const user = firstName !== undefined || lastName !== undefined
+    ? repo.updateNames(req.user.id, firstName, lastName)
+    : repo.updateDisplayName(req.user.id, displayName);
   return res.json(repo.toPublicUser(user));
 });
 
@@ -118,7 +121,7 @@ router.post('/reset-password', authAttemptLimiter, (req, res) => {
   repo.updatePasswordHash(resetToken.userId, password);
   passwordResets.markResetTokenUsed(resetToken.id);
 
-  return res.json({ message: 'Password updated successfully. You can now log in with your new password.' });
+  return res.json({ message: 'Password changed successfully.' });
 });
 
 export default router;

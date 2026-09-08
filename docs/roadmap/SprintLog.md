@@ -7,7 +7,7 @@ It is a human-readable history, not an archive of every Git commit. Git remains 
 ## Feature FP-7 — Account Profile & Email Password Reset
 **Status:** DONE
 
-Extended Feature 10.2's email + password accounts with a profile display name
+Extended Feature 10.2's email + password accounts with first/last names
 and a self-service password reset flow, without touching existing JWT
 authentication, roles, or invitations. Deliberately still has **no**
 account-activation / email-verification gate on registration — accounts

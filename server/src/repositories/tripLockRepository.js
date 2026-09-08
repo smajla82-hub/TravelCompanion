@@ -13,13 +13,18 @@ function mapLockRow(row) {
     acquiredAt: row.acquired_at,
     lastHeartbeatAt: row.last_heartbeat_at,
     expiresAt: row.expires_at,
-    ...(row.email ? { email: row.email, displayName: row.display_name ?? null } : {}),
+    ...(row.email ? {
+      email: row.email,
+      firstName: row.first_name ?? '',
+      lastName: row.last_name ?? '',
+      displayName: [row.first_name, row.last_name].filter(Boolean).join(' ') || row.display_name || row.email,
+    } : {}),
   };
 }
 
 function getLockRow(tripId) {
   return db.prepare(
-    `SELECT trip_locks.*, users.email, users.display_name
+    `SELECT trip_locks.*, users.email, users.first_name, users.last_name, users.display_name
      FROM trip_locks JOIN users ON users.id = trip_locks.user_id
      WHERE trip_locks.trip_id = ?`,
   ).get(tripId);

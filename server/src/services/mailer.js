@@ -47,6 +47,18 @@ export function isConsoleTransport() {
   return cachedTransportIsConsole;
 }
 
+export function sendAccountCreatedEmail(email) {
+  const subject = 'Your Travel Companion account was created';
+  const text = [
+    'Your Travel Companion account was created successfully.',
+    '',
+    `Account email: ${email}`,
+    '',
+    'You can now sign in and use Travel Companion.',
+  ].join('\n');
+  return sendMail({ to: email, subject, text, html: `<p>Your Travel Companion account was created successfully.</p><p>Account email: ${email}</p><p>You can now sign in and use Travel Companion.</p>` });
+}
+
 export async function sendMail({ to, subject, text, html }) {
   const transport = getTransport();
   return transport.sendMail({

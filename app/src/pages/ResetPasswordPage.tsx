@@ -62,7 +62,7 @@ export default function ResetPasswordPage() {
                         <>
                             <p className="account-status account-status--signed-in">
                                 <Icon name="circleCheck" width={16} height={16} />
-                                Your password has been updated.
+                                Password changed successfully.
                             </p>
                             <p>
                                 <Link to="/account">Go to Account to log in</Link>

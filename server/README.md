@@ -48,7 +48,7 @@ Expected response:
 
 ## Authentication
 
-Feature 10.2 added simple email + password accounts; FP-7 extends this with a profile display name and a self-service password reset flow delivered by email (still no OAuth/social login and no email verification/activation gate on registration — those remain out of scope).
+Feature 10.2 added simple email + password accounts; FP-7 extends this with first/last names, informational registration email, and a self-service password reset flow delivered by email (still no OAuth/social login and no email verification/activation gate on registration).
 
 - Passwords are hashed with `bcryptjs` before being stored — plaintext passwords are never persisted. A minimum password length of 8 characters is enforced on registration and password reset.
 - On successful register/login, the API issues a JSON Web Token (JWT) signed with the `JWT_SECRET` environment variable. Tokens expire after `JWT_EXPIRES_IN` (defaults to `7d`, i.e. 7 days).
@@ -60,7 +60,7 @@ Feature 10.2 added simple email + password accounts; FP-7 extends this with a pr
 - `POST /auth/register` — body `{ "email": string, "password": string }`. Validates a basic email format and an 8+ character password, creates a user (email is stored lower-cased, unique case-insensitively), and returns `{ token, user }`. `user` never includes the password hash.
 - `POST /auth/login` — body `{ "email": string, "password": string }`. Returns `{ token, user }` on success, `401` on invalid credentials.
 - `GET /auth/me` — requires an `Authorization` header with the JWT in bearer-token format (`Authorization: bearer <token>`). Returns the current user's public profile (`id`, `email`, `displayName`, `createdAt`, `updatedAt`).
-- `PUT /auth/profile` — requires authentication. Body `{ "displayName": string }`. Sets (or, with an empty/whitespace-only value, clears) the caller's display name and returns the updated public profile. `displayName` is optional everywhere it's shown — trip members, edit-lock holders, etc. fall back to the account's email address when it's unset.
+- `PUT /auth/profile` — requires authentication. Body `{ "firstName": string, "lastName": string }`. Updates the caller's names and returns the updated public profile. Members prefer both names, then either name, then email.
 - `POST /auth/forgot-password` — body `{ "email": string }`. **Always** responds `200` with the same generic message (`"If an account exists for that email address, a password reset link has been sent."`), whether or not the email matches an account, so this endpoint cannot be used to enumerate registered users. When it does match an account, a single-use reset token is created (invalidating any earlier unused token for that user) and emailed via the SMTP abstraction described below.
 - `POST /auth/reset-password` — body `{ "token": string, "password": string }`. Consumes the single-use token from the emailed link and sets a new password (subject to the same 8+ character minimum). Responds `400` with a generic "invalid or expired" error for an unknown, already-used, or expired token — this doesn't leak whether the token was ever valid for a real account, only that the token isn't currently usable.
 
@@ -68,7 +68,7 @@ Feature 10.2 added simple email + password accounts; FP-7 extends this with a pr
 
 `POST /auth/forgot-password` sends its email through a small abstraction in `src/services/mailer.js` built on `nodemailer`:
 
-- If `SMTP_HOST` is set, mail is sent through that SMTP server using `SMTP_PORT`/`SMTP_SECURE`/`SMTP_USER`/`SMTP_PASS`/`SMTP_FROM`.
+- If `SMTP_HOST` is set, mail is sent through that SMTP server using `SMTP_PORT`/`SMTP_SECURE`/`SMTP_USERNAME`/`SMTP_PASSWORD`/`SMTP_FROM`. Registration mail is informational only.
 - If `SMTP_HOST` is left empty (the `.env.example` default), the email is logged to the server console instead of being sent. This keeps local development and automated tests working without real SMTP infrastructure — it must **not** be relied on in production, since nobody will actually receive the reset link.
 - The reset link is built as `${APP_BASE_URL}/reset-password/<token>`, so `APP_BASE_URL` must point at wherever the frontend is deployed (including any sub-path, e.g. `https://smajla82-hub.github.io/TravelCompanion`) and the frontend must have a route at `/reset-password/:token` (it does, see `app/src/routes/AppRouter.tsx`).
 - Reset tokens expire after `PASSWORD_RESET_EXPIRES_IN_MINUTES` (default 60) and are single-use: requesting a new one invalidates any earlier unused token for the same account.
