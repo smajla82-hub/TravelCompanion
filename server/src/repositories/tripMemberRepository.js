@@ -17,13 +17,28 @@ function mapMemberRow(row) {
 }
 
 export function getTripMember(tripId, userId) {
-  return mapMemberRow(
+  const member = mapMemberRow(
     db.prepare(
       `SELECT trip_members.*, users.email
        FROM trip_members JOIN users ON users.id = trip_members.user_id
        WHERE trip_id = ? AND user_id = ?`,
     ).get(tripId, userId),
   );
+  if (member) {
+    return member;
+  }
+
+  // Intentional family-data recovery policy: a pre-authentication trip with no
+  // owner *and no explicit members* is recoverable shared data. Authenticated
+  // callers receive editor-level access only; no ownership is invented and
+  // owner-only operations remain closed. Once memberships exist, they are the
+  // authoritative access policy.
+  const ownerlessTrip = db.prepare(
+    `SELECT 1 FROM trips
+     WHERE id = ? AND user_id IS NULL
+       AND NOT EXISTS (SELECT 1 FROM trip_members WHERE trip_id = trips.id)`,
+  ).get(tripId);
+  return ownerlessTrip ? { userId, role: 'editor', legacyOwnerless: true } : null;
 }
 
 export function listTripMembers(tripId) {

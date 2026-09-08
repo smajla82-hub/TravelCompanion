@@ -294,6 +294,7 @@ test('an imported itinerary persists recommended venues and parking locations, d
             mapLink: 'https://maps.example.com/caffe-roma',
             recommendation: 'Great espresso',
             price: '5 EUR',
+            parking: 'P1',
           },
           { name: 'Trattoria Bella' },
         ],
@@ -336,6 +337,7 @@ test('an imported itinerary persists recommended venues and parking locations, d
     assert.equal(day1.venues[0].mapLink, 'https://maps.example.com/caffe-roma');
     assert.equal(day1.venues[0].recommendation, 'Great espresso');
     assert.equal(day1.venues[0].price, '5 EUR');
+    assert.equal(day1.venues[0].parking, 'P1');
     assert.equal(day1.venues[1].name, 'Trattoria Bella');
 
     // Parking locations persisted with server-generated stable IDs, keeping
@@ -537,12 +539,13 @@ test('editing a recommended venue updates its fields and editing a parking locat
       {
         method: 'PUT',
         headers,
-        body: JSON.stringify({ name: 'Updated', mealType: 'Dinner', subtype: 'Sushi' }),
+        body: JSON.stringify({ name: 'Updated', mealType: 'Dinner', subtype: 'Sushi', parking: 'P1' }),
       },
     )).json();
     assert.equal(updatedVenue.name, 'Updated');
     assert.equal(updatedVenue.mealType, 'Dinner');
     assert.equal(updatedVenue.subtype, 'Sushi');
+    assert.equal(updatedVenue.parking, 'P1');
 
     const parking = await (await fetch(
       `http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${day.id}/parking`,
@@ -563,6 +566,66 @@ test('editing a recommended venue updates its fields and editing a parking locat
     assert.equal(updatedParking.name, 'Updated Lot');
     assert.equal(updatedParking.price, '10 EUR');
     assert.equal(updatedParking.note, 'Covered');
+  } finally {
+    await closeServer(server);
+  }
+});
+
+test('day statistics writes are atomic and invalid day dates cannot create duplicates', async () => {
+  const { server, port } = await startServer();
+  try {
+    const headers = await signIn(port, 'atomic-day-stats@example.com');
+    const trip = await createTrip(port, headers, 'Atomic days');
+    await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, { method: 'POST', headers });
+
+    const invalidCreate = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days`, {
+      method: 'POST',
+      headers,
+      body: JSON.stringify({ date: '2026-09-01', title: 'Invalid', stats: [{ label: '', value: '1' }] }),
+    });
+    assert.equal(invalidCreate.status, 400);
+    assert.deepEqual((await getItinerary(port, headers, trip.id)).days, []);
+
+    const first = await createDay(port, headers, trip.id, '2026-09-01', 'First');
+    const second = await createDay(port, headers, trip.id, '2026-09-02', 'Second');
+    const duplicate = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days`, {
+      method: 'POST', headers, body: JSON.stringify({ date: '2026-09-01', title: 'Duplicate' }),
+    });
+    assert.equal(duplicate.status, 409);
+
+    const validStats = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${first.id}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ title: 'First with stats', stats: [{ label: 'Distance', value: '10 km' }] }),
+    });
+    assert.equal(validStats.status, 200);
+    const invalidUpdate = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${first.id}`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ title: 'Must not persist', stats: [{ label: '', value: '0' }] }),
+    });
+    assert.equal(invalidUpdate.status, 400);
+
+    const conflictingUpdate = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/itinerary/days/${second.id}`, {
+      method: 'PUT', headers, body: JSON.stringify({ date: '2026-09-01', title: 'Conflict' }),
+    });
+    assert.equal(conflictingUpdate.status, 409);
+
+    const afterInvalidWrites = await getItinerary(port, headers, trip.id);
+    assert.equal(afterInvalidWrites.days.find((day) => day.id === first.id).title, 'First with stats');
+    assert.deepEqual(afterInvalidWrites.days.find((day) => day.id === first.id).stats, [{ label: 'Distance', value: '10 km' }]);
+    assert.equal(afterInvalidWrites.days.find((day) => day.id === second.id).date, '2026-09-02');
+
+    const duplicateReplacement = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/itinerary`, {
+      method: 'PUT',
+      headers,
+      body: JSON.stringify({ days: [
+        { date: '2026-09-03', title: 'One', items: [] },
+        { date: '2026-09-03', title: 'Two', items: [] },
+      ] }),
+    });
+    assert.equal(duplicateReplacement.status, 400);
+    assert.equal((await getItinerary(port, headers, trip.id)).days.length, 2);
   } finally {
     await closeServer(server);
   }

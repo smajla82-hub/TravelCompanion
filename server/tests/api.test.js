@@ -267,6 +267,13 @@ test('Trip CRUD flow works for an authenticated user', async () => {
     assert.equal(activeTrip.id, createdTrip.id);
     assert.equal(activeTrip.isActive, true);
 
+    const invalidUpdateResponse = await fetch(`http://127.0.0.1:${port}/trips/${createdTrip.id}`, {
+      method: 'PUT',
+      headers: authHeaders,
+      body: JSON.stringify({ name: '', country: 'Atlantis' }),
+    });
+    assert.equal(invalidUpdateResponse.status, 400);
+
     const itineraryResponse = await fetch(`http://127.0.0.1:${port}/trips/${createdTrip.id}/itinerary/days`, {
       method: 'POST',
       headers: authHeaders,
@@ -350,6 +357,115 @@ test('a user cannot access another user\'s trip, and only sees their own trips',
     const ownerTrips = await ownerListResponse.json();
     assert.equal(ownerTrips.length, 1);
     assert.equal(ownerTrips[0].id, ownerTrip.id);
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});
+
+test('active trips are selected independently for each authenticated user', async () => {
+  const { server, port } = await startServer();
+  try {
+    const [{ randomUUID }, jwt, { config }, { getDb }] = await Promise.all([
+      import('node:crypto'),
+      import('jsonwebtoken'),
+      import('../src/config.js'),
+      import('../src/db/db.js'),
+    ]);
+    const createUser = (email) => {
+      const user = { id: randomUUID(), email };
+      getDb().prepare('INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)').run(
+        user.id, user.email, 'test-password-hash',
+      );
+      const token = jwt.default.sign({ email }, config.jwtSecret, { subject: user.id });
+      return { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token };
+    };
+    const alice = createUser('active-alice@example.com');
+    const bob = createUser('active-bob@example.com');
+    const aliceTrip = await (await fetch(`http://127.0.0.1:${port}/trips`, {
+      method: 'POST', headers: alice,
+      body: JSON.stringify({ name: 'Alice trip', startDate: '2026-10-01', endDate: '2026-10-02' }),
+    })).json();
+    const bobTrip = await (await fetch(`http://127.0.0.1:${port}/trips`, {
+      method: 'POST', headers: bob,
+      body: JSON.stringify({ name: 'Bob trip', startDate: '2026-10-01', endDate: '2026-10-02' }),
+    })).json();
+    await fetch(`http://127.0.0.1:${port}/trips/${aliceTrip.id}/lock`, { method: 'POST', headers: alice });
+    await fetch(`http://127.0.0.1:${port}/trips/${bobTrip.id}/lock`, { method: 'POST', headers: bob });
+    assert.equal((await fetch(`http://127.0.0.1:${port}/trips/${aliceTrip.id}/active`, {
+      method: 'PUT', headers: alice,
+    })).status, 200);
+    assert.equal((await fetch(`http://127.0.0.1:${port}/trips/${bobTrip.id}/active`, {
+      method: 'PUT', headers: bob,
+    })).status, 200);
+
+    assert.equal((await (await fetch(`http://127.0.0.1:${port}/trips/active`, { headers: alice })).json()).id, aliceTrip.id);
+    assert.equal((await (await fetch(`http://127.0.0.1:${port}/trips/active`, { headers: bob })).json()).id, bobTrip.id);
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});
+
+test('legacy unowned trips remain authenticated ownerless shared data', async () => {
+  const { server, port } = await startServer();
+  try {
+    const [{ randomUUID }, jwt, { config }, { getDb }] = await Promise.all([
+      import('node:crypto'),
+      import('jsonwebtoken'),
+      import('../src/config.js'),
+      import('../src/db/db.js'),
+    ]);
+    const createUser = (email) => {
+      const user = { id: randomUUID(), email };
+      getDb().prepare('INSERT INTO users (id, email, password_hash) VALUES (?, ?, ?)').run(
+        user.id, user.email, 'test-password-hash',
+      );
+      const token = jwt.default.sign({ email }, config.jwtSecret, { subject: user.id });
+      return { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token };
+    };
+    const firstUser = createUser('legacy-first@example.com');
+    const secondUser = createUser('legacy-second@example.com');
+    const tripId = randomUUID();
+    getDb().prepare(
+      `INSERT INTO trips (id, name, destination, country, start_date, end_date, travellers, status, is_active, user_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+    ).run(tripId, 'Legacy trip', '', '', '2026-11-01', '2026-11-02', 1, 'planning', 0);
+
+    assert.equal((await fetch(`http://127.0.0.1:${port}/trips/${tripId}`)).status, 401);
+    assert.equal((await fetch(`http://127.0.0.1:${port}/trips/${tripId}`, { headers: secondUser })).status, 200);
+    assert.equal((await fetch(`http://127.0.0.1:${port}/trips/${tripId}/lock`, {
+      method: 'POST', headers: firstUser,
+    })).status, 200);
+    assert.equal((await fetch(`http://127.0.0.1:${port}/trips/${tripId}`, {
+      method: 'PUT', headers: firstUser, body: JSON.stringify({ name: 'Updated legacy trip' }),
+    })).status, 200);
+    assert.equal(getDb().prepare('SELECT user_id FROM trips WHERE id = ?').get(tripId).user_id, null);
+    assert.equal((await fetch(`http://127.0.0.1:${port}/trips/${tripId}/invitations`, {
+      method: 'POST',
+      headers: firstUser,
+      body: JSON.stringify({ email: 'anyone@example.com', role: 'viewer' }),
+    })).status, 403);
+
+    const explicitlySharedTripId = randomUUID();
+    getDb().prepare(
+      `INSERT INTO trips (id, name, destination, country, start_date, end_date, travellers, status, is_active, user_id)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, NULL)`,
+    ).run(explicitlySharedTripId, 'Explicit legacy trip', '', '', '2026-11-01', '2026-11-02', 1, 'planning', 0);
+    const explicitMemberId = getDb().prepare('SELECT id FROM users WHERE email = ?').get('legacy-first@example.com').id;
+    getDb().prepare(
+      `INSERT INTO trip_members (trip_id, user_id, role, created_at, updated_at)
+       VALUES (?, ?, 'viewer', datetime('now'), datetime('now'))`,
+    ).run(explicitlySharedTripId, explicitMemberId);
+
+    assert.equal((await fetch(`http://127.0.0.1:${port}/trips/${explicitlySharedTripId}`, {
+      headers: firstUser,
+    })).status, 200);
+    assert.equal((await fetch(`http://127.0.0.1:${port}/trips/${explicitlySharedTripId}`, {
+      headers: secondUser,
+    })).status, 404);
   } finally {
     await new Promise((resolve, reject) => {
       server.close((error) => (error ? reject(error) : resolve()));

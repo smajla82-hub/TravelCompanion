@@ -165,6 +165,7 @@ function normalizeVenuePayload(payload = {}) {
     mapLink: payload.mapLink ?? payload.map_link ?? null,
     recommendation: payload.recommendation ?? null,
     price: payload.price ?? null,
+    parking: payload.parking ?? null,
     reservation: payload.reservation ?? null,
     sortOrder: Number(payload.sortOrder ?? payload.sort_order ?? 0),
   };
@@ -196,6 +197,19 @@ function normalizeTripPayload(payload = {}) {
   };
 }
 
+function validateTripPayload(data) {
+  if (!data.name || !data.startDate || !data.endDate) {
+    const error = new Error('Trip name, startDate and endDate are required.');
+    error.statusCode = 400;
+    throw error;
+  }
+  if (data.country && !COUNTRY_CODES.has(data.country)) {
+    const error = new Error('Country must be a valid ISO 3166-1 alpha-2 code.');
+    error.statusCode = 400;
+    throw error;
+  }
+}
+
 function normalizeItineraryDayPayload(payload = {}) {
   return {
     date: payload.date ?? '',
@@ -209,6 +223,38 @@ function normalizeDayStatPayload(payload = {}) {
     value: String(payload.value ?? '').trim(),
     sortOrder: Number(payload.sortOrder ?? payload.sort_order ?? 0),
   };
+}
+
+function normalizeDayStats(stats) {
+  if (stats === undefined || stats === null) {
+    return undefined;
+  }
+  if (!Array.isArray(stats)) {
+    const error = new Error('Day statistics must be an array.');
+    error.statusCode = 400;
+    throw error;
+  }
+  return stats.map((stat, index) => {
+    const statData = normalizeDayStatPayload({ ...stat, sortOrder: index });
+    if (!statData.label) {
+      const error = new Error('Day statistic label is required.');
+      error.statusCode = 400;
+      throw error;
+    }
+    return statData;
+  });
+}
+
+function assertDayDateAvailable(tripId, date, dayId = null) {
+  const conflict = db.prepare(
+    `SELECT 1 FROM itinerary_days
+     WHERE trip_id = ? AND date = ?${dayId ? ' AND id <> ?' : ''} LIMIT 1`,
+  ).get(...(dayId ? [tripId, date, dayId] : [tripId, date]));
+  if (conflict) {
+    const error = new Error('An itinerary day already exists for this date.');
+    error.statusCode = 409;
+    throw error;
+  }
 }
 
 function normalizeItineraryItemPayload(payload = {}) {
@@ -259,42 +305,46 @@ function resequenceDayItems(tripId, dayId) {
 
 export function listTrips(userId) {
   return db.prepare(
-    `SELECT trips.* FROM trips
-     JOIN trip_members ON trip_members.trip_id = trips.id
-     WHERE trip_members.user_id = ?
-     ORDER BY trips.updated_at DESC`,
-  ).all(userId).map(mapTripRow);
+   `SELECT trips.*, CASE WHEN user_active_trips.trip_id IS NULL THEN 0 ELSE 1 END AS is_active
+    FROM trips
+    LEFT JOIN trip_members ON trip_members.trip_id = trips.id AND trip_members.user_id = ?
+    LEFT JOIN user_active_trips ON user_active_trips.user_id = ? AND user_active_trips.trip_id = trips.id
+    WHERE trip_members.user_id IS NOT NULL
+      OR (trips.user_id IS NULL
+          AND NOT EXISTS (SELECT 1 FROM trip_members WHERE trip_id = trips.id))
+    ORDER BY trips.updated_at DESC`,
+  ).all(userId, userId).map(mapTripRow);
 }
 
 export function getTripById(tripId, userId) {
   return mapTripRow(db.prepare(
-    `SELECT trips.* FROM trips
-     JOIN trip_members ON trip_members.trip_id = trips.id
-     WHERE trips.id = ? AND trip_members.user_id = ?`,
-  ).get(tripId, userId));
+   `SELECT trips.*, CASE WHEN user_active_trips.trip_id IS NULL THEN 0 ELSE 1 END AS is_active
+    FROM trips
+    LEFT JOIN trip_members ON trip_members.trip_id = trips.id AND trip_members.user_id = ?
+    LEFT JOIN user_active_trips ON user_active_trips.user_id = ? AND user_active_trips.trip_id = trips.id
+    WHERE trips.id = ?
+      AND (trip_members.user_id IS NOT NULL
+           OR (trips.user_id IS NULL
+               AND NOT EXISTS (SELECT 1 FROM trip_members WHERE trip_id = trips.id)))`,
+  ).get(userId, userId, tripId));
 }
 
 export function getActiveTrip(userId) {
   return mapTripRow(db.prepare(
-    `SELECT trips.* FROM trips
-     JOIN trip_members ON trip_members.trip_id = trips.id
-     WHERE trips.is_active = 1 AND trip_members.user_id = ?
-     ORDER BY trips.updated_at DESC LIMIT 1`,
+   `SELECT trips.*, 1 AS is_active FROM user_active_trips
+    JOIN trips ON trips.id = user_active_trips.trip_id
+    LEFT JOIN trip_members ON trip_members.trip_id = trips.id AND trip_members.user_id = user_active_trips.user_id
+    WHERE user_active_trips.user_id = ?
+      AND (trip_members.user_id IS NOT NULL
+           OR (trips.user_id IS NULL
+               AND NOT EXISTS (SELECT 1 FROM trip_members WHERE trip_id = trips.id)))
+    LIMIT 1`,
   ).get(userId));
 }
 
 export function createTrip(payload = {}, userId) {
   const data = normalizeTripPayload(payload);
-  if (!data.name || !data.startDate || !data.endDate) {
-    const error = new Error('Trip name, startDate and endDate are required.');
-    error.statusCode = 400;
-    throw error;
-  }
-  if (data.country && !COUNTRY_CODES.has(data.country)) {
-    const error = new Error('Country must be a valid ISO 3166-1 alpha-2 code.');
-    error.statusCode = 400;
-    throw error;
-  }
+  validateTripPayload(data);
 
   const now = new Date().toISOString();
   const tripId = randomUUID();
@@ -305,9 +355,16 @@ export function createTrip(payload = {}, userId) {
        VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
     ).run(
       tripId, data.name, data.destination, data.country, data.startDate, data.endDate,
-      data.travellers, data.coverImage, data.status, data.isActive, userId, now, now,
+      data.travellers, data.coverImage, data.status, 0, userId, now, now,
     );
     addTripMember(tripId, userId, 'owner');
+    if (data.isActive) {
+      db.prepare(
+       `INSERT INTO user_active_trips (user_id, trip_id, created_at, updated_at)
+        VALUES (?, ?, ?, ?)
+        ON CONFLICT(user_id) DO UPDATE SET trip_id = excluded.trip_id, updated_at = excluded.updated_at`,
+      ).run(userId, tripId, now, now);
+    }
   })();
 
   return getTripById(tripId, userId);
@@ -322,30 +379,38 @@ export function updateTrip(tripId, payload = {}, userId) {
   }
 
   const data = normalizeTripPayload({ ...existing, ...payload });
-  if (Object.hasOwn(payload, 'country') && !COUNTRY_CODES.has(data.country)) {
-    const error = new Error('Country must be a valid ISO 3166-1 alpha-2 code.');
-    error.statusCode = 400;
-    throw error;
-  }
+  validateTripPayload(data);
   const now = new Date().toISOString();
 
-  db.prepare(
-    `UPDATE trips
-     SET name = ?, destination = ?, country = ?, start_date = ?, end_date = ?, travellers = ?, cover_image = ?, status = ?, is_active = ?, updated_at = ?
-     WHERE id = ?`
-  ).run(
-    data.name,
-    data.destination,
-    data.country,
-    data.startDate,
-    data.endDate,
-    data.travellers,
-    data.coverImage,
-    data.status,
-    data.isActive,
-    now,
-    tripId,
-  );
+  db.transaction(() => {
+    db.prepare(
+      `UPDATE trips
+       SET name = ?, destination = ?, country = ?, start_date = ?, end_date = ?, travellers = ?, cover_image = ?, status = ?, updated_at = ?
+       WHERE id = ?`,
+    ).run(
+      data.name,
+      data.destination,
+      data.country,
+      data.startDate,
+      data.endDate,
+      data.travellers,
+      data.coverImage,
+      data.status,
+      now,
+      tripId,
+    );
+    if (Object.hasOwn(payload, 'isActive') || Object.hasOwn(payload, 'is_active')) {
+      if (data.isActive) {
+        db.prepare(
+          `INSERT INTO user_active_trips (user_id, trip_id, created_at, updated_at)
+           VALUES (?, ?, ?, ?)
+           ON CONFLICT(user_id) DO UPDATE SET trip_id = excluded.trip_id, updated_at = excluded.updated_at`,
+        ).run(userId, tripId, now, now);
+      } else {
+        db.prepare('DELETE FROM user_active_trips WHERE user_id = ? AND trip_id = ?').run(userId, tripId);
+      }
+    }
+  })();
 
   return getTripById(tripId, userId);
 }
@@ -370,14 +435,12 @@ export function setActiveTrip(tripId, userId) {
     throw error;
   }
 
+  const now = new Date().toISOString();
   db.prepare(
-    `UPDATE trips SET is_active = 0
-     WHERE id IN (SELECT trip_id FROM trip_members WHERE user_id = ?)`,
-  ).run(userId);
-  db.prepare('UPDATE trips SET is_active = 1, updated_at = ? WHERE id = ?').run(
-    new Date().toISOString(),
-    tripId,
-  );
+    `INSERT INTO user_active_trips (user_id, trip_id, created_at, updated_at)
+     VALUES (?, ?, ?, ?)
+     ON CONFLICT(user_id) DO UPDATE SET trip_id = excluded.trip_id, updated_at = excluded.updated_at`,
+  ).run(userId, tripId, now, now);
   return getTripById(tripId, userId);
 }
 
@@ -412,14 +475,18 @@ export function createItineraryDay(tripId, payload = {}, userId) {
     error.statusCode = 400;
     throw error;
   }
+  assertDayDateAvailable(tripId, data.date);
+  const stats = normalizeDayStats(payload?.stats);
 
   const now = new Date().toISOString();
   const dayId = randomUUID();
 
-  db.prepare(
-    'INSERT INTO itinerary_days (id, trip_id, date, title, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)'
-  ).run(dayId, tripId, data.date, data.title, now, now);
-  writeDayStats(tripId, dayId, payload?.stats, now);
+  db.transaction(() => {
+    db.prepare(
+      'INSERT INTO itinerary_days (id, trip_id, date, title, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
+    ).run(dayId, tripId, data.date, data.title, now, now);
+    replaceDayStats(tripId, dayId, stats, now);
+  })();
 
   return getDayById(tripId, dayId);
 }
@@ -433,12 +500,25 @@ export function updateItineraryDay(tripId, dayId, payload = {}) {
   }
 
   const data = normalizeItineraryDayPayload({ ...existing, ...payload });
+  if (!data.date) {
+    const error = new Error('Itinerary day requires a date.');
+    error.statusCode = 400;
+    throw error;
+  }
+  // Legacy databases can contain duplicate dates. A title/stats-only update
+  // must remain possible; only a real date change is checked for conflicts.
+  if (data.date !== existing.date) {
+    assertDayDateAvailable(tripId, data.date, dayId);
+  }
+  const stats = normalizeDayStats(payload?.stats);
   const now = new Date().toISOString();
 
-  db.prepare(
-    'UPDATE itinerary_days SET date = ?, title = ?, updated_at = ? WHERE trip_id = ? AND id = ?'
-  ).run(data.date, data.title, now, tripId, dayId);
-  writeDayStats(tripId, dayId, payload?.stats, now);
+  db.transaction(() => {
+    db.prepare(
+      'UPDATE itinerary_days SET date = ?, title = ?, updated_at = ? WHERE trip_id = ? AND id = ?',
+    ).run(data.date, data.title, now, tripId, dayId);
+    replaceDayStats(tripId, dayId, stats, now);
+  })();
 
   return getDayById(tripId, dayId);
 }
@@ -486,39 +566,20 @@ export function listDayStatsForTrip(tripId) {
  * in which case the existing statistics are left untouched, so day updates that
  * do not carry statistics cannot silently drop them.
  */
-function writeDayStats(tripId, dayId, stats, now) {
-  if (stats === undefined || stats === null) {
+function replaceDayStats(tripId, dayId, stats, now) {
+  if (stats === undefined) {
     return;
   }
-
-  if (!Array.isArray(stats)) {
-    const error = new Error('Day statistics must be an array.');
-    error.statusCode = 400;
-    throw error;
-  }
-
-  const normalized = stats.map((stat, index) => {
-    const statData = normalizeDayStatPayload({ ...stat, sortOrder: index });
-    if (!statData.label) {
-      const error = new Error('Day statistic label is required.');
-      error.statusCode = 400;
-      throw error;
-    }
-
-    return statData;
-  });
 
   const insertStat = db.prepare(
     `INSERT INTO day_stats (id, trip_id, day_id, label, value, sort_order, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
   );
 
-  db.transaction(() => {
-    db.prepare('DELETE FROM day_stats WHERE trip_id = ? AND day_id = ?').run(tripId, dayId);
-    for (const stat of normalized) {
-      insertStat.run(randomUUID(), tripId, dayId, stat.label, stat.value, stat.sortOrder, now, now);
-    }
-  })();
+  db.prepare('DELETE FROM day_stats WHERE trip_id = ? AND day_id = ?').run(tripId, dayId);
+  for (const stat of stats) {
+    insertStat.run(randomUUID(), tripId, dayId, stat.label, stat.value, stat.sortOrder, now, now);
+  }
 }
 
 export function getItinerary(tripId) {
@@ -665,6 +726,12 @@ export function replaceItinerary(tripId, days, userId) {
       }),
     };
   });
+  const dates = normalizedDays.map((day) => day.date);
+  if (new Set(dates).size !== dates.length) {
+    const error = new Error('Duplicate itinerary day dates are not allowed.');
+    error.statusCode = 400;
+    throw error;
+  }
 
   const insertDay = db.prepare(
     'INSERT INTO itinerary_days (id, trip_id, date, title, created_at, updated_at) VALUES (?, ?, ?, ?, ?, ?)',
@@ -678,8 +745,8 @@ export function replaceItinerary(tripId, days, userId) {
   const insertVenue = db.prepare(
     `INSERT INTO venues (
       id, trip_id, day_id, priority, type, meal_type, subtype, name, smart_chip, map_link, recommendation,
-      price, reservation, sort_order, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      price, parking, reservation, sort_order, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   );
   const insertDayStat = db.prepare(
     `INSERT INTO day_stats (
@@ -741,6 +808,7 @@ export function replaceItinerary(tripId, days, userId) {
           venue.mapLink,
           venue.recommendation,
           venue.price,
+          venue.parking,
           venue.reservation,
           venue.sortOrder,
           now,
@@ -865,6 +933,11 @@ export function updateItineraryItem(tripId, dayId, itemId, payload = {}) {
   }
 
   const data = normalizeItineraryItemPayload({ ...existing, ...payload });
+  if (!data.title) {
+    const error = new Error('Itinerary item title is required.');
+    error.statusCode = 400;
+    throw error;
+  }
   const now = new Date().toISOString();
 
   db.transaction(() => {
@@ -951,11 +1024,11 @@ export function createVenue(tripId, dayId, payload = {}) {
   db.prepare(
     `INSERT INTO venues (
       id, trip_id, day_id, priority, type, meal_type, subtype, name, smart_chip, map_link, recommendation,
-      price, reservation, sort_order, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+      price, parking, reservation, sort_order, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
   ).run(
     venueId, tripId, dayId, data.priority, data.type, data.mealType, data.subtype, data.name,
-    data.smartChip, data.mapLink, data.recommendation, data.price, data.reservation, data.sortOrder,
+    data.smartChip, data.mapLink, data.recommendation, data.price, data.parking, data.reservation, data.sortOrder,
     now, now,
   );
 
@@ -988,11 +1061,11 @@ export function updateVenue(tripId, dayId, venueId, payload = {}) {
   db.prepare(
     `UPDATE venues
      SET priority = ?, type = ?, meal_type = ?, subtype = ?, name = ?, smart_chip = ?, map_link = ?,
-         recommendation = ?, price = ?, reservation = ?, updated_at = ?
+         recommendation = ?, price = ?, parking = ?, reservation = ?, updated_at = ?
      WHERE trip_id = ? AND day_id = ? AND id = ?`,
   ).run(
     data.priority, data.type, data.mealType, data.subtype, data.name, data.smartChip, data.mapLink,
-    data.recommendation, data.price, data.reservation, now,
+    data.recommendation, data.price, data.parking, data.reservation, now,
     tripId, dayId, venueId,
   );
 

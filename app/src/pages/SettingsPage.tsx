@@ -14,6 +14,8 @@ import {
 
 import { ThemeService } from "../services/ThemeService";
 import { TripService } from "../services/TripService";
+import { OnlineTripStore } from "../services/OnlineTripStore";
+import { createTripAdapter } from "../services/TripAdapter";
 import { SETTINGS_BACKGROUND_URL } from "../styles/brandAssets";
 
 import type { Theme } from "../services/ThemeService";
@@ -45,9 +47,21 @@ export default function SettingsPage() {
     const importInputId =
         useId();
 
-    function handleExportData() {
+    async function handleExportData() {
+        setImportError("");
+        let onlineTrips;
+        try {
+            onlineTrips = await Promise.all(
+                OnlineTripStore.getSnapshot().map(async trip =>
+                    createTripAdapter(trip).getTrip(),
+                ),
+            );
+        } catch {
+            setImportError("Unable to include synced Trips in the backup. Try again while online.");
+            return;
+        }
         const backup =
-            TripService.exportBackup();
+            TripService.exportBackup(onlineTrips);
 
         const blob =
             new Blob(
@@ -203,12 +217,14 @@ export default function SettingsPage() {
                             </Heading>
 
                             <p>
-                                Download a JSON backup of all Trips.
+                                Download local Trips plus a read-only snapshot of synced Trips.
+                                Restoring a backup changes local Trips only; it never overwrites
+                                server-backed or shared Trips.
                             </p>
 
                             <Button
                                 type="button"
-                                onClick={handleExportData}
+                                onClick={() => { void handleExportData(); }}
                             >
                                 Export data
                             </Button>
