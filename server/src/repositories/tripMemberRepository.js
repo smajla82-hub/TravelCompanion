@@ -17,13 +17,24 @@ function mapMemberRow(row) {
 }
 
 export function getTripMember(tripId, userId) {
-  return mapMemberRow(
+  const member = mapMemberRow(
     db.prepare(
       `SELECT trip_members.*, users.email
        FROM trip_members JOIN users ON users.id = trip_members.user_id
        WHERE trip_id = ? AND user_id = ?`,
     ).get(tripId, userId),
   );
+  if (member) {
+    return member;
+  }
+
+  // Trips created before authentication have no accountable owner. Do not
+  // assign the first caller as owner; expose them only to authenticated users
+  // as ownerless shared editor data, keeping destructive/owner actions closed.
+  const ownerlessTrip = db.prepare(
+    'SELECT 1 FROM trips WHERE id = ? AND user_id IS NULL',
+  ).get(tripId);
+  return ownerlessTrip ? { userId, role: 'editor', legacyOwnerless: true } : null;
 }
 
 export function listTripMembers(tripId) {

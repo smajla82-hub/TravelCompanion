@@ -64,6 +64,28 @@ function persistTrips() {
     );
 }
 
+function isBackupTrip(value: unknown): value is Trip {
+    if (!value || typeof value !== "object") {
+        return false;
+    }
+
+    const trip = value as Partial<Trip>;
+    if (
+        typeof trip.id !== "string" ||
+        typeof trip.destination !== "string" ||
+        typeof trip.country !== "string" ||
+        typeof trip.startDate !== "string" ||
+        typeof trip.endDate !== "string" ||
+        !Number.isInteger(trip.travellers) ||
+        (trip.travellers ?? 0) < 1 ||
+        !["planning", "active", "finished"].includes(trip.status ?? "")
+    ) {
+        return false;
+    }
+
+    return trip.itinerary === undefined || Array.isArray(trip.itinerary);
+}
+
 loadTrips();
 
 export const TripService = {
@@ -72,12 +94,16 @@ export const TripService = {
         return trips;
     },
 
-    exportBackup(): string {
+    exportBackup(onlineTrips: Trip[] = []): string {
         return JSON.stringify(
             {
-                version: 1,
+                version: 2,
                 exportedAt: new Date().toISOString(),
+                // `trips` remains the importable device-local collection for
+                // backward compatibility. Online data is export-only: restoring
+                // it must never overwrite server-backed trips.
                 trips: this.getAll(),
+                onlineTrips,
             },
             null,
             2
@@ -99,7 +125,7 @@ export const TripService = {
             };
         }
 
-        if (!Array.isArray(parsed.trips)) {
+        if (!Array.isArray(parsed.trips) || !parsed.trips.every(isBackupTrip)) {
             return {
                 success: false,
                 error: "Invalid backup file.",
@@ -440,10 +466,11 @@ export const TripService = {
         }
 
         trips.forEach(item => {
-            item.status =
-                item.id === id
-                    ? "active"
-                    : "planning";
+            if (item.id === id) {
+                item.status = "active";
+            } else if (item.status === "active") {
+                item.status = "planning";
+            }
         });
 
         persistTrips();

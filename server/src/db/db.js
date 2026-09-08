@@ -84,6 +84,93 @@ if (!hasParkingSmartChip) {
   db.exec('ALTER TABLE parking_locations ADD COLUMN smart_chip TEXT');
 }
 
+// Migration: venue parking is a user-facing string just like an item's parking
+// code. Keep it nullable so historical venue rows remain readable.
+const venueColumns = db.prepare('PRAGMA table_info(venues)').all();
+if (!venueColumns.some((column) => column.name === 'parking')) {
+  db.exec('ALTER TABLE venues ADD COLUMN parking TEXT');
+}
+
+// A former global active flag is copied once to each existing member. For a
+// user with multiple old active rows, the newest trip (then id) wins
+// deterministically. New selections only use `user_active_trips`.
+db.exec(`
+  INSERT OR IGNORE INTO user_active_trips (user_id, trip_id, created_at, updated_at)
+  SELECT member.user_id, trip.id, trip.created_at, trip.updated_at
+  FROM trip_members AS member
+  JOIN trips AS trip ON trip.id = member.trip_id
+  WHERE trip.is_active = 1
+    AND NOT EXISTS (
+      SELECT 1
+      FROM trip_members AS newer_member
+      JOIN trips AS newer_trip ON newer_trip.id = newer_member.trip_id
+      WHERE newer_member.user_id = member.user_id
+        AND newer_trip.is_active = 1
+        AND (
+          newer_trip.updated_at > trip.updated_at
+          OR (newer_trip.updated_at = trip.updated_at AND newer_trip.id > trip.id)
+        )
+    );
+`);
+
+// Enforce new same-day keys at the database boundary without making a legacy
+// database containing old duplicates fail to open. Clean databases get unique
+// indexes; triggers still prevent new duplicates when old rows make an index
+// impossible. Existing duplicate rows are intentionally left readable.
+const hasDuplicateDayDates = db.prepare(
+  `SELECT 1 FROM itinerary_days GROUP BY trip_id, date HAVING COUNT(*) > 1 LIMIT 1`,
+).get();
+if (!hasDuplicateDayDates) {
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_itinerary_days_trip_date ON itinerary_days (trip_id, date)');
+}
+const hasDuplicateParkingCodes = db.prepare(
+  `SELECT 1 FROM parking_locations GROUP BY day_id, code HAVING COUNT(*) > 1 LIMIT 1`,
+).get();
+if (!hasDuplicateParkingCodes) {
+  db.exec('CREATE UNIQUE INDEX IF NOT EXISTS idx_parking_locations_day_code ON parking_locations (day_id, code)');
+}
+db.exec(`
+  CREATE TRIGGER IF NOT EXISTS prevent_duplicate_itinerary_day_date
+  BEFORE INSERT ON itinerary_days
+  FOR EACH ROW WHEN EXISTS (
+    SELECT 1 FROM itinerary_days WHERE trip_id = NEW.trip_id AND date = NEW.date
+  )
+  BEGIN
+    SELECT RAISE(ABORT, 'Duplicate itinerary day date.');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS prevent_changed_duplicate_itinerary_day_date
+  BEFORE UPDATE OF trip_id, date ON itinerary_days
+  FOR EACH ROW WHEN (NEW.trip_id <> OLD.trip_id OR NEW.date <> OLD.date)
+    AND EXISTS (
+      SELECT 1 FROM itinerary_days
+      WHERE trip_id = NEW.trip_id AND date = NEW.date AND id <> OLD.id
+    )
+  BEGIN
+    SELECT RAISE(ABORT, 'Duplicate itinerary day date.');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS prevent_duplicate_parking_location_code
+  BEFORE INSERT ON parking_locations
+  FOR EACH ROW WHEN EXISTS (
+    SELECT 1 FROM parking_locations WHERE day_id = NEW.day_id AND code = NEW.code
+  )
+  BEGIN
+    SELECT RAISE(ABORT, 'Duplicate parking code within a day.');
+  END;
+
+  CREATE TRIGGER IF NOT EXISTS prevent_changed_duplicate_parking_location_code
+  BEFORE UPDATE OF day_id, code ON parking_locations
+  FOR EACH ROW WHEN (NEW.day_id <> OLD.day_id OR NEW.code <> OLD.code)
+    AND EXISTS (
+      SELECT 1 FROM parking_locations
+      WHERE day_id = NEW.day_id AND code = NEW.code AND id <> OLD.id
+    )
+  BEGIN
+    SELECT RAISE(ABORT, 'Duplicate parking code within a day.');
+  END;
+`);
+
 export function getDb() {
   return db;
 }

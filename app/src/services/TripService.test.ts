@@ -74,6 +74,34 @@ describe("TripService", () => {
         expect(TripService.getAll()[0].country).toBe("CZ");
     });
 
+    it("does not replace local data when any backup record is malformed", () => {
+        const before = structuredClone(TripService.getAll());
+
+        expect(TripService.importBackup(JSON.stringify({
+            trips: [{ id: "invalid", country: "" }],
+        }))).toEqual({ success: false, error: "Invalid backup file." });
+
+        expect(TripService.getAll()).toEqual(before);
+    });
+
+    it("exports online Trips as a read-only snapshot without importing them", () => {
+        const online = trip({ id: "online-a", source: "online" });
+        const backup = JSON.parse(TripService.exportBackup([online]));
+
+        expect(backup.onlineTrips).toEqual([online]);
+        expect(TripService.importBackup(JSON.stringify(backup))).toEqual({ success: true });
+        expect(TripService.getAll().some(current => current.id === "online-a")).toBe(false);
+    });
+
+    it("preserves a completed trip's lifecycle when another trip becomes active", () => {
+        TripService.getAll().find(current => current.id === "offline-a")!.status = "finished";
+
+        TripService.setActive("offline-b");
+
+        expect(TripService.getAll().find(current => current.id === "offline-a")?.status)
+            .toBe("finished");
+    });
+
     describe("itinerary ordering", () => {
         function itemTitles(): string[] {
             return TripService.getAll()

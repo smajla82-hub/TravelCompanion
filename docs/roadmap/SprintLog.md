@@ -4,6 +4,25 @@ This file records the completed development history of the Travel Companion appl
 
 It is a human-readable history, not an archive of every Git commit. Git remains authoritative for exact commit history.
 
+## Feature FP-6.1 — Full Project Audit Remediation
+**Status:** DONE
+
+Resolved the concrete data-integrity and compatibility findings from the FP-6
+audit without beginning FP-7. Recommended Venue parking now round-trips through
+online imports and SQLite. Local backups validate every trip before replacing
+device data; exports include a read-only snapshot of currently accessible
+online trips, while restore deliberately changes local data only and never
+overwrites server-backed/shared trips.
+
+The database migration is additive: historical ownerless trips remain
+ownerless (no caller is assigned ownership) and are accessible as legacy shared
+editor data to authenticated users. Legacy global active selections are copied
+per member deterministically; new selections are per user. Existing duplicate
+day dates and parking codes remain readable, while new duplicates are
+prevented. Day/stat writes are atomic, updates apply domain validation, parking
+references are checked within their day, and local activation preserves
+non-active lifecycle states.
+
 ## Feature FP-6 — Final Visual & Functional Pass
 **Status:** DONE
 

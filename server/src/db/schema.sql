@@ -44,6 +44,19 @@ CREATE TABLE IF NOT EXISTS trip_members (
 
 CREATE INDEX IF NOT EXISTS idx_trip_members_user_id ON trip_members (user_id);
 
+-- The current online trip is a per-user preference. The legacy `trips.is_active`
+-- column remains for compatibility with pre-FP-6.1 databases.
+CREATE TABLE IF NOT EXISTS user_active_trips (
+  user_id TEXT PRIMARY KEY,
+  trip_id TEXT NOT NULL,
+  created_at TEXT NOT NULL DEFAULT (datetime('now')),
+  updated_at TEXT NOT NULL DEFAULT (datetime('now')),
+  FOREIGN KEY (user_id) REFERENCES users (id) ON DELETE CASCADE,
+  FOREIGN KEY (trip_id) REFERENCES trips (id) ON DELETE CASCADE
+);
+
+CREATE INDEX IF NOT EXISTS idx_user_active_trips_trip_id ON user_active_trips (trip_id);
+
 CREATE TABLE IF NOT EXISTS trip_locks (
   trip_id TEXT PRIMARY KEY,
   user_id TEXT NOT NULL,
@@ -131,6 +144,7 @@ CREATE TABLE IF NOT EXISTS venues (
   map_link TEXT,
   recommendation TEXT,
   price TEXT,
+  parking TEXT,
   reservation TEXT,
   sort_order INTEGER NOT NULL DEFAULT 0,
   created_at TEXT NOT NULL DEFAULT (datetime('now')),
