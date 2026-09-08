@@ -4,11 +4,46 @@ import * as XLSX from "xlsx";
 import { importXlsxRoadBook } from "./XlsxRoadBookImporter";
 import { sortItineraryItems } from "../itinerary/sortItineraryItems";
 
-function buildWorkbookFile(rows: (string | number)[][]): File {
-    const sheet = XLSX.utils.aoa_to_sheet(rows);
+type SheetSpec = {
+    name: string;
+    rows: (string | number)[][];
+    links?: {
+        row: number;
+        column: number;
+        target: string;
+    }[];
+};
+
+function buildWorkbookFile(
+    rowsOrSheets: (string | number)[][] | SheetSpec[]
+): File {
+    const sheets: SheetSpec[] =
+        Array.isArray(rowsOrSheets[0]) ?
+            [{
+                name: "Day 1 - Test",
+                rows: rowsOrSheets as (string | number)[][],
+            }] :
+            rowsOrSheets as SheetSpec[];
+
     const workbook = XLSX.utils.book_new();
 
-    XLSX.utils.book_append_sheet(workbook, sheet, "Day 1 - Test");
+    for (const { name, rows, links = [] } of sheets) {
+        const sheet = XLSX.utils.aoa_to_sheet(rows);
+
+        for (const link of links) {
+            const address = XLSX.utils.encode_cell({
+                r: link.row,
+                c: link.column,
+            });
+
+            sheet[address] = {
+                ...(sheet[address] ?? { t: "s", v: "" }),
+                l: { Target: link.target },
+            };
+        }
+
+        XLSX.utils.book_append_sheet(workbook, sheet, name);
+    }
 
     const buffer = XLSX.write(workbook, {
         type: "buffer",
@@ -16,6 +51,16 @@ function buildWorkbookFile(rows: (string | number)[][]): File {
     });
 
     return new File([buffer], "roadbook.xlsx");
+}
+
+function readFixtureFile(filename: string): File {
+    const workbook = XLSX.readFile(`../${filename}`);
+    const buffer = XLSX.write(workbook, {
+        type: "buffer",
+        bookType: "xlsx",
+    });
+
+    return new File([buffer], filename);
 }
 
 const HEADER_ROW = [
@@ -43,7 +88,288 @@ function buildRows(
     ];
 }
 
+const CANONICAL_HEADER_ROW = [
+    "Time🕒 ",
+    "Activity 🗓",
+    "Location 🌍",
+    "Activity Type",
+    "Priority ⭐",
+    "Parking 🚗",
+    "Place Name 📍 (Smart Chip)",
+    "Price 💰",
+    "Note📝",
+];
+
+const CANONICAL_VENUE_PARKING_HEADER_ROW = [
+    "Priority ⭐",
+    "Meal Type 🍴",
+    "Place 🌍",
+    "Place Name 📍 (Smart Chip)",
+    "Recommendation 💡",
+    "Price/person 💰",
+    "Parking 🚗",
+    "Reservation ⏰",
+    "Note📝",
+    "",
+    "",
+    "Code",
+    "Location 🌍",
+    "Place Name 📍 (Smart Chip)",
+    "Price 💰",
+    "Note📝",
+];
+
+function buildCanonicalRows(
+    dataRows: (string | number)[][],
+    venueParkingRows: (string | number)[][] = [],
+    statsRows: (string | number)[][] = []
+): (string | number)[][] {
+    const rows: (string | number)[][] = [
+        ["🧳 DAY X – Example"],
+        ["Neděle • 1. 1. 2020"],
+        [],
+        ["🗓 ČASOVÁ OSA + 🚗 PARKOVÁNÍ", "", "", "", "", "", "", "", "", "", "", "STATISTICS 📊"],
+        CANONICAL_HEADER_ROW,
+        ...dataRows,
+        [],
+    ];
+
+    if (statsRows.length > 0) {
+        for (let index = 0; index < statsRows.length; index++) {
+            const row = rows[4 + index] ?? [];
+
+            rows[4 + index] = row;
+            row[11] = statsRows[index][0];
+            row[12] = statsRows[index][1];
+        }
+    }
+
+    rows.push(
+        ["🍴 DOPORUČENÉ PODNIKY", "", "", "", "", "", "", "", "", "", "", "PARKING 🚗"],
+        CANONICAL_VENUE_PARKING_HEADER_ROW,
+        ...venueParkingRows
+    );
+
+    return rows;
+}
+
 describe("importXlsxRoadBook", () => {
+    it("imports the MASTER_TEMPLATE v4.3 Day sheet without CONFIG and ignores its instruction sheet", async () => {
+        const file = readFixtureFile("MASTER_TEMPLATE_V_4.3.xlsx");
+
+        const { days } = await importXlsxRoadBook(file);
+
+        expect(days).toHaveLength(1);
+        expect(days[0]).toMatchObject({
+            date: "2020-01-01",
+            title: "🧳 DAY X – Example",
+        });
+    });
+
+    it("imports canonical v4.3 activity, venue, parking, Smart Chip links, and statistics", async () => {
+        const activityLink = "https://maps.example/activity";
+        const venueLink = "https://maps.example/venue";
+        const parkingLink = "https://maps.example/parking";
+        const rows = buildCanonicalRows(
+            [
+                [
+                    "7:00:00",
+                    "Breakfast",
+                    "Anaheim",
+                    "food",
+                    "MUST",
+                    "P1",
+                    "Breakfast Smart Place",
+                    "15 USD",
+                    "Morning note",
+                ],
+                [
+                    "9:30:00",
+                    "Museum",
+                    "Los Angeles",
+                    "culture",
+                    "OPTIONAL",
+                    "",
+                    "Museum Smart Place",
+                    "20 USD",
+                    "Museum note",
+                ],
+            ],
+            [[
+                "⭐ Hlavní",
+                "🍳Breakfast",
+                "Venue display name",
+                "Venue Smart Place",
+                "Great breakfast",
+                "15–20 USD",
+                "P1",
+                "No",
+                "Airport",
+                "",
+                "",
+                "P1",
+                "Parking display name",
+                "Parking Smart Place",
+                "10 USD/day",
+                "Covered lot",
+            ]],
+            [
+                ["🚗 Celkem km", "~60 km"],
+                ["🍽 Podniky", "1"],
+            ]
+        );
+        const file = buildWorkbookFile([{
+            name: "Day 1 - Canonical",
+            rows,
+            links: [
+                { row: 5, column: 6, target: activityLink },
+                { row: 10, column: 3, target: venueLink },
+                { row: 10, column: 13, target: parkingLink },
+            ],
+        }]);
+
+        const { days } = await importXlsxRoadBook(file);
+        const day = days[0];
+
+        expect(day.items).toHaveLength(2);
+        expect(day.items[0]).toMatchObject({
+            time: "07:00",
+            title: "Breakfast",
+            location: "Anaheim",
+            activityType: "food",
+            priority: "MUST",
+            parking: "P1",
+            smartChip: "Breakfast Smart Place",
+            mapLink: activityLink,
+            price: "15 USD",
+            note: "Morning note",
+        });
+        expect(day.venues).toEqual([
+            expect.objectContaining({
+                priority: "⭐ Hlavní",
+                type: "🍳Breakfast",
+                mealType: "🍳Breakfast",
+                name: "Venue display name",
+                smartChip: "Venue Smart Place",
+                mapLink: venueLink,
+                recommendation: "Great breakfast",
+                price: "15–20 USD",
+                parking: "P1",
+                reservation: "No",
+                subtype: "Airport",
+            }),
+        ]);
+        expect(day.parkingLocations).toEqual([
+            expect.objectContaining({
+                code: "P1",
+                name: "Parking display name",
+                mapLink: parkingLink,
+                price: "10 USD/day",
+                note: "Covered lot",
+            }),
+        ]);
+        expect(day.stats).toEqual([
+            { label: "🚗 Celkem km", value: "~60 km" },
+            { label: "🍽 Podniky", value: "1" },
+        ]);
+    });
+
+    it("imports multiple Day sheets using canonical v4.3 headers", async () => {
+        const firstDayRows = buildCanonicalRows([
+            ["7:00", "First day activity", "", "other", "MUST"],
+        ]);
+        const secondDayRows = buildCanonicalRows([
+            ["8:00", "Second day activity", "", "other", "OPTIONAL"],
+        ]);
+
+        secondDayRows[0][0] = "🧳 DAY Y – Example";
+        secondDayRows[1][0] = "Pondělí • 2. 1. 2020";
+
+        const file = buildWorkbookFile([
+            { name: "Day 1", rows: firstDayRows },
+            { name: "Day 2", rows: secondDayRows },
+        ]);
+
+        const { days } = await importXlsxRoadBook(file);
+
+        expect(days).toHaveLength(2);
+        expect(days.map(day => day.date)).toEqual([
+            "2020-01-01",
+            "2020-01-02",
+        ]);
+        expect(days.map(day => day.items[0].title)).toEqual([
+            "First day activity",
+            "Second day activity",
+        ]);
+    });
+
+    it("keeps canonical venue and parking columns scoped when shared headers collide", async () => {
+        const rows = buildCanonicalRows(
+            [["7:00", "Activity", "", "other", "MUST"]],
+            [[
+                "Main",
+                "Dinner",
+                "Venue name",
+                "Venue chip",
+                "Recommendation",
+                "Venue price",
+                "P2",
+                "Required",
+                "Venue note",
+                "",
+                "",
+                "P2",
+                "Parking name",
+                "Parking chip",
+                "Parking price",
+                "Parking note",
+            ]]
+        );
+        const file = buildWorkbookFile(rows);
+
+        const { days } = await importXlsxRoadBook(file);
+
+        expect(days[0].venues?.[0]).toMatchObject({
+            name: "Venue name",
+            smartChip: "Venue chip",
+            price: "Venue price",
+            subtype: "Venue note",
+        });
+        expect(days[0].parkingLocations?.[0]).toMatchObject({
+            name: "Parking name",
+            price: "Parking price",
+            note: "Parking note",
+        });
+    });
+
+    it("keeps the legacy BlizzCon RoadBook multi-day import functional while ignoring non-Day sheets", async () => {
+        const file = readFixtureFile("BlizzCon 2026 plan.xlsx");
+
+        const { days } = await importXlsxRoadBook(file);
+
+        expect(days).toHaveLength(8);
+        expect(days.map(day => day.date)).toEqual([
+            "2026-09-10",
+            "2026-09-11",
+            "2026-09-12",
+            "2026-09-13",
+            "2026-09-14",
+            "2026-09-15",
+            "2026-09-16",
+            "2026-09-17",
+        ]);
+        expect(days.map(day => day.title)).not.toContain("🗺️ Main Plan");
+        expect(days.map(day => day.title)).not.toContain("🧰 Travel Handbook");
+        expect(days[0].items.length).toBeGreaterThan(0);
+        expect(days[0].venues?.length).toBeGreaterThan(0);
+        expect(days[0].parkingLocations?.length).toBeGreaterThan(0);
+        expect(days[0].stats).toEqual(
+            expect.arrayContaining([
+                { label: "🚗 Celkem km", value: "~60 km" },
+            ])
+        );
+    });
+
     it("reads Activity Type directly from the corresponding column without changing the title", async () => {
         const file = buildWorkbookFile(
             buildRows([

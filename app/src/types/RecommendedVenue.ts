@@ -20,6 +20,8 @@ export interface RecommendedVenue {
 
     price?: string;
 
+    parking?: string;
+
     reservation?: string;
 
 }
