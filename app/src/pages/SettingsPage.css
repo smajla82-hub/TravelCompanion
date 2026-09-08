@@ -1,3 +1,49 @@
+.settings-page {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+
+    padding: var(--space-lg);
+    border-radius: var(--radius-xl);
+
+    background-color: var(--surface-primary);
+    background-image: var(--tc-settings-artwork);
+    background-repeat: no-repeat;
+    background-position: top center;
+    /*
+     * Scale the artwork to the page width while preserving its native
+     * 1440x3200 aspect ratio (no cropping, no fixed hero height), matching
+     * the My Trips page background. It simply scrolls with the page content
+     * beneath it; if the page is shorter than the artwork the surrounding
+     * border-radius clips it cleanly, and if the page grows taller the
+     * layout continues on the plain surface color below the artwork instead
+     * of stretching/repeating the image.
+     */
+    background-size: 100% auto;
+}
+
+.settings-page > .tc-stack > .tc-hero-title {
+    margin: 0;
+}
+
+@media (max-width: 480px) {
+    .settings-page {
+        padding: var(--space-lg) 12px;
+        /*
+         * Same narrow-mobile handling as My Trips: the artwork's tall
+         * (1440x3200) aspect ratio renders shorter than several stacked
+         * Settings cards at full-page width on a narrow phone, so uniformly
+         * scaling it up (same factor on width and height, so proportions
+         * stay intact — no distortion) keeps it visually present further
+         * down the page; the page's own `overflow: hidden` trims only the
+         * symmetric left/right overscan introduced by the up-scale, not the
+         * artwork's height, so nothing is cropped into a shorter box.
+         */
+        background-position: top center;
+        background-size: 160% auto;
+    }
+}
+
 .settings-theme-switch {
     display: flex;
     flex-wrap: wrap;

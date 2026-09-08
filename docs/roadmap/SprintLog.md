@@ -23,6 +23,14 @@ and labels; a `:focus-visible` outline was added to it and to interactive
 controls app-wide for keyboard accessibility. No new npm dependencies, no
 new backend endpoints, and no second theme/navigation state were introduced.
 
+Settings also received its final branded background: the approved
+`settings_background1440x3200.webp` asset is applied as a full-width,
+aspect-ratio-preserving page background that scrolls naturally with the page
+content, reusing the exact CSS pattern established for My Trips (including
+the narrow-mobile up-scale handling), and the "Settings" heading now uses
+the shared `tc-hero-title` treatment to match "Travel Companion" and "My
+Trips".
+
 ## Feature FP-4 — My Trips
 **Status:** DONE
 

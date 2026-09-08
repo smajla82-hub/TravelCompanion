@@ -1,4 +1,5 @@
 import { useId, useRef, useState } from "react";
+import type { CSSProperties } from "react";
 
 import { RoadBookImport } from "../components/import";
 
@@ -13,9 +14,14 @@ import {
 
 import { ThemeService } from "../services/ThemeService";
 import { TripService } from "../services/TripService";
+import { SETTINGS_BACKGROUND_URL } from "../styles/brandAssets";
 
 import type { Theme } from "../services/ThemeService";
 import "./SettingsPage.css";
+
+const pageStyle = {
+    "--tc-settings-artwork": `url("${SETTINGS_BACKGROUND_URL}")`,
+} as CSSProperties;
 
 export default function SettingsPage() {
 
@@ -135,121 +141,123 @@ export default function SettingsPage() {
 
     return (
         <Container>
-            <Stack gap="lg">
+            <section className="settings-page" style={pageStyle}>
+                <Stack gap="lg">
 
-                <Heading level={1}>
-                    Settings
-                </Heading>
+                    <Heading level={1} className="tc-hero-title">
+                        Settings
+                    </Heading>
 
-                <RoadBookImport
-                    key={roadBookImportKey}
-                />
+                    <RoadBookImport
+                        key={roadBookImportKey}
+                    />
 
-                <Card>
-                    <Stack gap="md">
-                        <Heading level={2}>
-                            Appearance
-                        </Heading>
+                    <Card>
+                        <Stack gap="md">
+                            <Heading level={2}>
+                                Appearance
+                            </Heading>
 
-                        <p>
-                            Choose how Travel Companion looks on this device.
-                        </p>
+                            <p>
+                                Choose how Travel Companion looks on this device.
+                            </p>
 
-                        <div
-                            className="settings-theme-switch"
-                            role="group"
-                            aria-label="Theme"
-                        >
+                            <div
+                                className="settings-theme-switch"
+                                role="group"
+                                aria-label="Theme"
+                            >
+                                <Button
+                                    type="button"
+                                    variant={theme === "light" ? "success" : "outline"}
+                                    aria-pressed={theme === "light"}
+                                    onClick={() => selectTheme("light")}
+                                >
+                                    <Icon name="sun" width={16} height={16} />
+                                    Light
+                                    {theme === "light" && (
+                                        <Icon name="circleCheck" width={16} height={16} />
+                                    )}
+                                </Button>
+
+                                <Button
+                                    type="button"
+                                    variant={theme === "dark" ? "success" : "outline"}
+                                    aria-pressed={theme === "dark"}
+                                    onClick={() => selectTheme("dark")}
+                                >
+                                    <Icon name="moon" width={16} height={16} />
+                                    Dark
+                                    {theme === "dark" && (
+                                        <Icon name="circleCheck" width={16} height={16} />
+                                    )}
+                                </Button>
+                            </div>
+                        </Stack>
+                    </Card>
+
+                    <Card>
+                        <Stack gap="md">
+                            <Heading level={2}>
+                                Export data
+                            </Heading>
+
+                            <p>
+                                Download a JSON backup of all Trips.
+                            </p>
+
                             <Button
                                 type="button"
-                                variant={theme === "light" ? "success" : "outline"}
-                                aria-pressed={theme === "light"}
-                                onClick={() => selectTheme("light")}
+                                onClick={handleExportData}
                             >
-                                <Icon name="sun" width={16} height={16} />
-                                Light
-                                {theme === "light" && (
-                                    <Icon name="circleCheck" width={16} height={16} />
-                                )}
+                                Export data
                             </Button>
+                        </Stack>
+                    </Card>
 
-                            <Button
-                                type="button"
-                                variant={theme === "dark" ? "success" : "outline"}
-                                aria-pressed={theme === "dark"}
-                                onClick={() => selectTheme("dark")}
+                    <Card>
+                        <Stack gap="md">
+                            <Heading level={2}>
+                                Import backup
+                            </Heading>
+
+                            <p>
+                                Restore Trips from a JSON backup file.
+                            </p>
+
+                            <label
+                                className="settings-file-label"
+                                htmlFor={importInputId}
                             >
-                                <Icon name="moon" width={16} height={16} />
-                                Dark
-                                {theme === "dark" && (
+                                Backup file (.json)
+                            </label>
+
+                            <input
+                                id={importInputId}
+                                ref={fileInputRef}
+                                type="file"
+                                accept=".json,application/json"
+                                onChange={handleImportBackup}
+                            />
+
+                            {importMessage && (
+                                <p className="settings-status settings-status--success" role="status">
                                     <Icon name="circleCheck" width={16} height={16} />
-                                )}
-                            </Button>
-                        </div>
-                    </Stack>
-                </Card>
+                                    {importMessage}
+                                </p>
+                            )}
 
-                <Card>
-                    <Stack gap="md">
-                        <Heading level={2}>
-                            Export data
-                        </Heading>
+                            {importError && (
+                                <p className="settings-status settings-status--error" role="alert">
+                                    <Icon name="circleAlert" width={16} height={16} />
+                                    {importError}
+                                </p>
+                            )}
+                        </Stack>
+                    </Card>
 
-                        <p>
-                            Download a JSON backup of all Trips.
-                        </p>
-
-                        <Button
-                            type="button"
-                            onClick={handleExportData}
-                        >
-                            Export data
-                        </Button>
-                    </Stack>
-                </Card>
-
-                <Card>
-                    <Stack gap="md">
-                        <Heading level={2}>
-                            Import backup
-                        </Heading>
-
-                        <p>
-                            Restore Trips from a JSON backup file.
-                        </p>
-
-                        <label
-                            className="settings-file-label"
-                            htmlFor={importInputId}
-                        >
-                            Backup file (.json)
-                        </label>
-
-                        <input
-                            id={importInputId}
-                            ref={fileInputRef}
-                            type="file"
-                            accept=".json,application/json"
-                            onChange={handleImportBackup}
-                        />
-
-                        {importMessage && (
-                            <p className="settings-status settings-status--success" role="status">
-                                <Icon name="circleCheck" width={16} height={16} />
-                                {importMessage}
-                            </p>
-                        )}
-
-                        {importError && (
-                            <p className="settings-status settings-status--error" role="alert">
-                                <Icon name="circleAlert" width={16} height={16} />
-                                {importError}
-                            </p>
-                        )}
-                    </Stack>
-                </Card>
-
-            </Stack>
+                </Stack>
+            </section>
         </Container>
     );
 }
