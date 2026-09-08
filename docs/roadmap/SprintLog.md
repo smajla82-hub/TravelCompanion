@@ -17,11 +17,18 @@ the bottom navigation already provides Home. Account now distinguishes the
 authenticated (server) state from local/offline device state in separate
 cards, shows a loading state during sign-in/sign-up, surfaces the local Trip
 count for this device, and signing out now also refreshes `OnlineTripStore`
-so stale synced Trips don't linger in My Trips after logout. The bottom
-navigation (Home / My Trips / Settings / Account) is unchanged in placement
-and labels; a `:focus-visible` outline was added to it and to interactive
-controls app-wide for keyboard accessibility. No new npm dependencies, no
-new backend endpoints, and no second theme/navigation state were introduced.
+so stale synced Trips don't linger in My Trips after logout. A
+`:focus-visible` outline was added to the bottom navigation and to
+interactive controls app-wide for keyboard accessibility. No new npm
+dependencies, no new backend endpoints, and no second theme/navigation
+state were introduced.
+
+The final navigation correction moved Account out of the bottom
+navigation, which is now exactly Home / My Trips / Settings (placement,
+labels and styling unchanged), and into the top application header as its
+single dedicated account action — the header intentionally does not
+restore the old mockup header items (Settings / New Trip / My Trips) and
+no second navigation system was created.
 
 Settings also received its final branded background: the approved
 `settings_background1440x3200.webp` asset is applied as a full-width,
@@ -30,6 +37,13 @@ content, reusing the exact CSS pattern established for My Trips (including
 the narrow-mobile up-scale handling), and the "Settings" heading now uses
 the shared `tc-hero-title` treatment to match "Travel Companion" and "My
 Trips".
+
+The Account page reuses the exact same approved background treatment — the
+same `settings_background1440x3200.webp` asset and the same full-width,
+aspect-ratio-preserving, naturally scrolling CSS pattern (no new asset, no
+fixed/parallax background, no cropped hero box), and its "Account & Sync"
+heading uses the same `tc-hero-title` treatment so the page reads like
+Home, My Trips and Settings.
 
 ## Feature FP-4 — My Trips
 **Status:** DONE

@@ -297,7 +297,9 @@ Current Trip / dashboard hero
 
 The approved artwork is bundled locally, not CSS/SVG-only decoration: `top-background800x800.webp` is used in the top header and `hero-background1200x600.webp` in the hero. Its positioning and spacing are intentional parts of the 9.7B mobile baseline and must not compete with content.
 
-The top header does not contain Settings, New Trip or My Trips.
+The top header does not contain Settings, New Trip or My Trips. Its only
+action is **Account**, the dedicated account entry point (the bottom
+navigation carries Home / My Trips / Settings).
 
 ## 13. Bottom navigation
 
@@ -316,6 +318,10 @@ Ikony:
 - Home
 - My Trips
 - Settings
+
+Account is not part of the bottom navigation. It lives in the top
+application header as the single dedicated account action — the top header
+contains only Account (not Settings, New Trip or My Trips).
 
 New Trip is available from **My Trips**, not from the top header.
 
