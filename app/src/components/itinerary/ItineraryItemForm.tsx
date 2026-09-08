@@ -1,4 +1,4 @@
-import { Button, Stack } from "../ui";
+import { Button, Icon, Stack } from "../ui";
 import "../trips/NewTripModal.css";
 
 import { useState } from "react";
@@ -15,6 +15,7 @@ import {
   exceedsTextLimit,
   formatCharacterCounter,
 } from "../../domain/validation/textLimits";
+import { openMapSearch } from "../../utils/mapSearchUrl";
 
 const PRIORITY_OPTIONS = [
   "MUST",
@@ -107,6 +108,10 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
     });
   }
 
+  function handleFindOnMap() {
+    openMapSearch(title, location);
+  }
+
   return (
     <form className="tc-trip-form" onSubmit={handleSubmit}>
       <Stack gap="md">
@@ -139,6 +144,15 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
           <span className={counterClassName(location, "location")}>
             {formatCharacterCounter(location, "location")}
           </span>
+          <Button
+            type="button"
+            variant="outline"
+            compact
+            disabled={!title.trim() && !location.trim()}
+            onClick={handleFindOnMap}
+          >
+            <Icon name="mapPin" width={16} height={16} /> Find on Map
+          </Button>
         </label>
         <label>
           Activity Type
