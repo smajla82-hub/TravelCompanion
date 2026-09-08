@@ -4,6 +4,25 @@ This file records the completed development history of the Travel Companion appl
 
 It is a human-readable history, not an archive of every Git commit. Git remains authoritative for exact commit history.
 
+## Feature FP-6 — Final Visual & Functional Pass
+**Status:** DONE
+
+Completed the final polish pass without changing approved product architecture:
+
+- Removed duplicate theme aliases and aligned modal, form, and itinerary action
+  styling with shared radius and shadow tokens.
+- Restored visible keyboard focus rings for account and new-trip form controls.
+- Made the modal safer on narrow devices with responsive padding, viewport
+  sizing, safe-area handling, and reduced-motion support.
+- Prevented bottom navigation from overflowing on narrow mobile widths while
+  preserving touch-target sizing.
+- Verified the approved Home / My Trips / Settings navigation, branded artwork,
+  routes, GitHub Pages base path, SPA fallback, and PWA asset configuration.
+
+Frontend lint and production build pass. The existing importer test failure for
+the BlizzCon fixture remains unrelated to this visual/functional pass and was
+not changed.
+
 ## Feature FP-5 — Settings + Navigation + Account
 **Status:** DONE
 
