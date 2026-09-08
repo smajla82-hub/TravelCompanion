@@ -1,4 +1,4 @@
-import { Button, Stack } from "../ui";
+import { Button, Icon, Stack } from "../ui";
 import "../trips/NewTripModal.css";
 
 import { useState } from "react";
@@ -15,6 +15,7 @@ import {
   exceedsTextLimit,
   formatCharacterCounter,
 } from "../../domain/validation/textLimits";
+import { getMapSearchUrl } from "../../utils/mapSearchUrl";
 
 const PRIORITY_OPTIONS = [
   "MUST",
@@ -35,6 +36,28 @@ type ItineraryItemFormProps = {
   item?: ItineraryItem;
   onSubmit: (item: ItineraryItemFields) => void;
 };
+
+export function openActivityMapSearch(
+  title: string,
+  location: string,
+  openWindow: (
+    url: string,
+    target: string,
+    features: string,
+  ) => void = (url, target, features) => {
+    window.open(url, target, features);
+  },
+) {
+  const url = getMapSearchUrl(title, location);
+
+  if (!url) {
+    return false;
+  }
+
+  openWindow(url, "_blank", "noopener,noreferrer");
+
+  return true;
+}
 
 export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
   const [time, setTime] = useState(item?.time ?? "");
@@ -92,6 +115,10 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
       return;
     }
 
+    function handleFindOnMap() {
+      openActivityMapSearch(title, location);
+    }
+
     onSubmit({
       time,
       title,
@@ -139,6 +166,15 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
           <span className={counterClassName(location, "location")}>
             {formatCharacterCounter(location, "location")}
           </span>
+          <Button
+            type="button"
+            variant="outline"
+            compact
+            disabled={!title.trim() && !location.trim()}
+            onClick={handleFindOnMap}
+          >
+            <Icon name="mapPin" width={16} height={16} /> Find on Map
+          </Button>
         </label>
         <label>
           Activity Type
