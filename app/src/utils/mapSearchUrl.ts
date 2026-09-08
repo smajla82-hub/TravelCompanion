@@ -27,3 +27,25 @@ export function getMapSearchUrl(
 
     return `${GOOGLE_MAPS_SEARCH_ORIGIN}${encodeURIComponent(query)}`;
 }
+
+export function openMapSearch(
+    title: string,
+    location: string,
+    openWindow: (
+        url: string,
+        target: string,
+        features: string,
+    ) => void = (url, target, features) => {
+        window.open(url, target, features);
+    },
+): boolean {
+    const url = getMapSearchUrl(title, location);
+
+    if (!url) {
+        return false;
+    }
+
+    openWindow(url, "_blank", "noopener,noreferrer");
+
+    return true;
+}

@@ -3,8 +3,8 @@ import { describe, expect, it } from "vitest";
 
 import {
     ItineraryItemForm,
-    openActivityMapSearch,
 } from "./ItineraryItemForm";
+import { openMapSearch } from "../../utils/mapSearchUrl";
 
 describe("ItineraryItemForm", () => {
     it("opens the expected Google Maps search URL", () => {
@@ -16,9 +16,7 @@ describe("ItineraryItemForm", () => {
             expect(features).toBe("noopener,noreferrer");
         };
 
-        expect(openActivityMapSearch("Old Town", "Prague", openWindow)).toBe(
-            true,
-        );
+        expect(openMapSearch("Old Town", "Prague", openWindow)).toBe(true);
     });
 
     it("renders Find on Map without changing imported Smart Chip fields", () => {

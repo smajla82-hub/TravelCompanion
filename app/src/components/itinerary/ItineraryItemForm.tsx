@@ -15,7 +15,7 @@ import {
   exceedsTextLimit,
   formatCharacterCounter,
 } from "../../domain/validation/textLimits";
-import { getMapSearchUrl } from "../../utils/mapSearchUrl";
+import { openMapSearch } from "../../utils/mapSearchUrl";
 
 const PRIORITY_OPTIONS = [
   "MUST",
@@ -36,28 +36,6 @@ type ItineraryItemFormProps = {
   item?: ItineraryItem;
   onSubmit: (item: ItineraryItemFields) => void;
 };
-
-export function openActivityMapSearch(
-  title: string,
-  location: string,
-  openWindow: (
-    url: string,
-    target: string,
-    features: string,
-  ) => void = (url, target, features) => {
-    window.open(url, target, features);
-  },
-) {
-  const url = getMapSearchUrl(title, location);
-
-  if (!url) {
-    return false;
-  }
-
-  openWindow(url, "_blank", "noopener,noreferrer");
-
-  return true;
-}
 
 export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
   const [time, setTime] = useState(item?.time ?? "");
@@ -115,10 +93,6 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
       return;
     }
 
-    function handleFindOnMap() {
-      openActivityMapSearch(title, location);
-    }
-
     onSubmit({
       time,
       title,
@@ -132,6 +106,10 @@ export function ItineraryItemForm({ item, onSubmit }: ItineraryItemFormProps) {
       price,
       note,
     });
+  }
+
+  function handleFindOnMap() {
+    openMapSearch(title, location);
   }
 
   return (
