@@ -1,5 +1,6 @@
 import { Stack } from "../ui";
-import "./RecommendedVenueList.css";
+import { RecommendedVenueSummary } from "./RecommendedVenueSummary";
+import "./ItineraryRow.css";
 
 import type { RecommendedVenue } from "../../types";
 
@@ -25,59 +26,12 @@ export function RecommendedVenueList({
             {venues.map((venue) => (
                 <div
                     key={venue.id}
-                    className="recommended-venue-list__item"
+                    className="itinerary-activity-row"
                 >
-
-                    {venue.priority && (
-                        <div>
-                            {venue.priority}
-                        </div>
-                    )}
-
-                    <strong>
-                        {venue.name}
-                    </strong>
-
-                    {venue.subtype && (
-                        <div>
-                            {venue.subtype}
-                        </div>
-                    )}
-
-                    {venue.smartChip && (
-                        <div>
-                            {venue.mapLink ? (
-                                <a
-                                    href={venue.mapLink}
-                                    target="_blank"
-                                    rel="noreferrer"
-                                >
-                                    {venue.smartChip}
-                                </a>
-                            ) : (
-                                venue.smartChip
-                            )}
-                        </div>
-                    )}
-
-                    {venue.price && (
-                        <div>
-                            Price/person: {venue.price}
-                        </div>
-                    )}
-
-                    {venue.reservation && (
-                        <div>
-                            Reservation: {venue.reservation}
-                        </div>
-                    )}
-
-                    {venue.recommendation && (
-                        <div>
-                            {venue.recommendation}
-                        </div>
-                    )}
-
+                    <div className="itinerary-activity-content">
+                        <RecommendedVenueSummary venue={venue} />
+                    </div>
+                    <div className="itinerary-activity-separator" />
                 </div>
             ))}
         </Stack>

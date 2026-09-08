@@ -1,4 +1,5 @@
 import { Button, Modal, Stack } from "../ui";
+import "./ParkingLocationActionsModal.css";
 
 import type { ItineraryItem, ParkingLocation } from "../../types";
 
@@ -35,18 +36,30 @@ export function ParkingLocationActionsModal({
                 </Button>
 
                 {isReferenced ? (
-                    <p>
-                        {referencingItems.length} activit
-                        {referencingItems.length === 1 ? "y" : "ies"}{" "}
-                        reference{" "}
-                        {referencingItems.length === 1 ? "s" : ""}{" "}
-                        {parking?.code}: {" "}
-                        {referencingItems
-                            .map((item) => item.title)
-                            .join(", ")}
-                        . Remove or reassign them before deleting this
-                        parking location.
-                    </p>
+                    <div className="parking-actions-warning">
+                        <p className="parking-actions-warning__heading">
+                            {referencingItems.length}{" "}
+                            {referencingItems.length === 1
+                                ? "Activity"
+                                : "Activities"}{" "}
+                            reference
+                            {referencingItems.length === 1 ? "s" : ""}{" "}
+                            {parking?.code}:
+                        </p>
+
+                        <ul className="parking-actions-warning__list">
+                            {referencingItems.map((item) => (
+                                <li key={item.id}>
+                                    {item.title},
+                                </li>
+                            ))}
+                        </ul>
+
+                        <p className="parking-actions-warning__note">
+                            Remove or reassign them before deleting this
+                            parking location.
+                        </p>
+                    </div>
                 ) : (
                     <Button type="button" onClick={onDelete}>
                         Delete

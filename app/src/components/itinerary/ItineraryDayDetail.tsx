@@ -16,6 +16,7 @@ import { ActivityActionStack } from
     "./ActivityActionStack";
 import { ActivitySummary } from
     "./ActivitySummary";
+import "./ItineraryRow.css";
 import "./ItineraryDayDetail.css";
 
 import type {

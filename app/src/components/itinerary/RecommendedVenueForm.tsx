@@ -11,6 +11,10 @@ import {
     isOtherOption,
 } from "../../domain/venue/VenueOptions";
 import {
+    VENUE_PRIORITY_OPTIONS,
+    normalizeVenuePriority,
+} from "../../domain/venue/VenuePriorityRegistry";
+import {
     TEXT_LIMIT_LABELS,
     counterClassName,
     exceedsTextLimit,
@@ -29,7 +33,9 @@ export function RecommendedVenueForm({
     onSubmit,
 }: RecommendedVenueFormProps) {
     const [name, setName] = useState(venue?.name ?? "");
-    const [priority, setPriority] = useState(venue?.priority ?? "");
+    const [priority, setPriority] = useState(
+        normalizeVenuePriority(venue?.priority) ?? VENUE_PRIORITY_OPTIONS[0]
+    );
 
     const [mealTypeOption, setMealTypeOption] = useState(
         resolveControlledOption(MEAL_TYPE_OPTIONS, venue?.mealType)
@@ -145,11 +151,20 @@ export function RecommendedVenueForm({
 
                 <label>
                     Priority
-                    <input
-                        type="text"
+                    <select
                         value={priority}
-                        onChange={(event) => setPriority(event.target.value)}
-                    />
+                        onChange={(event) =>
+                            setPriority(
+                                event.target.value as typeof priority
+                            )
+                        }
+                    >
+                        {VENUE_PRIORITY_OPTIONS.map((option) => (
+                            <option key={option} value={option}>
+                                {option}
+                            </option>
+                        ))}
+                    </select>
                 </label>
 
                 <label>

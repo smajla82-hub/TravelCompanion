@@ -1,0 +1,34 @@
+/*
+ * Shared row layout used by itinerary Activities, Recommended Venues and
+ * Parking Locations, so all three render the same light-gray separator and
+ * bottom-left action button placement.
+ */
+
+.itinerary-activity-row {
+    position: relative;
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    padding-bottom: 16px;
+}
+
+.itinerary-activity-content {
+    display: flex;
+    flex: 1;
+    flex-direction: column;
+    gap: 6px;
+    min-width: 0;
+}
+
+.itinerary-activity-content > .tc-button {
+    align-self: flex-start;
+    margin-top: 8px;
+}
+
+.itinerary-activity-separator {
+    position: absolute;
+    right: 0;
+    bottom: 0;
+    left: 0;
+    border-bottom: 2px solid var(--color-border);
+}
