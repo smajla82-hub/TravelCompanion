@@ -1,1 +1,31 @@
-.settings-back { display: inline-flex; align-items: center; gap: 4px; color: var(--color-primary); text-decoration: none; font-size: 14px; }
+.settings-theme-switch {
+    display: flex;
+    flex-wrap: wrap;
+    gap: var(--space-sm);
+}
+
+.settings-theme-switch .tc-button {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.settings-file-label {
+    font-weight: 600;
+    font-size: 14px;
+}
+
+.settings-status {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    font-size: 14px;
+}
+
+.settings-status--success {
+    color: var(--color-success);
+}
+
+.settings-status--error {
+    color: var(--color-danger);
+}

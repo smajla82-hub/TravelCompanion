@@ -106,9 +106,11 @@ Completed:
 
 Remaining:
 
-- **9.8E — My Trips visual polish**
-- **9.8F — Settings visual polish**
 - **9.8G — Final responsive / QA pass**, if still appropriate after the page polish
+
+`9.8E — My Trips visual polish` and `9.8F — Settings visual polish` are DONE
+(see `FP-4 — My Trips` and `FP-5 — Settings + Navigation + Account` in
+`SprintLog.md`), which also finalized the Account page and bottom navigation.
 
 ### Milestone 7 — Shared Persistence & Accounts
 **10.x — PLANNED**
@@ -238,8 +240,8 @@ All work through **6.0.16** has been implemented and functionally tested.
 ## 5. Current State
 
 **Current Milestone:** 9.x — Final UI Look
-**Current completed Feature:** 9.8B
-**Status:** The 9.7B Dashboard baseline and work through 9.8B are complete. 9.8E / My Trips and 9.8F / Settings visual polish remain planned before 10.x — Shared Persistence & Accounts.
+**Current completed Feature:** FP-5 — Settings + Navigation + Account
+**Status:** The 9.7B Dashboard baseline and work through 9.8B, 9.8E (My Trips) and 9.8F (Settings, Account, bottom navigation) are complete. Only 9.8G — Final responsive / QA pass remains before 10.x — Shared Persistence & Accounts.
 
 The Trip system currently supports:
 
@@ -307,11 +309,9 @@ Verified test data currently imports as:
 
 ## 6. Next Development Order
 
-1. 9.8E — My Trips visual polish
-2. 9.8F — Settings visual polish
-3. 9.8G — Final responsive / QA pass, if still appropriate
-4. 10.x — Shared Persistence & Accounts (backend architecture confirmed — see `docs/decisions/ADR-003-Backend-Architecture.md`; **10.1–10.4b are DONE**; next up is **10.5 — Data migration**)
-5. 11.x+ — Extended travel functionality
+1. 9.8G — Final responsive / QA pass, if still appropriate
+2. 10.x — Shared Persistence & Accounts (backend architecture confirmed — see `docs/decisions/ADR-003-Backend-Architecture.md`; **10.1–10.4b are DONE**; next up is **10.5 — Data migration**)
+3. 11.x+ — Extended travel functionality
 
 The order remains intentional: the mobile experience was validated on a real device, the visual design is finished before committing to the larger architectural shift of introducing a server-side component, accounts and multi-device sync, and that shared-persistence foundation is in place before the future Extended Travel Companion modules are built on top of it.
 
@@ -327,7 +327,7 @@ This is **not** a blocker for the current BlizzCon RoadBook.
 
 ### UI / UX
 
-The approved 9.7B Dashboard redesign is complete, including permanent bottom navigation, comprehensive dark-mode coverage and bundled branded raster artwork. The remaining 9.x work is limited to My Trips (9.8E), Settings (9.8F), and a final responsive/QA pass (9.8G) if needed; it must not restore the old top navigation.
+The approved 9.7B Dashboard redesign is complete, including permanent bottom navigation, comprehensive dark-mode coverage and bundled branded raster artwork. My Trips (9.8E) and Settings/Account (9.8F) are now also complete; the only remaining 9.x work is a final responsive/QA pass (9.8G) if needed, and it must not restore the old top navigation.
 
 ### Backup / data safety
 

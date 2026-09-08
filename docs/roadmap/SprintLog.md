@@ -4,6 +4,25 @@ This file records the completed development history of the Travel Companion appl
 
 It is a human-readable history, not an archive of every Git commit. Git remains authoritative for exact commit history.
 
+## Feature FP-5 — Settings + Navigation + Account
+**Status:** DONE
+
+Settings and Account were finished as coherent application pages using the
+existing design system instead of ad-hoc layouts. Settings gained a clearer
+Appearance control (explicit Light/Dark buttons driven by the existing
+`ThemeService`, with a checkmark so the active choice isn't color-only) and
+accessible labels/status icons for the Import backup file input and
+success/error messages; a redundant "Back to Home" link was removed since
+the bottom navigation already provides Home. Account now distinguishes the
+authenticated (server) state from local/offline device state in separate
+cards, shows a loading state during sign-in/sign-up, surfaces the local Trip
+count for this device, and signing out now also refreshes `OnlineTripStore`
+so stale synced Trips don't linger in My Trips after logout. The bottom
+navigation (Home / My Trips / Settings / Account) is unchanged in placement
+and labels; a `:focus-visible` outline was added to it and to interactive
+controls app-wide for keyboard accessibility. No new npm dependencies, no
+new backend endpoints, and no second theme/navigation state were introduced.
+
 ## Feature FP-4 — My Trips
 **Status:** DONE
 
