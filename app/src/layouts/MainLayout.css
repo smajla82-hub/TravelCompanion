@@ -74,3 +74,14 @@
     outline: 2px solid #ffffff;
     outline-offset: 2px;
 }
+
+@media (max-width: 480px) {
+    .tc-bottom-nav {
+        gap: 4px;
+    }
+
+    .tc-bottom-nav a {
+        flex: 1 1 0;
+        min-width: 0;
+    }
+}

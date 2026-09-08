@@ -23,13 +23,13 @@
     background: var(--surface-primary);
     color: var(--color-text);
 
-    border-radius: 16px;
+    border-radius: var(--tc-radius-card);
 
     padding: 24px;
 
     position: relative;
 
-    box-shadow: 0 24px 64px rgba(0, 0, 0, .25);
+    box-shadow: var(--tc-shadow-card);
 
     animation: modalIn .25s ease;
 }
@@ -81,6 +81,26 @@
     from {
         opacity: 0;
         transform: translateY(20px) scale(.97);
+    }
+
+    @media (max-width: 480px) {
+        .tc-modal-overlay {
+            padding: max(16px, env(safe-area-inset-top))
+                16px
+                max(16px, env(safe-area-inset-bottom));
+        }
+
+        .tc-modal {
+            max-height: 95vh;
+            padding: 16px;
+        }
+    }
+
+    @media (prefers-reduced-motion: reduce) {
+        .tc-modal-overlay,
+        .tc-modal {
+            animation: none;
+        }
     }
 
     to {
