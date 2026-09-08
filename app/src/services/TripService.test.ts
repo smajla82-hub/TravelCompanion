@@ -63,6 +63,17 @@ describe("TripService", () => {
             .toHaveLength(1);
     });
 
+    it("normalizes country data for local persistence and backup import", () => {
+        TripService.add(trip({ id: "country-trip", country: "Italy" }));
+        expect(TripService.getAll().find(item => item.id === "country-trip")?.country)
+            .toBe("IT");
+
+        expect(TripService.importBackup(JSON.stringify({
+            trips: [trip({ id: "backup-trip", country: "Czech Republic" })],
+        }))).toEqual({ success: true });
+        expect(TripService.getAll()[0].country).toBe("CZ");
+    });
+
     describe("itinerary ordering", () => {
         function itemTitles(): string[] {
             return TripService.getAll()

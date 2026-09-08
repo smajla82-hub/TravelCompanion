@@ -1,5 +1,62 @@
+.my-trips-page {
+    position: relative;
+    isolation: isolate;
+    overflow: hidden;
+    min-height: 360px;
+    padding: var(--space-lg);
+    background:
+        var(--tc-brand-gradient-soft),
+        var(--surface-primary);
+    border: 1px solid color-mix(in srgb, var(--color-purple) 18%, var(--border-color));
+    border-radius: var(--radius-xl);
+}
+
+.my-trips-page::before {
+    content: "";
+    position: absolute;
+    z-index: -1;
+    top: 0;
+    right: 0;
+    width: min(420px, 85%);
+    height: 360px;
+    pointer-events: none;
+    opacity: var(--tc-brand-artwork-opacity);
+    background-image: var(--tc-my-trips-artwork);
+    background-repeat: no-repeat;
+    background-position: top right;
+    background-size: contain;
+    mix-blend-mode: multiply;
+}
+
+[data-theme="dark"] .my-trips-page::before {
+    opacity: 0.5;
+}
+
 .my-trips-header {
     display: flex;
     justify-content: flex-end;
     margin-bottom: 16px;
+}
+
+.my-trips-heading {
+    margin-bottom: var(--space-lg);
+}
+
+.my-trips-heading h2 {
+    color: var(--color-text);
+    font-size: 30px;
+    font-weight: 700;
+    line-height: 36px;
+    letter-spacing: -0.01em;
+}
+
+@media (max-width: 480px) {
+    .my-trips-page {
+        padding: var(--space-lg) 12px;
+    }
+
+    .my-trips-heading h2 {
+        font-size: 26px;
+        line-height: 32px;
+    }
 }

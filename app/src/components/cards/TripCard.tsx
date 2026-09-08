@@ -5,7 +5,7 @@ import type { Trip } from "../../types/Trip";
 import "./TripCard.css";
 
 import { formatDate } from "../../utils/formatDate";
-import { getCountryFlag } from "../../utils/getCountryFlag";
+import { getCountryDisplayName, getCountryFlag } from "../../utils/country";
 
 type TripCardProps = {
     trip: Trip;
@@ -20,20 +20,33 @@ export function TripCard({
     onClick,
 }: TripCardProps) {
     return (
-        <div onClick={onClick}>
-            <Card>
-                <Stack gap="sm">
+        <Card
+            className="trip-card"
+            role={onClick ? "button" : undefined}
+            tabIndex={onClick ? 0 : undefined}
+            onClick={onClick}
+            onKeyDown={event => {
+                if (onClick && (event.key === "Enter" || event.key === " ")) {
+                    event.preventDefault();
+                    onClick();
+                }
+            }}
+        >
+            <Stack gap="sm">
+                <div className="trip-card__header">
                     <h3>{getCountryFlag(trip.country)} {trip.destination}</h3>
-                    <p aria-label={`Trip source: ${badge}`}>{badge}</p>
+                    <span className={`trip-source-status trip-source-status--${badge.toLowerCase()}`}>
+                        <span aria-hidden="true" />{badge}
+                    </span>
+                </div>
 
-                    <p>
-                        {formatDate(trip.startDate)} –{" "}
-                        {formatDate(trip.endDate)}
-                    </p>
+                <p>
+                    {formatDate(trip.startDate)} –{" "}
+                    {formatDate(trip.endDate)}
+                </p>
 
-                    <p>{trip.country}</p>
-                </Stack>
-            </Card>
-        </div>
+                <p>{getCountryDisplayName(trip.country)}</p>
+            </Stack>
+        </Card>
     );
 }

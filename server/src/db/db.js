@@ -26,6 +26,22 @@ if (!hasUserId) {
   db.exec('CREATE INDEX IF NOT EXISTS idx_trips_user_id ON trips (user_id)');
 }
 
+// Normalize known historical country names to ISO 3166-1 alpha-2 codes.
+// Unknown values are deliberately preserved for later user correction.
+const countryAliases = {
+  'united states': 'US', usa: 'US', 'united states of america': 'US',
+  'czech republic': 'CZ', czechia: 'CZ', 'united kingdom': 'GB', uk: 'GB',
+  'great britain': 'GB', italia: 'IT', italy: 'IT',
+};
+const countryRows = db.prepare('SELECT id, country FROM trips').all();
+const updateCountry = db.prepare('UPDATE trips SET country = ? WHERE id = ?');
+for (const trip of countryRows) {
+  const normalized = countryAliases[String(trip.country ?? '').trim().toLowerCase()];
+  if (normalized && normalized !== trip.country) {
+    updateCountry.run(normalized, trip.id);
+  }
+}
+
 // Migration: retain access to trips created before shared memberships existed.
 // INSERT OR IGNORE makes this safe on every startup and preserves member rows.
 db.exec(

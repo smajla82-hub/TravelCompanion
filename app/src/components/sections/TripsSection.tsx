@@ -39,14 +39,17 @@ export function TripsSection({
     const { trips: allTrips, onlineTrips: syncedTrips } = useTrips();
     const trips = allTrips.filter(trip => trip.source !== "online");
     const [syncedError, setSyncedError] = useState("");
+    const [onlineLoading, setOnlineLoading] = useState(Boolean(AuthService.getToken()));
 
     useEffect(() => {
         if (!AuthService.getToken()) {
             return;
         }
-        void OnlineTripStore.ensureLoaded().catch(reason => setSyncedError(
-            reason instanceof ApiError ? reason.message : "Unable to load online trips.",
-        ));
+        void OnlineTripStore.ensureLoaded()
+            .catch(reason => setSyncedError(
+                reason instanceof ApiError ? reason.message : "Unable to load online trips.",
+            ))
+            .finally(() => setOnlineLoading(false));
     }, []);
 
     const [selectedTrip, setSelectedTrip] =
@@ -124,11 +127,17 @@ export function TripsSection({
 
     return (
         <>
-            <Heading level={2}>
-                My Trips
-            </Heading>
+            <div className="my-trips-heading">
+                <Heading level={2}>
+                    My Trips
+                </Heading>
+            </div>
 
-            <Grid>
+            {onlineLoading && <p aria-live="polite">Loading trips…</p>}
+            {!onlineLoading && trips.length === 0 && syncedTrips.length === 0 && !syncedError && (
+                <p>No trips yet. Create a new trip to get started.</p>
+            )}
+            <Grid className="trips-grid">
                 {trips.map((trip) => (
                     <TripCard
                         key={trip.id}

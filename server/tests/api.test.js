@@ -236,6 +236,17 @@ test('Trip CRUD flow works for an authenticated user', async () => {
     assert.equal(createResponse.status, 201);
     const createdTrip = await createResponse.json();
     assert.ok(createdTrip.id);
+    assert.equal(createdTrip.country, 'CZ');
+
+    const invalidCountryResponse = await fetch(`http://127.0.0.1:${port}/trips`, {
+      method: 'POST',
+      headers: authHeaders,
+      body: JSON.stringify({
+        name: 'Invalid country', destination: 'Nowhere', country: 'Atlantis',
+        startDate: '2026-10-01', endDate: '2026-10-03',
+      }),
+    });
+    assert.equal(invalidCountryResponse.status, 400);
 
     const listResponse = await fetch(`http://127.0.0.1:${port}/trips`, { headers: authHeaders });
     assert.equal(listResponse.status, 200);

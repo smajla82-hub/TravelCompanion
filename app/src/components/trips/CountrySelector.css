@@ -1,0 +1,37 @@
+.tc-country-selector {
+    position: relative;
+}
+
+.tc-country-selector input {
+    width: 100%;
+}
+
+.tc-country-selector ul {
+    position: absolute;
+    z-index: 2;
+    width: 100%;
+    max-height: 240px;
+    overflow-y: auto;
+    margin-top: 4px;
+    padding: 4px;
+    list-style: none;
+    background: var(--surface-primary);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-sm);
+    box-shadow: var(--tc-shadow-card);
+}
+
+.tc-country-selector button {
+    width: 100%;
+    padding: 8px;
+    color: var(--color-text);
+    text-align: left;
+    background: transparent;
+    border: 0;
+    border-radius: var(--radius-sm);
+}
+
+.tc-country-selector button:hover,
+.tc-country-selector button[aria-selected="true"] {
+    background: color-mix(in srgb, var(--color-primary) 12%, transparent);
+}
