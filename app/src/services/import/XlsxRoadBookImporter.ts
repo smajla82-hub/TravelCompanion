@@ -50,31 +50,138 @@ function extractDate(value: CellValue): string {
     ].join("-");
 }
 
-function findColumn(
-    headers: string[],
-    name: string
-): number {
-    return headers.findIndex(
-        header => header === name
-    );
+type ColumnRange = {
+    start: number;
+    end: number;
+};
+
+const ACTIVITY_HEADER_ALIASES = {
+    time: ["Čas", "Time", "Time 🕒", "Time🕒"],
+    activity: ["Aktivita", "Activity", "Activity 🗓"],
+    location: ["Lokalita", "Location", "Location 🌍"],
+    activityType: ["Activity Type"],
+    priority: ["Priorita", "Priority", "Priority ⭐"],
+    parking: ["🅿", "🅿️", "Parking", "Parking 🚗", "Parking 🅿"],
+    smartChip: [
+        "📍",
+        "📍 Smart Chip",
+        "Place Name 📍 (Smart Chip)",
+    ],
+    price: ["Cena", "💰 Cena", "Price", "Price 💰"],
+    note: ["Poznámka", "📝 Poznámka", "Note", "Note 📝", "Note📝"],
+} as const;
+
+const VENUE_HEADER_ALIASES = {
+    priority: ["Priorita", "Priority", "Priority ⭐"],
+    mealType: ["Typ", "Meal Type", "Meal Type 🍴"],
+    name: ["Podnik", "Place", "Place 🌍"],
+    smartChip: [
+        "📍",
+        "📍 Smart Chip",
+        "Place Name 📍 (Smart Chip)",
+    ],
+    recommendation: [
+        "⭐ Doporučení",
+        "Doporučení",
+        "Recommendation",
+        "Recommendation 💡",
+    ],
+    price: [
+        "💰 Cena/os.",
+        "💰 Cena / os.",
+        "Cena/os.",
+        "Cena / os.",
+        "Price/person",
+        "Price/person 💰",
+        "Price per person",
+        "Price per person 💰",
+    ],
+    parking: ["🅿", "🅿️", "Parking", "Parking 🚗", "Parking 🅿"],
+    reservation: ["⏰ Rez.", "Rez.", "Reservation", "Reservation ⏰"],
+    subtype: ["Poznámka", "📝 Poznámka", "Note", "Note 📝", "Note📝"],
+} as const;
+
+const PARKING_HEADER_ALIASES = {
+    code: ["Označení", "Code"],
+    name: ["Místo", "Location", "Location 🌍"],
+    smartChip: [
+        "📍",
+        "📍 Smart Chip",
+        "Place Name 📍 (Smart Chip)",
+    ],
+    price: ["Cena", "💰 Cena", "Price", "Price 💰"],
+    note: ["Poznámka", "📝 Poznámka", "Note", "Note 📝", "Note📝"],
+} as const;
+
+function normalizeHeader(value: string): string {
+    return value
+        .normalize("NFC")
+        .replace(/\uFE0F/g, "")
+        .replace(/\s+/g, " ")
+        .trim()
+        .toLocaleLowerCase("cs-CZ");
 }
 
-function findColumnStartingWith(
+function findColumnByAliases(
     headers: string[],
-    prefix: string
+    aliases: readonly string[],
+    range: ColumnRange = {
+        start: 0,
+        end: headers.length - 1,
+    }
 ): number {
-    return headers.findIndex(
-        header => header.startsWith(prefix)
+    const normalizedAliases = new Set(
+        aliases.map(normalizeHeader)
     );
+    const start = Math.max(0, range.start);
+    const end = Math.min(headers.length - 1, range.end);
+
+    for (let index = start; index <= end; index++) {
+        if (normalizedAliases.has(normalizeHeader(headers[index] ?? ""))) {
+            return index;
+        }
+    }
+
+    return -1;
 }
 
-function findColumnContaining(
+function findColumns<T extends Record<string, readonly string[]>>(
     headers: string[],
-    text: string
-): number {
-    return headers.findIndex(
-        header => header.includes(text)
+    aliases: T,
+    range?: ColumnRange
+): { [K in keyof T]: number } {
+    return Object.fromEntries(
+        Object.entries(aliases).map(([key, values]) => {
+            return [
+                key,
+                findColumnByAliases(headers, values, range),
+            ];
+        })
+    ) as { [K in keyof T]: number };
+}
+
+function getVenueRange(headers: string[]): ColumnRange {
+    const parkingStart = findColumnByAliases(
+        headers,
+        PARKING_HEADER_ALIASES.code
     );
+
+    return {
+        start: 0,
+        end: parkingStart === -1 ? headers.length - 1 : parkingStart - 1,
+    };
+}
+
+function getParkingRange(headers: string[]): ColumnRange {
+    const parkingStart = findColumnByAliases(
+        headers,
+        PARKING_HEADER_ALIASES.code
+    );
+
+    return {
+        start: parkingStart === -1 ? 0 : parkingStart,
+        end: headers.length - 1,
+    };
 }
 
 function findVenueHeaderRow(
@@ -82,10 +189,19 @@ function findVenueHeaderRow(
 ): number {
     return rows.findIndex((row) => {
         const headers = row.map(getString);
+        const range = getVenueRange(headers);
 
         return (
-            findColumn(headers, "Priorita") !== -1 &&
-            findColumnStartingWith(headers, "Podnik") !== -1
+            findColumnByAliases(
+                headers,
+                VENUE_HEADER_ALIASES.priority,
+                range
+            ) !== -1 &&
+            findColumnByAliases(
+                headers,
+                VENUE_HEADER_ALIASES.name,
+                range
+            ) !== -1
         );
     });
 }
@@ -99,7 +215,8 @@ function findVenueSectionRow(
 
             return (
                 value === "DOPORUČENÉ PODNIKY" ||
-                value.endsWith("DOPORUČENÉ PODNIKY")
+                value.endsWith("DOPORUČENÉ PODNIKY") ||
+                normalizeHeader(value) === "recommended places"
             );
         });
     });
@@ -136,18 +253,11 @@ function parseVenues(
     const headers =
         (rows[headerRowIndex] ?? []).map(getString);
 
-    const columns = {
-        priority: findColumn(headers, "Priorita"),
-        mealType: findColumn(headers, "Typ"),
-        name: findColumnStartingWith(headers, "Podnik"),
-        place: findColumnStartingWith(headers, "📍"),
-        recommendation:
-            findColumnContaining(headers, "Doporuč"),
-        price: findColumnStartingWith(headers, "💰 Cena"),
-        smartChip: findColumn(headers, "🅿"),
-        reservation: findColumnContaining(headers, "Rez."),
-        subtype: findColumn(headers, "Poznámka"),
-    };
+    const columns = findColumns(
+        headers,
+        VENUE_HEADER_ALIASES,
+        getVenueRange(headers)
+    );
 
     if (columns.name === -1) {
         return [];
@@ -177,11 +287,6 @@ function parseVenues(
                 sheet,
                 rowIndex,
                 columns.smartChip
-            ) ||
-            getCellLink(
-                sheet,
-                rowIndex,
-                columns.place
             );
 
         venues.push({
@@ -192,11 +297,11 @@ function parseVenues(
             subtype: get(columns.subtype),
             name,
             smartChip:
-                get(columns.smartChip) ||
-                get(columns.place),
+                get(columns.smartChip),
             mapLink: smartChipLink,
             recommendation: get(columns.recommendation),
             price: get(columns.price),
+            parking: get(columns.parking),
             reservation: get(columns.reservation),
         });
     }
@@ -209,11 +314,24 @@ function findParkingHeaderRow(
 ): number {
     return rows.findIndex((row) => {
         const headers = row.map(getString);
+        const range = getParkingRange(headers);
 
         return (
-            findColumn(headers, "Označení") !== -1 &&
-            findColumn(headers, "Místo") !== -1 &&
-            findColumnStartingWith(headers, "📍") !== -1
+            findColumnByAliases(
+                headers,
+                PARKING_HEADER_ALIASES.code,
+                range
+            ) !== -1 &&
+            findColumnByAliases(
+                headers,
+                PARKING_HEADER_ALIASES.name,
+                range
+            ) !== -1 &&
+            findColumnByAliases(
+                headers,
+                PARKING_HEADER_ALIASES.smartChip,
+                range
+            ) !== -1
         );
     });
 }
@@ -230,13 +348,11 @@ function parseParkingLocations(
 
     const headers =
         (rows[headerRowIndex] ?? []).map(getString);
-    const columns = {
-        code: findColumn(headers, "Označení"),
-        name: findColumn(headers, "Místo"),
-        smartChip: findColumnStartingWith(headers, "📍"),
-        price: findColumn(headers, "💰 Cena"),
-        note: findColumn(headers, "📝 Poznámka"),
-    };
+    const columns = findColumns(
+        headers,
+        PARKING_HEADER_ALIASES,
+        getParkingRange(headers)
+    );
     const parkingLocations: ParkingLocation[] = [];
 
     for (
@@ -284,9 +400,14 @@ function parseStats(
     ) {
         const row = rows[rowIndex] ?? [];
         const columnIndex = row.findIndex((cell) => {
-            return getString(cell)
+            const value = getString(cell)
                 .toUpperCase()
-                .includes("STATISTIKY");
+                .trim();
+
+            return (
+                value.includes("STATISTIKY") ||
+                value.includes("STATISTICS")
+            );
         });
 
         if (columnIndex === -1) {
@@ -488,19 +609,10 @@ function parseDaySheet(
     const headers =
         (rows[4] ?? []).map(getString);
 
-    const columns = {
-        time: findColumn(headers, "Čas"),
-        activity: findColumn(headers, "Aktivita"),
-        location: findColumn(headers, "Lokalita"),
-        activityType: findColumn(headers, "Activity Type"),
-        priority: findColumn(headers, "Priorita"),
-        parking: findColumn(headers, "🅿"),
-        smartChip:
-            findColumnStartingWith(headers, "📍"),
-        price:
-            findColumnStartingWith(headers, "💰"),
-        note: findColumn(headers, "Poznámka"),
-    };
+    const columns = findColumns(
+        headers,
+        ACTIVITY_HEADER_ALIASES
+    );
 
     if (
         columns.time === -1 ||
@@ -512,10 +624,16 @@ function parseDaySheet(
     const items: ItineraryItem[] = [];
     const venueSectionRowIndex =
         findVenueSectionRow(rows);
+    const venueHeaderRowIndex =
+        findVenueHeaderRow(rows);
     const timelineEndRowIndex =
-        venueSectionRowIndex === -1
-            ? rows.length
-            : venueSectionRowIndex;
+        Math.min(
+            ...[
+                venueSectionRowIndex,
+                venueHeaderRowIndex,
+                rows.length,
+            ].filter(index => index !== -1)
+        );
 
     for (
         let rowIndex = 5;
@@ -563,7 +681,7 @@ function parseDaySheet(
         sheet,
         rows,
         date,
-        findVenueHeaderRow(rows)
+        venueHeaderRowIndex
     );
     const stats = parseStats(rows);
     const parkingLocations = parseParkingLocations(
