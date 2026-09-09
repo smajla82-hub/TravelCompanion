@@ -587,6 +587,19 @@ test('shared trip invitations and roles enforce access', async () => {
       .get(trip.id).count;
     assert.equal(invitationsAfterSend, invitationsBeforeSend);
 
+    const resendInvitationEmail = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/invitations/${editorInvitation.id}/send-email`, {
+      method: 'POST',
+      headers: owner.headers,
+    });
+    assert.equal(resendInvitationEmail.status, 200);
+    const resendPayload = await resendInvitationEmail.json();
+    assert.equal(resendPayload.sent, true);
+    assert.equal(resendPayload.invitation.id, editorInvitation.id);
+    const invitationsAfterResend = getDb()
+      .prepare('SELECT COUNT(*) AS count FROM invitations WHERE trip_id = ?')
+      .get(trip.id).count;
+    assert.equal(invitationsAfterResend, invitationsBeforeSend);
+
     const wrongRecipient = await fetch(`http://127.0.0.1:${port}/invitations/${editorInvitation.token}/accept`, {
       method: 'POST', headers: stranger.headers,
     });
