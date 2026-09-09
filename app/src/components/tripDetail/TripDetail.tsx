@@ -10,6 +10,7 @@ import type { Trip } from "../../types";
 import { Button, Card, Icon, Modal, Stack } from "../ui";
 import { lockConflictMessage } from "../sections/lockConflictMessage";
 import { SETTINGS_BACKGROUND_URL } from "../../styles/brandAssets";
+import { runInviteTopAction, type InviteDelivery } from "./inviteTopAction";
 import "./TripDetail.css";
 
 type TripDetailProps = {
@@ -26,83 +27,6 @@ type Feedback = {
     tone: "success" | "error";
     message: string;
 };
-
-type InviteDelivery = "link" | "email";
-
-type InvitationResponse = Invitation | { invitation: Invitation };
-
-type InviteTopActionResult = {
-    invitations: Invitation[];
-    feedback: Feedback;
-};
-
-function feedbackMessage(reason: unknown, fallback: string) {
-    return reason instanceof ApiError ? reason.message : fallback;
-}
-
-function resolveInvitation(payload: InvitationResponse) {
-    if ("id" in payload) {
-        return payload;
-    }
-    return payload.invitation;
-}
-
-function mergeInvitation(invitations: Invitation[], invitation: Invitation) {
-    return invitations.some(current => current.id === invitation.id)
-        ? invitations
-        : [invitation, ...invitations];
-}
-
-export async function runInviteTopAction({
-    createInvitation,
-    listInvitations,
-    sendInvitationEmail,
-    currentInvitations,
-    delivery,
-}: {
-    createInvitation: () => Promise<InvitationResponse>;
-    listInvitations: () => Promise<Invitation[]>;
-    sendInvitationEmail: (invitationId: string) => Promise<void>;
-    currentInvitations: Invitation[];
-    delivery: InviteDelivery;
-}): Promise<InviteTopActionResult> {
-    let createdInvitation: Invitation;
-    try {
-        createdInvitation = resolveInvitation(await createInvitation());
-    } catch (reason) {
-        return {
-            invitations: currentInvitations,
-            feedback: { tone: "error", message: feedbackMessage(reason, "Unable to create invitation.") },
-        };
-    }
-
-    let invitations = currentInvitations;
-    try {
-        invitations = await listInvitations();
-    } catch {
-        invitations = mergeInvitation(currentInvitations, createdInvitation);
-    }
-
-    if (delivery === "link") {
-        return {
-            invitations,
-            feedback: { tone: "success", message: "Invitation link created." },
-        };
-    }
-
-    try {
-        await sendInvitationEmail(createdInvitation.id);
-        return {
-            invitations,
-            feedback: { tone: "success", message: "Invitation email sent." },
-        };
-    } catch (reason) {
-        return {
-            invitations,
-            feedback: { tone: "error", message: feedbackMessage(reason, "Unable to send invitation email.") },
-        };
-    }
-}
 
 const MEMBER_ROLE_STYLES: Record<TripMember["role"], string> = {
     owner: "trip-detail__role trip-detail__role--owner",
@@ -223,7 +147,9 @@ export function TripDetail({
         } catch (reason) {
             setInvitationActionFeedback({
                 invitationId,
-                message: feedbackMessage(reason, "Unable to send invitation email."),
+                message: reason instanceof ApiError
+                    ? reason.message
+                    : "Unable to send invitation email.",
             });
         } finally {
             setEmailSendingInvitationId(null);

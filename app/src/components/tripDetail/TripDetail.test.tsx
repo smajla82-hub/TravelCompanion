@@ -31,7 +31,8 @@ vi.mock("../../utils/selectActiveTrip", () => ({
 }));
 
 import { ApiError } from "../../api/client";
-import { TripDetail, TRIP_DETAIL_HEADER_BACKGROUND_IMAGE, runInviteTopAction } from "./TripDetail";
+import { TripDetail, TRIP_DETAIL_HEADER_BACKGROUND_IMAGE } from "./TripDetail";
+import { runInviteTopAction } from "./inviteTopAction";
 
 const baseTrip = {
     id: "trip-1",
