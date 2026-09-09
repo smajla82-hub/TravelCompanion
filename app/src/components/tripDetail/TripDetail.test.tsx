@@ -30,7 +30,6 @@ vi.mock("../../utils/selectActiveTrip", () => ({
     isCurrentActiveTrip: mocks.isCurrentActiveTrip,
 }));
 
-import { ApiError } from "../../api/client";
 import { TripDetail, TRIP_DETAIL_HEADER_BACKGROUND_IMAGE } from "./TripDetail";
 import { runInviteTopAction } from "./inviteTopAction";
 
@@ -134,14 +133,14 @@ describe("TripDetail", () => {
         expect(markup).toContain("Current invitations");
         expect(markup).toContain("pending@example.com");
         expect(markup).not.toContain("accepted@example.com —");
-        expect(markup).toContain("Invitation History");
+        expect(markup).toContain("Invitation History (2)");
         expect(markup).toContain("accepted@example.com");
         expect(markup).toContain("revoked@example.com");
         expect(markup).toContain("Create invitation link");
-        expect(markup).toContain("Send invitation email");
+        expect((markup.match(/Send invitation email/g) ?? [])).toHaveLength(1);
     });
 
-    it("reports link creation success without triggering invitation email delivery", async () => {
+    it("reports link creation success", async () => {
         const invitation: Invitation = {
             id: "invite-1",
             email: "pending@example.com",
@@ -150,47 +149,42 @@ describe("TripDetail", () => {
             token: "token-1",
             acceptLink: "/accept-invite/token-1",
         };
-        const sendInvitationEmail = vi.fn();
 
         const result = await runInviteTopAction({
+            email: invitation.email,
             createInvitation: async () => invitation,
             listInvitations: async () => [invitation],
-            sendInvitationEmail,
             currentInvitations: [],
-            delivery: "link",
         });
 
         expect(result.feedback.message).toBe("Invitation link created.");
         expect(result.feedback.tone).toBe("success");
         expect(result.invitations).toEqual([invitation]);
-        expect(sendInvitationEmail).not.toHaveBeenCalled();
+        expect(result.alreadyGenerated).toBe(false);
     });
 
-    it("creates once and reports email success for top send action", async () => {
+    it("returns duplicate message when matching pending invitation already exists", async () => {
         const invitation: Invitation = {
-            id: "invite-email",
-            email: "pending@example.com",
+            id: "invite-existing",
+            email: "User@Example.com",
             role: "editor",
             status: "pending",
-            token: "token-email",
-            acceptLink: "/accept-invite/token-email",
+            token: "token-existing",
         };
         const createInvitation = vi.fn(async () => invitation);
-        const sendInvitationEmail = vi.fn(async () => undefined);
 
         const result = await runInviteTopAction({
+            email: " user@example.com ",
             createInvitation,
-            listInvitations: async () => [invitation],
-            sendInvitationEmail,
-            currentInvitations: [],
-            delivery: "email",
+            listInvitations: async () => Promise.reject(new Error("unused")),
+            currentInvitations: [invitation],
         });
 
-        expect(createInvitation).toHaveBeenCalledTimes(1);
-        expect(sendInvitationEmail).toHaveBeenCalledWith(invitation.id);
-        expect(result.feedback.message).toBe("Invitation email sent.");
+        expect(createInvitation).not.toHaveBeenCalled();
+        expect(result.feedback.message).toBe("Invitation link already generated.");
         expect(result.feedback.tone).toBe("success");
         expect(result.invitations).toEqual([invitation]);
+        expect(result.alreadyGenerated).toBe(true);
     });
 
     it("handles wrapped invitation creation payloads", async () => {
@@ -201,18 +195,15 @@ describe("TripDetail", () => {
             status: "pending",
             token: "token-wrapped",
         };
-        const sendInvitationEmail = vi.fn(async () => undefined);
 
         const result = await runInviteTopAction({
+            email: invitation.email,
             createInvitation: async () => ({ invitation }),
             listInvitations: async () => [invitation],
-            sendInvitationEmail,
             currentInvitations: [],
-            delivery: "email",
         });
 
-        expect(sendInvitationEmail).toHaveBeenCalledWith(invitation.id);
-        expect(result.feedback.message).toBe("Invitation email sent.");
+        expect(result.feedback.message).toBe("Invitation link created.");
     });
 
     it("avoids duplicate local invitations when list refresh fails", async () => {
@@ -225,43 +216,23 @@ describe("TripDetail", () => {
         };
 
         const result = await runInviteTopAction({
+            email: invitation.email,
             createInvitation: async () => invitation,
             listInvitations: async () => Promise.reject(new Error("list failed")),
-            sendInvitationEmail: async () => undefined,
             currentInvitations: [invitation],
-            delivery: "link",
         });
 
         expect(result.invitations).toHaveLength(1);
         expect(result.invitations[0]?.id).toBe(invitation.id);
     });
 
-    it("separates invitation creation failures from email delivery failures", async () => {
-        const invitation: Invitation = {
-            id: "invite-separation",
-            email: "pending@example.com",
-            role: "viewer",
-            status: "pending",
-            token: "token-separation",
-        };
-
+    it("reports invitation creation failures", async () => {
         const creationFailure = await runInviteTopAction({
+            email: "pending@example.com",
             createInvitation: async () => Promise.reject(new Error("boom")),
             listInvitations: async () => [],
-            sendInvitationEmail: async () => undefined,
             currentInvitations: [],
-            delivery: "email",
         });
         expect(creationFailure.feedback.message).toBe("Unable to create invitation.");
-
-        const emailFailure = await runInviteTopAction({
-            createInvitation: async () => invitation,
-            listInvitations: async () => [invitation],
-            sendInvitationEmail: async () => Promise.reject(new ApiError("SMTP unavailable")),
-            currentInvitations: [],
-            delivery: "email",
-        });
-        expect(emailFailure.feedback.message).toBe("SMTP unavailable");
-        expect(emailFailure.invitations).toEqual([invitation]);
     });
 });

@@ -274,8 +274,11 @@ export function createTripRoutes() {
       return res.status(400).json({ error: 'A valid email and an editor or viewer role are required.' });
     }
     const expiresAt = new Date(Date.now() + config.invitationExpiresInDays * 24 * 60 * 60 * 1000).toISOString();
-    const invitation = invitations.createInvitation(req.params.tripId, email, role, req.user.id, expiresAt);
-    return res.status(201).json(toInvitationPayload(invitation));
+    const result = invitations.createInvitation(req.params.tripId, email, role, req.user.id, expiresAt);
+    return res.status(result.alreadyGenerated ? 200 : 201).json({
+      ...toInvitationPayload(result.invitation),
+      alreadyGenerated: result.alreadyGenerated,
+    });
   });
 
   router.get('/:tripId/invitations', requireTripRole(['owner']), (req, res) => {

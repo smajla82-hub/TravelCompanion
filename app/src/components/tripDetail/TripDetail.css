@@ -102,6 +102,10 @@
     gap: var(--space-sm);
 }
 
+.trip-detail__invites {
+    padding-bottom: max(var(--space-md), env(safe-area-inset-bottom, 0px));
+}
+
 .trip-detail__member-row {
     display: grid;
     grid-template-columns: minmax(0, 1fr) auto;
@@ -167,8 +171,16 @@
 
 .trip-detail__invite-actions {
     display: grid;
-    grid-template-columns: repeat(2, minmax(0, 1fr));
+    grid-template-columns: minmax(0, 1fr);
     gap: var(--space-sm);
+    width: min(100%, 320px);
+    justify-self: center;
+}
+
+.trip-detail__invite-actions--card {
+    width: 100%;
+    justify-self: stretch;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
 }
 
 .trip-detail__current-invitations {
@@ -195,9 +207,30 @@
     background: color-mix(in srgb, var(--surface-primary) 90%, var(--color-border));
 }
 
-.trip-detail__subtle-status {
-    color: var(--color-text-secondary);
+.trip-detail__invite-field-label {
+    display: block;
     font-size: 12px;
+    color: var(--color-text-secondary);
+    margin-bottom: 2px;
+}
+
+.trip-detail__subtle-status {
+    color: var(--color-text);
+    font-size: 12px;
+}
+
+.trip-detail__subtle-status--success {
+    color: var(--color-success);
+}
+
+.trip-detail__subtle-status--error {
+    color: var(--color-danger);
+}
+
+.trip-detail__action--history {
+    background: color-mix(in srgb, var(--color-blue) 8%, transparent);
+    border-color: color-mix(in srgb, var(--color-blue) 32%, var(--color-border));
+    color: var(--color-blue);
 }
 
 .trip-detail__history {
@@ -223,8 +256,11 @@
     }
 
     .trip-detail__metadata,
-    .trip-detail__invite-actions,
     .trip-detail__member-row {
+        grid-template-columns: 1fr;
+    }
+
+    .trip-detail__invite-actions--card {
         grid-template-columns: 1fr;
     }
 

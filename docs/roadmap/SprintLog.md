@@ -583,6 +583,15 @@ dashboard state, authenticated New Trip creation, and RoadBook full replacement
 now use the adapter; members and invitations remain in unified detail. **10.5 —
 Data migration is next.**
 
+**10.4e — Invitation UX + integrity correction — DONE.** Owner invite flow now
+separates link creation from delivery: Trip Detail exposes one top-level
+`Create invitation link` action, then per-pending-invitation card actions for
+Copy link, Send invitation email, and Revoke invitation. Backend invitation
+creation now enforces one active `pending` invitation per
+`trip_id + normalized(email)` (trimmed, case-insensitive), returning the
+existing pending invitation instead of creating a duplicate token/row. Accepted,
+revoked, rejected, and expired rows remain preserved in Invitation History.
+
 ## 11.x+ — Extended Travel Companion (PLANNED)
 
 Budget, checklist, currency, timeline, equipment, knowledge base and related modules — expected to build on top of the shared persistence/accounts foundation once it exists.
