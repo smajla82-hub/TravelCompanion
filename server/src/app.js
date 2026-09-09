@@ -1,13 +1,14 @@
 import express from 'express';
 import cors from 'cors';
 import healthRoutes from './routes/health.js';
-import tripRoutes from './routes/trips.js';
-import authRoutes from './routes/auth.js';
-import invitationRoutes from './routes/invitations.js';
+import { createTripRoutes } from './routes/trips.js';
+import { createAuthRoutes } from './routes/auth.js';
+import { createInvitationRoutes } from './routes/invitations.js';
 import { config } from './config.js';
 
 export function createApp() {
   const app = express();
+  app.set('trust proxy', 1);
   const allowedOrigins = (config.corsOrigin ?? '')
     .split(',')
     .map((origin) => origin.trim())
@@ -33,9 +34,9 @@ export function createApp() {
   );
 
   app.use(healthRoutes);
-  app.use('/auth', authRoutes);
-  app.use('/invitations', invitationRoutes);
-  app.use('/trips', tripRoutes);
+  app.use('/auth', createAuthRoutes());
+  app.use('/invitations', createInvitationRoutes());
+  app.use('/trips', createTripRoutes());
 
   app.use((error, _req, res, _next) => {
     const status = error.statusCode ?? 500;

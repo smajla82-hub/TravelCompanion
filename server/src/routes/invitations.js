@@ -4,18 +4,6 @@ import { requireAuth } from '../middleware/auth.js';
 import * as invitations from '../repositories/invitationRepository.js';
 import { RATE_LIMIT_WINDOW_MS } from '../middleware/rateLimitWindow.js';
 
-const router = express.Router();
-
-const invitationsLimiter = rateLimit({
-  windowMs: RATE_LIMIT_WINDOW_MS,
-  limit: 300,
-  standardHeaders: true,
-  legacyHeaders: false,
-});
-
-router.use(invitationsLimiter);
-router.use(requireAuth);
-
 function respond(handler) {
   return (req, res) => {
     const result = handler(req.params.token, req.user);
@@ -32,7 +20,21 @@ function respond(handler) {
   };
 }
 
-router.post('/:token/accept', respond(invitations.acceptInvitation));
-router.post('/:token/reject', respond(invitations.rejectInvitation));
+export function createInvitationRoutes() {
+  const router = express.Router();
 
-export default router;
+  const invitationsLimiter = rateLimit({
+    windowMs: RATE_LIMIT_WINDOW_MS,
+    limit: 300,
+    standardHeaders: true,
+    legacyHeaders: false,
+  });
+
+  router.use(invitationsLimiter);
+  router.use(requireAuth);
+
+  router.post('/:token/accept', respond(invitations.acceptInvitation));
+  router.post('/:token/reject', respond(invitations.rejectInvitation));
+
+  return router;
+}

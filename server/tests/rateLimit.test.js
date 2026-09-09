@@ -13,11 +13,74 @@ process.env.PORT = '0';
 
 const { createApp } = await import(`../src/app.js?test=${Date.now()}`);
 
+function startServer(app) {
+  return new Promise((resolve) => {
+    const server = app.listen(0, () => resolve(server));
+  });
+}
+
+function closeServer(server) {
+  return new Promise((resolve, reject) => {
+    server.close((error) => (error ? reject(error) : resolve()));
+  });
+}
+
+function captureConsoleMessages(messages) {
+  return (...args) => {
+    messages.push(args.map((value) => {
+      if (value instanceof Error) {
+        return [value.code, value.message, value.stack].filter(Boolean).join(' ');
+      }
+      return typeof value === 'string' ? value : JSON.stringify(value);
+    }).join(' '));
+  };
+}
+
+test('Express derives the client IP from exactly one trusted proxy without rate-limit proxy errors', async () => {
+  const app = createApp();
+  app.get('/__test/ip', (req, res) => {
+    res.json({ ip: req.ip, ips: req.ips });
+  });
+
+  const consoleErrors = [];
+  const originalConsoleError = console.error;
+  console.error = captureConsoleMessages(consoleErrors);
+
+  const server = await startServer(app);
+  try {
+    const port = server.address().port;
+
+    const ipResponse = await fetch(`http://127.0.0.1:${port}/__test/ip`, {
+      headers: { 'X-Forwarded-For': '203.0.113.10' },
+    });
+    assert.equal(ipResponse.status, 200);
+    assert.deepEqual(await ipResponse.json(), {
+      ip: '203.0.113.10',
+      ips: ['203.0.113.10'],
+    });
+
+    const loginResponse = await fetch(`http://127.0.0.1:${port}/auth/login`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'X-Forwarded-For': '203.0.113.10',
+      },
+      body: JSON.stringify({ email: 'nobody@example.com', password: 'wrong-password' }),
+    });
+    assert.equal(loginResponse.status, 401);
+    assert.equal(
+      consoleErrors.some((message) => message.includes('ERR_ERL_UNEXPECTED_X_FORWARDED_FOR')),
+      false,
+    );
+  } finally {
+    console.error = originalConsoleError;
+    await closeServer(server);
+  }
+});
+
 test('a rate limited trip request answers with a JSON error body', async () => {
   const app = createApp();
-  const server = await new Promise((resolve) => {
-    const listening = app.listen(0, () => resolve(listening));
-  });
+  const server = await startServer(app);
 
   try {
     const port = server.address().port;
@@ -37,8 +100,6 @@ test('a rate limited trip request answers with a JSON error body', async () => {
     const body = await limited.json();
     assert.match(body.error, /Too many trip requests/);
   } finally {
-    await new Promise((resolve, reject) => {
-      server.close((error) => (error ? reject(error) : resolve()));
-    });
+    await closeServer(server);
   }
 });
