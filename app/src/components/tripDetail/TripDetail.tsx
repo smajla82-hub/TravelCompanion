@@ -301,7 +301,7 @@ export function TripDetail({
                                         <option value="viewer">Viewer</option>
                                     </select>
 
-                                    <div className="trip-detail__invite-actions trip-detail__invite-actions--card">
+                                    <div className="trip-detail__invite-actions">
                                         <Button type="submit" disabled={creatingInvitation} className="trip-detail__action trip-detail__action--edit">
                                             Create invitation link
                                         </Button>
@@ -348,7 +348,7 @@ export function TripDetail({
                                                         </Button>
                                                     </p>
                                                 )}
-                                                <div className="trip-detail__invite-actions">
+                                                <div className="trip-detail__invite-actions trip-detail__invite-actions--card">
                                                     <Button
                                                         type="button"
                                                         variant="outline"
