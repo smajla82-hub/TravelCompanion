@@ -1,0 +1,237 @@
+.trip-detail {
+    margin-top: 24px;
+}
+
+.trip-detail__header {
+    position: relative;
+    overflow: hidden;
+    border-radius: var(--tc-radius-card);
+    padding: var(--space-lg);
+    background-image:
+        linear-gradient(180deg, rgba(15, 23, 42, 0.2) 0%, rgba(15, 23, 42, 0.75) 100%),
+        url('/assets/settings_background1440x3200.webp');
+    background-size: cover;
+    background-position: center 30%;
+    color: #fff;
+}
+
+.trip-detail__header h2 {
+    margin: 0;
+    font-size: var(--font-size-lg);
+}
+
+.trip-detail__header p {
+    margin: var(--space-xs) 0 0;
+    opacity: 0.95;
+}
+
+.trip-detail__metadata {
+    display: grid;
+    grid-template-columns: repeat(3, minmax(0, 1fr));
+    gap: var(--space-sm);
+}
+
+.trip-detail__metadata p {
+    min-width: 0;
+    display: flex;
+    align-items: center;
+    gap: var(--space-xs);
+    padding: 10px 12px;
+    border-radius: var(--tc-radius-button);
+    border: 1px solid var(--color-border);
+    background: color-mix(in srgb, var(--surface-primary) 92%, var(--color-primary) 8%);
+}
+
+.trip-detail__metadata span {
+    overflow-wrap: anywhere;
+}
+
+.trip-detail__feedback {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 12px;
+    border-radius: var(--tc-radius-button);
+    border: 1px solid var(--color-border);
+}
+
+.trip-detail__feedback--success {
+    color: var(--color-success);
+    background: color-mix(in srgb, var(--color-success) 14%, transparent);
+    border-color: color-mix(in srgb, var(--color-success) 42%, var(--color-border));
+}
+
+.trip-detail__feedback--error {
+    color: var(--color-danger);
+    background: color-mix(in srgb, var(--color-danger) 14%, transparent);
+    border-color: color-mix(in srgb, var(--color-danger) 35%, var(--color-border));
+}
+
+.trip-detail__actions {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-sm);
+}
+
+.trip-detail__action {
+    width: 100%;
+    justify-content: center;
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.trip-detail__action--active {
+    background: color-mix(in srgb, var(--color-success) 13%, transparent);
+    border-color: color-mix(in srgb, var(--color-success) 38%, var(--color-border));
+    color: var(--color-success);
+}
+
+.trip-detail__action--edit {
+    background: color-mix(in srgb, var(--color-primary) 10%, transparent);
+    border-color: color-mix(in srgb, var(--color-primary) 40%, var(--color-border));
+    color: var(--color-primary);
+}
+
+.trip-detail__action--delete {
+    background: color-mix(in srgb, var(--color-danger) 10%, transparent);
+    border-color: color-mix(in srgb, var(--color-danger) 40%, var(--color-border));
+    color: var(--color-danger);
+}
+
+.trip-detail__members,
+.trip-detail__invites {
+    display: grid;
+    gap: var(--space-sm);
+}
+
+.trip-detail__member-row {
+    display: grid;
+    grid-template-columns: minmax(0, 1fr) auto;
+    gap: var(--space-xs) var(--space-sm);
+    align-items: center;
+}
+
+.trip-detail__member-name {
+    font-weight: 700;
+}
+
+.trip-detail__member-email {
+    color: var(--color-text-secondary);
+    font-size: 13px;
+}
+
+.trip-detail__role {
+    justify-self: end;
+    display: inline-flex;
+    align-items: center;
+    gap: 4px;
+    border-radius: var(--tc-radius-pill);
+    border: 1px solid var(--color-border);
+    font-size: 12px;
+    padding: 3px 8px;
+    font-weight: 700;
+    letter-spacing: 0.02em;
+}
+
+.trip-detail__role--owner {
+    color: var(--color-success);
+    background: color-mix(in srgb, var(--color-success) 14%, transparent);
+    border-color: color-mix(in srgb, var(--color-success) 45%, var(--color-border));
+}
+
+.trip-detail__role--editor {
+    color: var(--color-blue);
+    background: color-mix(in srgb, var(--color-blue) 14%, transparent);
+    border-color: color-mix(in srgb, var(--color-blue) 45%, var(--color-border));
+}
+
+.trip-detail__role--viewer {
+    color: var(--color-text-secondary);
+}
+
+.trip-detail__invite-form {
+    display: grid;
+    gap: 6px;
+}
+
+.trip-detail__invite-form label {
+    font-weight: 600;
+}
+
+.trip-detail__invite-form input,
+.trip-detail__invite-form select {
+    width: 100%;
+    min-width: 0;
+    padding: 10px 12px;
+    border-radius: var(--tc-radius-button);
+    border: 1px solid var(--color-border);
+}
+
+.trip-detail__invite-actions {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: var(--space-sm);
+}
+
+.trip-detail__current-invitations {
+    display: grid;
+    gap: var(--space-sm);
+}
+
+.trip-detail__invitation-card {
+    display: grid;
+    gap: var(--space-xs);
+}
+
+.trip-detail__invite-link {
+    display: grid;
+    gap: var(--space-xs);
+}
+
+.trip-detail__invite-link code {
+    max-width: 100%;
+    overflow-wrap: anywhere;
+    display: block;
+    padding: 8px;
+    border-radius: 8px;
+    background: color-mix(in srgb, var(--surface-primary) 90%, var(--color-border));
+}
+
+.trip-detail__subtle-status {
+    color: var(--color-text-secondary);
+    font-size: 12px;
+}
+
+.trip-detail__history {
+    display: grid;
+    gap: var(--space-sm);
+    max-height: min(60vh, 460px);
+    overflow-y: auto;
+    padding-right: 4px;
+}
+
+.trip-detail__history-item {
+    display: grid;
+    gap: 4px;
+}
+
+@media (max-width: 640px) {
+    .trip-detail {
+        margin-top: 20px;
+    }
+
+    .trip-detail__header {
+        padding: var(--space-md);
+    }
+
+    .trip-detail__metadata,
+    .trip-detail__invite-actions,
+    .trip-detail__member-row {
+        grid-template-columns: 1fr;
+    }
+
+    .trip-detail__role {
+        justify-self: start;
+    }
+}

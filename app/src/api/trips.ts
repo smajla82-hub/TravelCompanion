@@ -41,6 +41,9 @@ export type Invitation = {
     status: string;
     token: string;
     acceptLink?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    expiresAt?: string;
 };
 
 export type LockConflict = {
@@ -66,6 +69,11 @@ export const SyncedTripApi = {
             method: "POST",
             body: JSON.stringify({ email, role }),
         }),
+    sendInvitationEmail: (tripId: string, invitationId: string) =>
+        apiRequest<{ sent: true; invitation: Invitation }>(
+            `/trips/${tripId}/invitations/${invitationId}/send-email`,
+            { method: "POST" },
+        ),
     revokeInvitation: (tripId: string, invitationId: string) =>
         apiRequest<Invitation>(
             `/trips/${tripId}/invitations/${invitationId}`,

@@ -10,6 +10,7 @@ import { Icon } from "../icon/Icon";
 type ModalProps = {
     open: boolean;
     title?: string;
+    ariaLabel?: string;
     children: ReactNode;
     onClose: () => void;
 };
@@ -17,6 +18,7 @@ type ModalProps = {
 export function Modal({
     open,
     title,
+    ariaLabel,
     children,
     onClose,
 }: ModalProps) {
@@ -66,6 +68,7 @@ export function Modal({
                 onClick={(e) => e.stopPropagation()}
                 role="dialog"
                 aria-modal="true"
+                aria-label={title ? undefined : ariaLabel}
                 aria-labelledby={
                     title
                         ? "tc-modal-title"
