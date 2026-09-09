@@ -771,7 +771,11 @@ test('trip edit locks enforce exclusive edits and permit only current offline wr
       method: 'POST', headers: editor.headers,
     });
     assert.equal(blocked.status, 409);
-    assert.deepEqual((await blocked.json()).lockedBy, { userId: owner.user.id, email: owner.user.email });
+    assert.deepEqual((await blocked.json()).lockedBy, {
+      userId: owner.user.id,
+      email: owner.user.email,
+      displayName: owner.user.email,
+    });
     const viewerLock = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, {
       method: 'POST', headers: viewer.headers,
     });

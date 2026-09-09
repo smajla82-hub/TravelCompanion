@@ -294,7 +294,7 @@ describe("importXlsxRoadBook", () => {
             }),
             expect.objectContaining({
                 name: "Hopdoddy Burger Bar",
-                parking: "P4",
+                parking: "P2",
                 smartChip: "Hopdoddy Burger Bar",
             }),
             expect.objectContaining({

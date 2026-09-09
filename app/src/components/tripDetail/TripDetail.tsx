@@ -1,4 +1,4 @@
-import { useEffect, useMemo, useState } from "react";
+import { useEffect, useId, useMemo, useState } from "react";
 import { ApiError } from "../../api/client";
 import { AuthService } from "../../services/AuthService";
 import { createTripAdapter } from "../../services/TripAdapter";
@@ -89,6 +89,8 @@ export function TripDetail({
     const [historyOpen, setHistoryOpen] = useState(initialHistoryOpen);
     const [creatingInvitation, setCreatingInvitation] = useState(false);
     const [emailSendingInvitationId, setEmailSendingInvitationId] = useState<string | null>(null);
+    const inviteEmailInputId = useId();
+    const inviteRoleSelectId = useId();
 
     const user = AuthService.getUser();
     const role = members.find(member => member.userId === user?.id)?.role;
@@ -292,11 +294,11 @@ export function TripDetail({
                             <section className="trip-detail__invites" aria-label="Collaborator invitations">
                                 <h3>Invite collaborator</h3>
                                 <form onSubmit={invite} className="trip-detail__invite-form">
-                                    <label htmlFor="trip-detail-invite-email">Email</label>
-                                    <input id="trip-detail-invite-email" name="email" type="email" required placeholder="collaborator@example.com" />
+                                    <label htmlFor={inviteEmailInputId}>Email</label>
+                                    <input id={inviteEmailInputId} name="email" type="email" required placeholder="collaborator@example.com" autoComplete="email" />
 
-                                    <label htmlFor="trip-detail-invite-role">Role</label>
-                                    <select id="trip-detail-invite-role" name="role" defaultValue="editor">
+                                    <label htmlFor={inviteRoleSelectId}>Role</label>
+                                    <select id={inviteRoleSelectId} name="role" defaultValue="editor">
                                         <option value="editor">Editor</option>
                                         <option value="viewer">Viewer</option>
                                     </select>

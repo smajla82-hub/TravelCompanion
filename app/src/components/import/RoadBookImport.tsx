@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useId, useState } from "react";
 
 import {
     Button,
@@ -31,6 +31,8 @@ import { RoadBookPreview } from
     "./RoadBookPreview";
 
 export function RoadBookImport() {
+    const tripSelectId = useId();
+    const importFileInputId = useId();
 
     const trips = TripService.getAll();
     const [syncedTrips, setSyncedTrips] = useState<SyncedTrip[]>([]);
@@ -163,11 +165,12 @@ export function RoadBookImport() {
                     Import RoadBook
                 </h2>
 
-                <label>
+                <label htmlFor={tripSelectId}>
                     Trip
                 </label>
 
                 <select
+                    id={tripSelectId}
                     value={selectedTripId}
                     onChange={(event) => {
                         setSelectedTripId(
@@ -204,7 +207,12 @@ export function RoadBookImport() {
                     ))}
                 </select>
 
+                <label htmlFor={importFileInputId}>
+                    RoadBook file (.xlsx)
+                </label>
+
                 <input
+                    id={importFileInputId}
                     type="file"
                     accept=".xlsx"
                     onChange={handleFileChange}
@@ -217,7 +225,7 @@ export function RoadBookImport() {
                 )}
 
                 {days.length > 0 && (
-                    <p>
+                    <p role="status" aria-live="polite">
                         Imported {days.length} days
                         {" · "}
                         {itemCount} activities
@@ -225,7 +233,7 @@ export function RoadBookImport() {
                 )}
 
                 {error && (
-                    <p>
+                    <p role="alert">
                         {error}
                     </p>
                 )}
@@ -253,7 +261,7 @@ export function RoadBookImport() {
                 )}
 
                 {saved && (
-                    <p>
+                    <p role="status" aria-live="polite">
                         RoadBook saved to Trip.
                     </p>
                 )}
