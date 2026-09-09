@@ -75,8 +75,8 @@ describe("toOnlineTrip", () => {
         });
 
         it("stores the explicit current-device online selection when activated", async () => {
-            vi.spyOn(SyncedTripApi, "acquireLock").mockResolvedValue({});
-            vi.spyOn(SyncedTripApi, "releaseLock").mockResolvedValue({});
+            const acquireLock = vi.spyOn(SyncedTripApi, "acquireLock").mockResolvedValue({});
+            const releaseLock = vi.spyOn(SyncedTripApi, "releaseLock").mockResolvedValue({});
             vi.spyOn(SyncedTripApi, "setActive")
                 .mockResolvedValue(serverTrip({ id: "online-a", isActive: true }));
 
@@ -94,6 +94,8 @@ describe("toOnlineTrip", () => {
                 source: "online",
                 id: "online-a",
             });
+            expect(acquireLock).not.toHaveBeenCalled();
+            expect(releaseLock).not.toHaveBeenCalled();
         });
 
         it("updates the cached itinerary after online activity mutations", async () => {

@@ -234,10 +234,10 @@ export function createTripAdapter(trip: Pick<Trip, "id" | "source"> | SyncedTrip
             ...updated,
             name: updated.destination ?? updated.name,
         } as SyncedTrip))),
-        setActive: () => withLock(async () => {
+        setActive: async () => {
             const activeTrip = toOnlineTrip(await SyncedTripApi.setActive(tripId));
             ActiveTripSelectionStore.selectOnline(tripId);
             return activeTrip;
-        }),
+        },
     };
 }
