@@ -10,7 +10,7 @@ import type { Trip } from "../../types";
 import { Button, Card, Icon, Modal, Stack } from "../ui";
 import { lockConflictMessage } from "../sections/lockConflictMessage";
 import { SETTINGS_BACKGROUND_URL } from "../../styles/brandAssets";
-import { runInviteTopAction, type InviteDelivery } from "./inviteTopAction";
+import { runInviteTopAction } from "./inviteTopAction";
 import "./TripDetail.css";
 
 type TripDetailProps = {
@@ -57,6 +57,15 @@ function formatDateTime(value?: string) {
     return date.toLocaleString();
 }
 
+function dedupeInvitations(items: Invitation[]) {
+    const seen = new Set<string>();
+    return items.filter(item => {
+        if (seen.has(item.id)) return false;
+        seen.add(item.id);
+        return true;
+    });
+}
+
 export function TripDetail({
     trip,
     onEdit,
@@ -68,16 +77,17 @@ export function TripDetail({
 }: TripDetailProps) {
     const adapter = useMemo(() => createTripAdapter(trip), [trip]);
     const [members, setMembers] = useState<TripMember[]>(initialMembers);
-    const [invitations, setInvitations] = useState<Invitation[]>(initialInvitations);
+    const [invitations, setInvitations] = useState<Invitation[]>(dedupeInvitations(initialInvitations));
     const [feedback, setFeedback] = useState<Feedback | null>(null);
     const [inviteFeedback, setInviteFeedback] = useState<Feedback | null>(null);
     const [invitationActionFeedback, setInvitationActionFeedback] = useState<{
         invitationId: string;
+        tone: "success" | "error";
         message: string;
     } | null>(null);
-    const [copiedInvitationId, setCopiedInvitationId] = useState<string | null>(null);
+    const [invitationListFeedback, setInvitationListFeedback] = useState<Feedback | null>(null);
     const [historyOpen, setHistoryOpen] = useState(initialHistoryOpen);
-    const [pendingAction, setPendingAction] = useState<InviteDelivery | null>(null);
+    const [creatingInvitation, setCreatingInvitation] = useState(false);
     const [emailSendingInvitationId, setEmailSendingInvitationId] = useState<string | null>(null);
 
     const user = AuthService.getUser();
@@ -87,7 +97,10 @@ export function TripDetail({
 
     const { activeTrip } = useTrips();
     const isCurrentSelection = isCurrentActiveTrip(trip, activeTrip);
-    const currentInvitations = invitations.filter(invitation => invitation.status === "pending");
+    const currentInvitations = dedupeInvitations(
+        invitations.filter(invitation => invitation.status === "pending"),
+    );
+    const historicalInvitations = invitations.filter(invitation => invitation.status !== "pending");
 
     useEffect(() => {
         if (adapter.source !== "online") return;
@@ -95,7 +108,7 @@ export function TripDetail({
             .then(async loadedMembers => {
                 setMembers(loadedMembers);
                 if (loadedMembers.some(member => member.userId === user?.id && member.role === "owner")) {
-                    setInvitations(await adapter.invitations());
+                    setInvitations(dedupeInvitations(await adapter.invitations()));
                 }
             })
             .catch(reason => setFeedback({
@@ -104,52 +117,57 @@ export function TripDetail({
             }));
     }, [trip.id, adapter, user?.id]);
 
+    async function reconcileInvitations() {
+        setInvitations(dedupeInvitations(await adapter.invitations()));
+    }
+
     async function invite(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
+        if (creatingInvitation) return;
         setInviteFeedback(null);
+        setInvitationListFeedback(null);
         setInvitationActionFeedback(null);
-        setCopiedInvitationId(null);
-
-        const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
-        const delivery = submitter?.value === "email" ? "email" : "link";
-        setPendingAction(delivery);
+        setCreatingInvitation(true);
 
         const form = new FormData(event.currentTarget);
+        const email = String(form.get("email") ?? "");
         try {
             const result = await runInviteTopAction({
                 createInvitation: () => adapter.invite(
-                    String(form.get("email") ?? ""),
+                    email,
                     String(form.get("role") ?? "editor") as "editor" | "viewer",
                 ),
                 listInvitations: () => adapter.invitations(),
-                sendInvitationEmail: invitationId => adapter.sendInvitationEmail(invitationId),
                 currentInvitations: invitations,
-                delivery,
+                email,
             });
             setInvitations(result.invitations);
             setInviteFeedback(result.feedback);
-            event.currentTarget.reset();
         } finally {
-            setPendingAction(null);
+            setCreatingInvitation(false);
         }
     }
 
     async function sendInvitationEmail(invitationId: string) {
         setInviteFeedback(null);
+        setInvitationListFeedback(null);
         setInvitationActionFeedback(null);
         setEmailSendingInvitationId(invitationId);
         try {
             await adapter.sendInvitationEmail(invitationId);
+            await reconcileInvitations();
             setInvitationActionFeedback({
                 invitationId,
+                tone: "success",
                 message: "Invitation email sent.",
             });
         } catch (reason) {
             setInvitationActionFeedback({
                 invitationId,
+                tone: "error",
                 message: reason instanceof ApiError
                     ? reason.message
-                    : "Unable to send invitation email.",
+                    : "Unable to deliver invitation email.",
             });
         } finally {
             setEmailSendingInvitationId(null);
@@ -158,15 +176,15 @@ export function TripDetail({
 
     async function revoke(invitationId: string) {
         setFeedback(null);
+        setInviteFeedback(null);
+        setInvitationActionFeedback(null);
+        setInvitationListFeedback(null);
         try {
             await adapter.revokeInvitation(invitationId);
-            setInvitations(current => current.map(item => (
-                item.id === invitationId
-                    ? { ...item, status: "revoked", updatedAt: new Date().toISOString() }
-                    : item
-            )));
+            await reconcileInvitations();
+            setInvitationListFeedback({ tone: "success", message: "Invitation revoked." });
         } catch (reason) {
-            setFeedback({
+            setInvitationListFeedback({
                 tone: "error",
                 message: reason instanceof ApiError
                     ? lockConflictMessage(reason)
@@ -176,16 +194,24 @@ export function TripDetail({
     }
 
     async function copyInviteLink(invitationId: string, link: string) {
-        setFeedback(null);
+        setInviteFeedback(null);
+        setInvitationListFeedback(null);
         try {
             if (!navigator.clipboard?.writeText) {
                 throw new Error("Clipboard API unavailable.");
             }
             await navigator.clipboard.writeText(link);
-            setCopiedInvitationId(invitationId);
-            setFeedback({ tone: "success", message: "Invitation link copied." });
+            setInvitationActionFeedback({
+                invitationId,
+                tone: "success",
+                message: "Invitation link copied.",
+            });
         } catch {
-            setFeedback({ tone: "error", message: "Unable to copy the invite link. Please copy it manually." });
+            setInvitationActionFeedback({
+                invitationId,
+                tone: "error",
+                message: "Unable to copy the invite link. Please copy it manually.",
+            });
         }
     }
 
@@ -276,11 +302,8 @@ export function TripDetail({
                                     </select>
 
                                     <div className="trip-detail__invite-actions">
-                                        <Button type="submit" value="link" disabled={pendingAction !== null} className="trip-detail__action trip-detail__action--edit">
+                                        <Button type="submit" disabled={creatingInvitation} className="trip-detail__action trip-detail__action--edit">
                                             Create invitation link
-                                        </Button>
-                                        <Button type="submit" value="email" disabled={pendingAction !== null} className="trip-detail__action trip-detail__action--active">
-                                            Send invitation email
                                         </Button>
                                     </div>
                                     {inviteFeedback && (
@@ -308,22 +331,24 @@ export function TripDetail({
 
                                         return (
                                             <Card key={invitation.id} variant="outlined" className="trip-detail__invitation-card">
-                                                <p><strong>{invitation.email}</strong></p>
-                                                <p>{roleLabel(invitation.role)}</p>
+                                                <p><span className="trip-detail__invite-field-label">Email</span><strong>{invitation.email}</strong></p>
+                                                <p><span className="trip-detail__invite-field-label">Role</span>{roleLabel(invitation.role)}</p>
                                                 {inviteLink && (
                                                     <p className="trip-detail__invite-link">
+                                                        <span className="trip-detail__invite-field-label">Invitation link</span>
                                                         <code>{inviteLink}</code>
                                                         <Button
                                                             type="button"
                                                             variant="outline"
                                                             compact
                                                             onClick={() => void copyInviteLink(invitation.id, inviteLink)}
+                                                            className="trip-detail__action trip-detail__action--edit"
                                                         >
                                                             Copy link
                                                         </Button>
                                                     </p>
                                                 )}
-                                                <div className="trip-detail__invite-actions">
+                                                <div className="trip-detail__invite-actions trip-detail__invite-actions--card">
                                                     <Button
                                                         type="button"
                                                         variant="outline"
@@ -344,11 +369,12 @@ export function TripDetail({
                                                         Revoke invitation
                                                     </Button>
                                                 </div>
-                                                {copiedInvitationId === invitation.id && (
-                                                    <p className="trip-detail__subtle-status" role="status">Copied.</p>
-                                                )}
                                                 {invitationActionFeedback?.invitationId === invitation.id && (
-                                                    <p className="trip-detail__subtle-status" role="status">
+                                                    <p
+                                                        className={`trip-detail__subtle-status trip-detail__subtle-status--${invitationActionFeedback.tone}`}
+                                                        role="status"
+                                                        aria-live="polite"
+                                                    >
                                                         {invitationActionFeedback.message}
                                                     </p>
                                                 )}
@@ -357,8 +383,19 @@ export function TripDetail({
                                     })}
                                 </div>
 
-                                <Button type="button" variant="outline" onClick={() => setHistoryOpen(true)}>
-                                    Invitation History ({invitations.length})
+                                {invitationListFeedback && (
+                                    <p
+                                        className={`trip-detail__feedback trip-detail__feedback--${invitationListFeedback.tone}`}
+                                        role="status"
+                                        aria-live="polite"
+                                    >
+                                        <Icon name={invitationListFeedback.tone === "success" ? "circleCheck" : "circleAlert"} width={16} height={16} />
+                                        {invitationListFeedback.message}
+                                    </p>
+                                )}
+
+                                <Button type="button" variant="outline" onClick={() => setHistoryOpen(true)} className="trip-detail__action trip-detail__action--history">
+                                    Invitation History ({historicalInvitations.length})
                                 </Button>
                             </section>
                         )}
@@ -372,8 +409,8 @@ export function TripDetail({
                 title="Invitation History"
             >
                 <div className="trip-detail__history" aria-label="Invitation history list">
-                    {invitations.length === 0 && <p>No invitation history.</p>}
-                    {invitations.map(invitation => (
+                    {historicalInvitations.length === 0 && <p>No invitation history.</p>}
+                    {historicalInvitations.map(invitation => (
                         <Card key={invitation.id} variant="outlined" className="trip-detail__history-item">
                             <p><strong>{invitationStatusLabel(invitation.status)}</strong></p>
                             <p>{invitation.email}</p>

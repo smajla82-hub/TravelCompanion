@@ -36,15 +36,39 @@ function getRowByToken(token) {
   return expireIfNeeded(db.prepare('SELECT * FROM invitations WHERE token = ?').get(token));
 }
 
+function normalizeInvitationEmail(email) {
+  return String(email ?? '').trim().toLowerCase();
+}
+
+function findPendingInvitationByEmail(tripId, email) {
+  const row = db.prepare(
+    `SELECT * FROM invitations
+     WHERE trip_id = ?
+       AND status = 'pending'
+       AND LOWER(TRIM(email)) = ?
+     ORDER BY created_at DESC
+     LIMIT 1`,
+  ).get(tripId, normalizeInvitationEmail(email));
+  const invitation = expireIfNeeded(row);
+  if (!invitation || invitation.status !== 'pending') {
+    return null;
+  }
+  return mapInvitationRow(invitation);
+}
+
 export function createInvitation(tripId, email, role, invitedByUserId, expiresAt) {
+  const existing = findPendingInvitationByEmail(tripId, email);
+  if (existing) {
+    return { invitation: existing, alreadyGenerated: true };
+  }
   const now = new Date().toISOString();
   const id = randomUUID();
   const token = randomBytes(32).toString('base64url');
   db.prepare(
     `INSERT INTO invitations (id, trip_id, email, role, token, status, invited_by_user_id, expires_at, created_at, updated_at)
      VALUES (?, ?, ?, ?, ?, 'pending', ?, ?, ?, ?)`,
-  ).run(id, tripId, email.trim().toLowerCase(), role, token, invitedByUserId, expiresAt, now, now);
-  return getInvitationById(tripId, id);
+  ).run(id, tripId, normalizeInvitationEmail(email), role, token, invitedByUserId, expiresAt, now, now);
+  return { invitation: getInvitationById(tripId, id), alreadyGenerated: false };
 }
 
 export function getInvitationById(tripId, invitationId) {

@@ -46,6 +46,10 @@ export type Invitation = {
     expiresAt?: string;
 };
 
+export type InvitationCreateResponse = Invitation & {
+    alreadyGenerated?: boolean;
+};
+
 export type LockConflict = {
     lockedBy?: {
         email: string;
@@ -65,7 +69,7 @@ export const SyncedTripApi = {
     invitations: (tripId: string) =>
         apiRequest<Invitation[]>(`/trips/${tripId}/invitations`),
     invite: (tripId: string, email: string, role: "editor" | "viewer") =>
-        apiRequest<Invitation>(`/trips/${tripId}/invitations`, {
+        apiRequest<InvitationCreateResponse>(`/trips/${tripId}/invitations`, {
             method: "POST",
             body: JSON.stringify({ email, role }),
         }),

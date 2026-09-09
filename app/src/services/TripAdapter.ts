@@ -1,6 +1,7 @@
 import type { ItineraryDay, ItineraryItem, ParkingLocation, RecommendedVenue, Trip } from "../types";
 import { TripService } from "./TripService";
 import {
+    type InvitationCreateResponse,
     SyncedTripApi,
     type Invitation,
     type SyncedTrip,
@@ -33,7 +34,7 @@ export type TripAdapter = {
     releaseLock: () => Promise<void>;
     members: () => Promise<TripMember[]>;
     invitations: () => Promise<Invitation[]>;
-    invite: (email: string, role: "editor" | "viewer") => Promise<Invitation>;
+    invite: (email: string, role: "editor" | "viewer") => Promise<InvitationCreateResponse>;
     sendInvitationEmail: (invitationId: string) => Promise<void>;
     revokeInvitation: (id: string) => Promise<void>;
     updateTrip: (trip: Trip) => Promise<Trip>;

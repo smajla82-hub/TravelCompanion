@@ -556,17 +556,19 @@ test('shared trip invitations and roles enforce access', async () => {
     });
     const trip = await createResponse.json();
 
-    const invite = async (user, role) => {
+    const invite = async (user, role, invitedEmail = user.user.email) => {
       const response = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/invitations`, {
         method: 'POST',
         headers: owner.headers,
-        body: JSON.stringify({ email: user.user.email, role }),
+        body: JSON.stringify({ email: invitedEmail, role }),
       });
-      assert.equal(response.status, 201);
-      return response.json();
+      return { status: response.status, body: await response.json() };
     };
-    const editorInvitation = await invite(editor, 'editor');
-    const viewerInvitation = await invite(viewer, 'viewer');
+    const createdEditorInvitation = await invite(editor, 'editor');
+    assert.equal(createdEditorInvitation.status, 201);
+    assert.equal(createdEditorInvitation.body.alreadyGenerated, false);
+    const editorInvitation = createdEditorInvitation.body;
+    const viewerInvitation = (await invite(viewer, 'viewer')).body;
     assert.ok(editorInvitation.token);
     assert.equal(editorInvitation.acceptLink, `/accept-invite/${editorInvitation.token}`);
     const { getDb } = await import('../src/db/db.js');
@@ -599,6 +601,15 @@ test('shared trip invitations and roles enforce access', async () => {
       .prepare('SELECT COUNT(*) AS count FROM invitations WHERE trip_id = ?')
       .get(trip.id).count;
     assert.equal(invitationsAfterResend, invitationsBeforeSend);
+    const duplicateEditorInvitation = await invite(editor, 'viewer', ' shared-editor@example.com ');
+    assert.equal(duplicateEditorInvitation.status, 200);
+    assert.equal(duplicateEditorInvitation.body.alreadyGenerated, true);
+    assert.equal(duplicateEditorInvitation.body.id, editorInvitation.id);
+    assert.equal(duplicateEditorInvitation.body.token, editorInvitation.token);
+    const invitationsAfterDuplicate = getDb()
+      .prepare('SELECT COUNT(*) AS count FROM invitations WHERE trip_id = ?')
+      .get(trip.id).count;
+    assert.equal(invitationsAfterDuplicate, invitationsBeforeSend);
 
     const wrongRecipient = await fetch(`http://127.0.0.1:${port}/invitations/${editorInvitation.token}/accept`, {
       method: 'POST', headers: stranger.headers,
@@ -639,7 +650,7 @@ test('shared trip invitations and roles enforce access', async () => {
     assert.equal(editorDelete.status, 403);
 
     const secondViewer = await registerUser('second-viewer@example.com');
-    const secondViewerInvitation = await invite(secondViewer, 'viewer');
+    const secondViewerInvitation = (await invite(secondViewer, 'viewer')).body;
     const acceptViewer = await fetch(`http://127.0.0.1:${port}/invitations/${secondViewerInvitation.token}/accept`, {
       method: 'POST', headers: secondViewer.headers,
     });
@@ -668,7 +679,7 @@ test('shared trip invitations and roles enforce access', async () => {
     });
     assert.equal(removeOwner.status, 400);
 
-    const revocable = await invite(stranger, 'viewer');
+    const revocable = (await invite(stranger, 'viewer')).body;
     const revoke = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/invitations/${revocable.id}`, {
       method: 'DELETE', headers: owner.headers,
     });
@@ -678,7 +689,7 @@ test('shared trip invitations and roles enforce access', async () => {
     });
     assert.equal(revokedAccept.status, 400);
 
-    const expired = await invite(stranger, 'viewer');
+    const expired = (await invite(stranger, 'viewer')).body;
     getDb().prepare('UPDATE invitations SET expires_at = ? WHERE id = ?').run('2000-01-01T00:00:00.000Z', expired.id);
     const expiredReject = await fetch(`http://127.0.0.1:${port}/invitations/${expired.token}/reject`, {
       method: 'POST', headers: stranger.headers,
@@ -686,6 +697,25 @@ test('shared trip invitations and roles enforce access', async () => {
     assert.equal(expiredReject.status, 400);
     const invitationList = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/invitations`, { headers: owner.headers });
     assert.equal((await invitationList.json()).find((entry) => entry.id === expired.id).status, 'expired');
+
+    const recreatedAfterRevoke = await invite(stranger, 'viewer');
+    assert.equal(recreatedAfterRevoke.status, 201);
+    assert.notEqual(recreatedAfterRevoke.body.id, revocable.id);
+
+    const recreatedAfterAccept = await invite(editor, 'editor');
+    assert.equal(recreatedAfterAccept.status, 201);
+    assert.notEqual(recreatedAfterAccept.body.id, editorInvitation.id);
+
+    const recreatedAfterExpire = await invite(stranger, 'viewer');
+    assert.equal(recreatedAfterExpire.status, 201);
+    assert.notEqual(recreatedAfterExpire.body.id, expired.id);
+
+    const invitationHistory = getDb()
+      .prepare('SELECT id, status FROM invitations WHERE trip_id = ? ORDER BY created_at ASC')
+      .all(trip.id);
+    assert.equal(invitationHistory.some((entry) => entry.id === revocable.id && entry.status === 'revoked'), true);
+    assert.equal(invitationHistory.some((entry) => entry.id === editorInvitation.id && entry.status === 'accepted'), true);
+    assert.equal(invitationHistory.some((entry) => entry.id === expired.id && entry.status === 'expired'), true);
 
     const strangerTrip = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}`, { headers: stranger.headers });
     assert.equal(strangerTrip.status, 404);

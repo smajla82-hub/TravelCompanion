@@ -1,18 +1,17 @@
 import { ApiError } from "../../api/client";
-import type { Invitation } from "../../api/trips";
+import type { Invitation, InvitationCreateResponse } from "../../api/trips";
 
 type Feedback = {
     tone: "success" | "error";
     message: string;
 };
 
-export type InviteDelivery = "link" | "email";
-
-type InvitationResponse = Invitation | { invitation: Invitation };
+type InvitationResponse = InvitationCreateResponse | { invitation: Invitation; alreadyGenerated?: boolean };
 
 type InviteTopActionResult = {
     invitations: Invitation[];
     feedback: Feedback;
+    alreadyGenerated: boolean;
 };
 
 function feedbackMessage(reason: unknown, fallback: string) {
@@ -26,55 +25,78 @@ function resolveInvitation(payload: InvitationResponse) {
     return payload.invitation;
 }
 
+function resolveAlreadyGenerated(payload: InvitationResponse) {
+    return "alreadyGenerated" in payload ? payload.alreadyGenerated === true : false;
+}
+
+function normalizeEmail(email: string) {
+    return email.trim().toLowerCase();
+}
+
+function dedupeById(invitations: Invitation[]) {
+    const seen = new Set<string>();
+    return invitations.filter(invitation => {
+        if (seen.has(invitation.id)) return false;
+        seen.add(invitation.id);
+        return true;
+    });
+}
+
 function mergeInvitation(invitations: Invitation[], invitation: Invitation) {
-    return invitations.some(current => current.id === invitation.id)
-        ? invitations
-        : [invitation, ...invitations];
+    return dedupeById(
+        invitations.some(current => current.id === invitation.id)
+            ? invitations
+            : [invitation, ...invitations],
+    );
 }
 
 export async function runInviteTopAction({
+    email,
     createInvitation,
     listInvitations,
-    sendInvitationEmail,
     currentInvitations,
-    delivery,
 }: {
+    email: string;
     createInvitation: () => Promise<InvitationResponse>;
     listInvitations: () => Promise<Invitation[]>;
-    sendInvitationEmail: (invitationId: string) => Promise<void>;
     currentInvitations: Invitation[];
-    delivery: InviteDelivery;
 }): Promise<InviteTopActionResult> {
+    const existing = currentInvitations.find(invitation =>
+        invitation.status === "pending"
+        && normalizeEmail(invitation.email) === normalizeEmail(email),
+    );
+    if (existing) {
+        return {
+            invitations: dedupeById(currentInvitations),
+            feedback: { tone: "success", message: "Invitation link already generated." },
+            alreadyGenerated: true,
+        };
+    }
+
+    let response: InvitationResponse;
     let createdInvitation: Invitation;
     try {
-        createdInvitation = resolveInvitation(await createInvitation());
+        response = await createInvitation();
+        createdInvitation = resolveInvitation(response);
     } catch (reason) {
         return {
-            invitations: currentInvitations,
+            invitations: dedupeById(currentInvitations),
             feedback: { tone: "error", message: feedbackMessage(reason, "Unable to create invitation.") },
+            alreadyGenerated: false,
         };
     }
 
-    const invitations = await listInvitations()
-        .catch(() => mergeInvitation(currentInvitations, createdInvitation));
-
-    if (delivery === "link") {
-        return {
-            invitations,
-            feedback: { tone: "success", message: "Invitation link created." },
-        };
-    }
-
-    try {
-        await sendInvitationEmail(createdInvitation.id);
-        return {
-            invitations,
-            feedback: { tone: "success", message: "Invitation email sent." },
-        };
-    } catch (reason) {
-        return {
-            invitations,
-            feedback: { tone: "error", message: feedbackMessage(reason, "Unable to send invitation email.") },
-        };
-    }
+    const alreadyGenerated = resolveAlreadyGenerated(response);
+    const invitations = dedupeById(
+        await listInvitations()
+            .catch(() => mergeInvitation(currentInvitations, createdInvitation)),
+    );
+    return {
+        invitations,
+        feedback: {
+            tone: "success",
+            message: alreadyGenerated ? "Invitation link already generated." : "Invitation link created.",
+        },
+        alreadyGenerated,
+    };
 }
