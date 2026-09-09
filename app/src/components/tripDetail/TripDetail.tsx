@@ -9,6 +9,7 @@ import type { Invitation, TripMember } from "../../api/trips";
 import type { Trip } from "../../types";
 import { Button, Card, Icon, Modal, Stack } from "../ui";
 import { lockConflictMessage } from "../sections/lockConflictMessage";
+import { SETTINGS_BACKGROUND_URL } from "../../styles/brandAssets";
 import "./TripDetail.css";
 
 type TripDetailProps = {
@@ -31,6 +32,8 @@ const MEMBER_ROLE_STYLES: Record<TripMember["role"], string> = {
     editor: "trip-detail__role trip-detail__role--editor",
     viewer: "trip-detail__role trip-detail__role--viewer",
 };
+
+export const TRIP_DETAIL_HEADER_BACKGROUND_IMAGE = `linear-gradient(180deg, rgba(15, 23, 42, 0.2) 0%, rgba(15, 23, 42, 0.75) 100%), url("${SETTINGS_BACKGROUND_URL}")`;
 
 function roleLabel(role?: TripMember["role"]) {
     if (!role) return "Member";
@@ -185,7 +188,10 @@ export function TripDetail({
     return (
         <>
             <Stack gap="md" className="trip-detail">
-                <header className="trip-detail__header">
+                <header
+                    className="trip-detail__header"
+                    style={{ backgroundImage: TRIP_DETAIL_HEADER_BACKGROUND_IMAGE }}
+                >
                     <h2>{trip.name ?? trip.destination}</h2>
                     <p>{adapter.source === "online" ? `${roleLabel(role)} access` : "Offline trip"}</p>
                 </header>

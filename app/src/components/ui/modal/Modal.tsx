@@ -6,6 +6,7 @@ import {
 } from "react";
 
 import { Icon } from "../icon/Icon";
+import { lockBodyScroll, unlockBodyScroll } from "./modalScrollLock";
 
 type ModalProps = {
     open: boolean;
@@ -24,12 +25,10 @@ export function Modal({
 }: ModalProps) {
     useEffect(() => {
         if (!open) {
-            document.body.style.overflow = "";
-
             return;
         }
 
-        document.body.style.overflow = "hidden";
+        lockBodyScroll();
 
         const listener = (
             event: KeyboardEvent,
@@ -45,7 +44,7 @@ export function Modal({
         );
 
         return () => {
-            document.body.style.overflow = "";
+            unlockBodyScroll();
 
             window.removeEventListener(
                 "keydown",

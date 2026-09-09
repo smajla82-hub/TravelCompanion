@@ -2,6 +2,7 @@ import { renderToStaticMarkup } from "react-dom/server";
 import { describe, expect, it, vi } from "vitest";
 
 import type { Invitation, TripMember } from "../../api/trips";
+import { SETTINGS_BACKGROUND_URL } from "../../styles/brandAssets";
 
 const mocks = vi.hoisted(() => {
     const createTripAdapter = vi.fn();
@@ -29,7 +30,7 @@ vi.mock("../../utils/selectActiveTrip", () => ({
     isCurrentActiveTrip: mocks.isCurrentActiveTrip,
 }));
 
-import { TripDetail } from "./TripDetail";
+import { TripDetail, TRIP_DETAIL_HEADER_BACKGROUND_IMAGE } from "./TripDetail";
 
 const baseTrip = {
     id: "trip-1",
@@ -57,6 +58,11 @@ const localAdapter = {
 };
 
 describe("TripDetail", () => {
+    it("uses base-aware settings artwork URL for the header background", () => {
+        expect(SETTINGS_BACKGROUND_URL).toContain("/assets/settings_background1440x3200.webp");
+        expect(TRIP_DETAIL_HEADER_BACKGROUND_IMAGE).toContain(`url("${SETTINGS_BACKGROUND_URL}")`);
+    });
+
     it("does not render online collaboration UI for offline trips", () => {
         mocks.createTripAdapter.mockReturnValue(localAdapter);
 
