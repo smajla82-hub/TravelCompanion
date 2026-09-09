@@ -27,6 +27,83 @@ type Feedback = {
     message: string;
 };
 
+type InviteDelivery = "link" | "email";
+
+type InvitationResponse = Invitation | { invitation: Invitation };
+
+type InviteTopActionResult = {
+    invitations: Invitation[];
+    feedback: Feedback;
+};
+
+function feedbackMessage(reason: unknown, fallback: string) {
+    return reason instanceof ApiError ? reason.message : fallback;
+}
+
+function resolveInvitation(payload: InvitationResponse) {
+    if ("id" in payload) {
+        return payload;
+    }
+    return payload.invitation;
+}
+
+function mergeInvitation(invitations: Invitation[], invitation: Invitation) {
+    return invitations.some(current => current.id === invitation.id)
+        ? invitations
+        : [invitation, ...invitations];
+}
+
+export async function runInviteTopAction({
+    createInvitation,
+    listInvitations,
+    sendInvitationEmail,
+    currentInvitations,
+    delivery,
+}: {
+    createInvitation: () => Promise<InvitationResponse>;
+    listInvitations: () => Promise<Invitation[]>;
+    sendInvitationEmail: (invitationId: string) => Promise<void>;
+    currentInvitations: Invitation[];
+    delivery: InviteDelivery;
+}): Promise<InviteTopActionResult> {
+    let createdInvitation: Invitation;
+    try {
+        createdInvitation = resolveInvitation(await createInvitation());
+    } catch (reason) {
+        return {
+            invitations: currentInvitations,
+            feedback: { tone: "error", message: feedbackMessage(reason, "Unable to create invitation.") },
+        };
+    }
+
+    let invitations = currentInvitations;
+    try {
+        invitations = await listInvitations();
+    } catch {
+        invitations = mergeInvitation(currentInvitations, createdInvitation);
+    }
+
+    if (delivery === "link") {
+        return {
+            invitations,
+            feedback: { tone: "success", message: "Invitation link created." },
+        };
+    }
+
+    try {
+        await sendInvitationEmail(createdInvitation.id);
+        return {
+            invitations,
+            feedback: { tone: "success", message: "Invitation email sent." },
+        };
+    } catch (reason) {
+        return {
+            invitations,
+            feedback: { tone: "error", message: feedbackMessage(reason, "Unable to send invitation email.") },
+        };
+    }
+}
+
 const MEMBER_ROLE_STYLES: Record<TripMember["role"], string> = {
     owner: "trip-detail__role trip-detail__role--owner",
     editor: "trip-detail__role trip-detail__role--editor",
@@ -69,9 +146,14 @@ export function TripDetail({
     const [members, setMembers] = useState<TripMember[]>(initialMembers);
     const [invitations, setInvitations] = useState<Invitation[]>(initialInvitations);
     const [feedback, setFeedback] = useState<Feedback | null>(null);
+    const [inviteFeedback, setInviteFeedback] = useState<Feedback | null>(null);
+    const [invitationActionFeedback, setInvitationActionFeedback] = useState<{
+        invitationId: string;
+        message: string;
+    } | null>(null);
     const [copiedInvitationId, setCopiedInvitationId] = useState<string | null>(null);
     const [historyOpen, setHistoryOpen] = useState(initialHistoryOpen);
-    const [pendingAction, setPendingAction] = useState<"link" | "email" | null>(null);
+    const [pendingAction, setPendingAction] = useState<InviteDelivery | null>(null);
     const [emailSendingInvitationId, setEmailSendingInvitationId] = useState<string | null>(null);
 
     const user = AuthService.getUser();
@@ -100,7 +182,8 @@ export function TripDetail({
 
     async function invite(event: React.FormEvent<HTMLFormElement>) {
         event.preventDefault();
-        setFeedback(null);
+        setInviteFeedback(null);
+        setInvitationActionFeedback(null);
         setCopiedInvitationId(null);
 
         const submitter = (event.nativeEvent as SubmitEvent).submitter as HTMLButtonElement | null;
@@ -109,43 +192,38 @@ export function TripDetail({
 
         const form = new FormData(event.currentTarget);
         try {
-            const invitation = await adapter.invite(
-                String(form.get("email") ?? ""),
-                String(form.get("role") ?? "editor") as "editor" | "viewer",
-            );
-            setInvitations(current => [invitation, ...current]);
-
-            if (delivery === "email") {
-                await adapter.sendInvitationEmail(invitation.id);
-                setFeedback({ tone: "success", message: "Invitation email sent." });
-            } else {
-                setFeedback({ tone: "success", message: "Invitation link created." });
-            }
-            event.currentTarget.reset();
-        } catch (reason) {
-            setFeedback({
-                tone: "error",
-                message: reason instanceof ApiError
-                    ? reason.message
-                    : "Unable to create invitation.",
+            const result = await runInviteTopAction({
+                createInvitation: () => adapter.invite(
+                    String(form.get("email") ?? ""),
+                    String(form.get("role") ?? "editor") as "editor" | "viewer",
+                ),
+                listInvitations: () => adapter.invitations(),
+                sendInvitationEmail: invitationId => adapter.sendInvitationEmail(invitationId),
+                currentInvitations: invitations,
+                delivery,
             });
+            setInvitations(result.invitations);
+            setInviteFeedback(result.feedback);
+            event.currentTarget.reset();
         } finally {
             setPendingAction(null);
         }
     }
 
     async function sendInvitationEmail(invitationId: string) {
-        setFeedback(null);
+        setInviteFeedback(null);
+        setInvitationActionFeedback(null);
         setEmailSendingInvitationId(invitationId);
         try {
             await adapter.sendInvitationEmail(invitationId);
-            setFeedback({ tone: "success", message: "Invitation email sent." });
+            setInvitationActionFeedback({
+                invitationId,
+                message: "Invitation email sent.",
+            });
         } catch (reason) {
-            setFeedback({
-                tone: "error",
-                message: reason instanceof ApiError
-                    ? reason.message
-                    : "Unable to send invitation email.",
+            setInvitationActionFeedback({
+                invitationId,
+                message: feedbackMessage(reason, "Unable to send invitation email."),
             });
         } finally {
             setEmailSendingInvitationId(null);
@@ -279,6 +357,16 @@ export function TripDetail({
                                             Send invitation email
                                         </Button>
                                     </div>
+                                    {inviteFeedback && (
+                                        <p
+                                            className={`trip-detail__feedback trip-detail__feedback--${inviteFeedback.tone}`}
+                                            role="status"
+                                            aria-live="polite"
+                                        >
+                                            <Icon name={inviteFeedback.tone === "success" ? "circleCheck" : "circleAlert"} width={16} height={16} />
+                                            {inviteFeedback.message}
+                                        </p>
+                                    )}
                                 </form>
 
                                 <div className="trip-detail__current-invitations">
@@ -332,6 +420,11 @@ export function TripDetail({
                                                 </div>
                                                 {copiedInvitationId === invitation.id && (
                                                     <p className="trip-detail__subtle-status" role="status">Copied.</p>
+                                                )}
+                                                {invitationActionFeedback?.invitationId === invitation.id && (
+                                                    <p className="trip-detail__subtle-status" role="status">
+                                                        {invitationActionFeedback.message}
+                                                    </p>
                                                 )}
                                             </Card>
                                         );
