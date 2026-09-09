@@ -110,7 +110,7 @@ export default function SettingsPage() {
 
         if (
             !window.confirm(
-                "This will overwrite all current data. Continue?"
+                "This will replace local Trips on this device. Continue?"
             )
         ) {
             clearFileInput();

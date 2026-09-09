@@ -111,7 +111,7 @@ export default function AccountPage() {
             setUser(updated);
             setFirstName(updated.firstName ?? "");
             setLastName(updated.lastName ?? "");
-            setProfileMessage("Display name saved.");
+            setProfileMessage("First and last name saved.");
         } catch (reason) {
             setProfileError(
                 reason instanceof ApiError

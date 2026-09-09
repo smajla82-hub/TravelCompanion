@@ -28,6 +28,7 @@ export default function AppRouter() {
             <Route path="/account" element={<AccountPage />} />
             <Route path="/reset-password/:token" element={<ResetPasswordPage />} />
             <Route path={`${ACCEPT_INVITE_PATH_PREFIX}:token`} element={<AcceptInvitationPage />} />
+            <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
     );
 }
