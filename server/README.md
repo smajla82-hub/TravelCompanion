@@ -88,6 +88,8 @@ curl http://localhost:3001/trips \
 
 `POST /auth/register` and `POST /auth/login` are rate-limited per IP (20 requests / 15 minutes) to reduce brute-force/credential-stuffing risk. `POST /auth/reset-password` shares that same limiter. `POST /auth/forgot-password` uses its own stricter limiter (5 requests / 15 minutes per IP), since each request can trigger an outbound email. `GET /auth/me`, `PUT /auth/profile` and all `/trips` routes use a more permissive general limiter, since they already require a valid JWT.
 
+In production the API is expected to sit behind exactly one trusted reverse-proxy hop (`Caddy -> localhost:3001 -> Express`), so the app sets `trust proxy` to `1`. Direct local development requests still work normally without any proxy headers.
+
 ## API surface
 
 The API intentionally mirrors the current Trip/itinerary domain model without coupling the frontend to it yet.
