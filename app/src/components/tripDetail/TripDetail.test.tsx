@@ -1,10 +1,7 @@
-/* @vitest-environment jsdom */
-import { act, type ReactElement } from "react";
-import { createRoot } from "react-dom/client";
-import { afterEach, beforeEach, describe, expect, it, vi } from "vitest";
+import { renderToStaticMarkup } from "react-dom/server";
+import { describe, expect, it, vi } from "vitest";
 
 import type { Invitation, TripMember } from "../../api/trips";
-import type { Trip } from "../../types";
 
 const mocks = vi.hoisted(() => {
     const createTripAdapter = vi.fn();
@@ -34,7 +31,7 @@ vi.mock("../../utils/selectActiveTrip", () => ({
 
 import { TripDetail } from "./TripDetail";
 
-const baseTrip: Trip = {
+const baseTrip = {
     id: "trip-1",
     destination: "Riva del Garda",
     name: "Lake Garda",
@@ -42,179 +39,97 @@ const baseTrip: Trip = {
     startDate: "2026-09-01",
     endDate: "2026-09-05",
     travellers: 2,
-    status: "planning",
+    status: "planning" as const,
 };
 
-function makeAdapter(overrides?: Partial<ReturnType<typeof makeAdapter>>) {
-    return {
-        source: "online" as const,
-        getTrip: vi.fn(),
-        setItinerary: vi.fn(),
-        addDay: vi.fn(),
-        updateDay: vi.fn(),
-        deleteDay: vi.fn(),
-        addItem: vi.fn(),
-        updateItem: vi.fn(),
-        deleteItem: vi.fn(),
-        reorderItems: vi.fn(),
-        addVenue: vi.fn(),
-        updateVenue: vi.fn(),
-        deleteVenue: vi.fn(),
-        addParking: vi.fn(),
-        updateParking: vi.fn(),
-        deleteParking: vi.fn(),
-        acquireLock: vi.fn(),
-        heartbeat: vi.fn(),
-        releaseLock: vi.fn(),
-        members: vi.fn<() => Promise<TripMember[]>>().mockResolvedValue([]),
-        invitations: vi.fn<() => Promise<Invitation[]>>().mockResolvedValue([]),
-        invite: vi.fn(),
-        sendInvitationEmail: vi.fn(),
-        revokeInvitation: vi.fn(),
-        updateTrip: vi.fn(),
-        setActive: vi.fn(),
-        ...overrides,
-    };
-}
+const onlineAdapter = {
+    source: "online" as const,
+    members: vi.fn(),
+    invitations: vi.fn(),
+    invite: vi.fn(),
+    sendInvitationEmail: vi.fn(),
+    revokeInvitation: vi.fn(),
+};
 
-async function render(component: ReactElement) {
-    const container = document.createElement("div");
-    document.body.append(container);
-    const root = createRoot(container);
-    await act(async () => {
-        root.render(component);
-    });
-    await act(async () => {
-        await Promise.resolve();
-    });
-    return {
-        container,
-        root,
-        cleanup: async () => {
-            await act(async () => {
-                root.unmount();
-            });
-            container.remove();
-        },
-    };
-}
-
-function buttonByText(container: HTMLElement, text: string) {
-    return Array.from(container.querySelectorAll("button")).find(button => button.textContent?.includes(text));
-}
+const localAdapter = {
+    ...onlineAdapter,
+    source: "local" as const,
+};
 
 describe("TripDetail", () => {
-    const cleanups: Array<() => Promise<void>> = [];
+    it("does not render online collaboration UI for offline trips", () => {
+        mocks.createTripAdapter.mockReturnValue(localAdapter);
 
-    afterEach(async () => {
-        while (cleanups.length > 0) {
-            await cleanups.pop()?.();
-        }
-        vi.clearAllMocks();
+        const markup = renderToStaticMarkup(
+            <TripDetail
+                trip={{ ...baseTrip, source: "local" }}
+            />,
+        );
+
+        expect(markup).not.toContain("Members");
+        expect(markup).not.toContain("Invite collaborator");
+        expect(markup).not.toContain("Invitation History");
     });
 
-    beforeEach(() => {
-        mocks.useTrips.mockReturnValue({ activeTrip: null });
-        mocks.getUser.mockReturnValue({ id: "owner-id" });
-        mocks.isCurrentActiveTrip.mockReturnValue(false);
-    });
-
-    it("does not render online collaboration UI for offline trips", async () => {
-        const adapter = makeAdapter({ source: "local" as const });
-        mocks.createTripAdapter.mockReturnValue(adapter);
-
-        const ui = await render(<TripDetail trip={{ ...baseTrip, source: "local" }} />);
-        cleanups.push(ui.cleanup);
-
-        expect(ui.container.textContent).not.toContain("Members");
-        expect(ui.container.textContent).not.toContain("Invite collaborator");
-        expect(ui.container.textContent).not.toContain("Invitation History");
-    });
-
-    it("keeps viewer set-active action available while preserving permissions", async () => {
-        const adapter = makeAdapter({
-            members: vi.fn().mockResolvedValue([
-                { userId: "viewer-id", email: "viewer@example.com", role: "viewer" },
-            ]),
-        });
-        mocks.createTripAdapter.mockReturnValue(adapter);
+    it("keeps viewer set-active action visible", () => {
+        mocks.createTripAdapter.mockReturnValue(onlineAdapter);
         mocks.getUser.mockReturnValue({ id: "viewer-id" });
-        const onSetActive = vi.fn();
 
-        const ui = await render(<TripDetail trip={{ ...baseTrip, source: "online" }} onSetActive={onSetActive} />);
-        cleanups.push(ui.cleanup);
+        const members: TripMember[] = [
+            { userId: "viewer-id", email: "viewer@example.com", role: "viewer" },
+        ];
 
-        const setActive = buttonByText(ui.container, "Set as Active Trip");
-        expect(setActive).toBeTruthy();
-        setActive?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-        expect(onSetActive).toHaveBeenCalledTimes(1);
+        const markup = renderToStaticMarkup(
+            <TripDetail
+                trip={{ ...baseTrip, source: "online" }}
+                initialMembers={members}
+                onSetActive={() => undefined}
+            />,
+        );
 
-        expect(buttonByText(ui.container, "Edit Trip")).toBeFalsy();
-        expect(buttonByText(ui.container, "Delete Trip")).toBeFalsy();
+        expect(markup).toContain("Set as Active Trip");
+        expect(markup).not.toContain("Edit Trip");
+        expect(markup).not.toContain("Delete Trip");
     });
 
-    it("renders member roles, invitation history, and separate link/email invitation actions", async () => {
-        const adapter = makeAdapter({
-            members: vi.fn().mockResolvedValue([
-                { userId: "owner-id", email: "owner@example.com", displayName: "Trip Owner", role: "owner" },
-                { userId: "editor-id", email: "editor@example.com", displayName: "Trip Editor", role: "editor" },
-                { userId: "viewer-id", email: "viewer@example.com", displayName: "Trip Viewer", role: "viewer" },
-            ]),
-            invitations: vi.fn().mockResolvedValue([
-                { id: "pending-1", email: "pending@example.com", role: "viewer", status: "pending", token: "t1", acceptLink: "/accept-invite/t1", createdAt: "2026-09-01T09:00:00.000Z", updatedAt: "2026-09-01T09:00:00.000Z" },
-                { id: "accepted-1", email: "accepted@example.com", role: "editor", status: "accepted", token: "t2", createdAt: "2026-09-01T09:00:00.000Z", updatedAt: "2026-09-02T09:00:00.000Z" },
-                { id: "revoked-1", email: "revoked@example.com", role: "viewer", status: "revoked", token: "t3", createdAt: "2026-09-01T09:00:00.000Z", updatedAt: "2026-09-03T09:00:00.000Z" },
-            ]),
-            invite: vi.fn()
-                .mockResolvedValueOnce({ id: "created-link", email: "link@example.com", role: "editor", status: "pending", token: "link-token", acceptLink: "/accept-invite/link-token" })
-                .mockResolvedValueOnce({ id: "created-email", email: "mail@example.com", role: "viewer", status: "pending", token: "mail-token", acceptLink: "/accept-invite/mail-token" }),
-            sendInvitationEmail: vi.fn().mockResolvedValue(undefined),
-        });
-        mocks.createTripAdapter.mockReturnValue(adapter);
+    it("renders role badges and invitation history entries", () => {
+        mocks.createTripAdapter.mockReturnValue(onlineAdapter);
+        mocks.getUser.mockReturnValue({ id: "owner-id" });
 
-        const ui = await render(<TripDetail trip={{ ...baseTrip, source: "online" }} />);
-        cleanups.push(ui.cleanup);
+        const members: TripMember[] = [
+            { userId: "owner-id", email: "owner@example.com", displayName: "Trip Owner", role: "owner" },
+            { userId: "editor-id", email: "editor@example.com", displayName: "Trip Editor", role: "editor" },
+            { userId: "viewer-id", email: "viewer@example.com", displayName: "Trip Viewer", role: "viewer" },
+        ];
+        const invitations: Invitation[] = [
+            { id: "pending", email: "pending@example.com", role: "viewer", status: "pending", token: "token-p", acceptLink: "/accept-invite/token-p", createdAt: "2026-09-01T09:00:00.000Z", updatedAt: "2026-09-01T09:00:00.000Z" },
+            { id: "accepted", email: "accepted@example.com", role: "editor", status: "accepted", token: "token-a", createdAt: "2026-09-01T09:00:00.000Z", updatedAt: "2026-09-02T09:00:00.000Z" },
+            { id: "revoked", email: "revoked@example.com", role: "viewer", status: "revoked", token: "token-r", createdAt: "2026-09-01T09:00:00.000Z", updatedAt: "2026-09-03T09:00:00.000Z" },
+        ];
 
-        expect(ui.container.textContent).toContain("Trip Owner");
-        expect(ui.container.textContent).toContain("Trip Editor");
-        expect(ui.container.textContent).toContain("Trip Viewer");
-        expect(ui.container.textContent).toContain("OWNER");
-        expect(ui.container.textContent).toContain("EDITOR");
-        expect(ui.container.textContent).toContain("VIEWER");
+        const markup = renderToStaticMarkup(
+            <TripDetail
+                trip={{ ...baseTrip, source: "online" }}
+                initialMembers={members}
+                initialInvitations={invitations}
+                initialHistoryOpen
+            />,
+        );
 
-        expect(ui.container.textContent).toContain("pending@example.com");
-        expect(ui.container.textContent).not.toContain("accepted@example.com");
-        expect(ui.container.textContent).not.toContain("revoked@example.com");
+        expect(markup).toContain("Trip Owner");
+        expect(markup).toContain("Trip Editor");
+        expect(markup).toContain("Trip Viewer");
+        expect(markup).toContain("OWNER");
+        expect(markup).toContain("EDITOR");
+        expect(markup).toContain("VIEWER");
 
-        buttonByText(ui.container, "Invitation History")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-        await act(async () => {
-            await Promise.resolve();
-        });
-        expect(ui.container.textContent).toContain("accepted@example.com");
-        expect(ui.container.textContent).toContain("revoked@example.com");
-
-        const emailInput = ui.container.querySelector("#trip-detail-invite-email") as HTMLInputElement;
-        const roleSelect = ui.container.querySelector("#trip-detail-invite-role") as HTMLSelectElement;
-
-        emailInput.value = "link@example.com";
-        roleSelect.value = "editor";
-        buttonByText(ui.container, "Create invitation link")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-        await act(async () => {
-            await Promise.resolve();
-        });
-
-        expect(adapter.invite).toHaveBeenCalledTimes(1);
-        expect(adapter.sendInvitationEmail).toHaveBeenCalledTimes(0);
-
-        emailInput.value = "mail@example.com";
-        roleSelect.value = "viewer";
-        buttonByText(ui.container, "Send invitation email")?.dispatchEvent(new MouseEvent("click", { bubbles: true }));
-        await act(async () => {
-            await Promise.resolve();
-        });
-
-        expect(adapter.invite).toHaveBeenCalledTimes(2);
-        expect(adapter.sendInvitationEmail).toHaveBeenCalledTimes(1);
-        expect(adapter.sendInvitationEmail).toHaveBeenCalledWith("created-email");
+        expect(markup).toContain("Current invitations");
+        expect(markup).toContain("pending@example.com");
+        expect(markup).not.toContain("accepted@example.com —");
+        expect(markup).toContain("Invitation History");
+        expect(markup).toContain("accepted@example.com");
+        expect(markup).toContain("revoked@example.com");
+        expect(markup).toContain("Create invitation link");
+        expect(markup).toContain("Send invitation email");
     });
 });

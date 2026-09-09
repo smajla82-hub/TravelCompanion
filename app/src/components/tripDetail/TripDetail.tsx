@@ -16,6 +16,9 @@ type TripDetailProps = {
     onEdit?: () => void;
     onDelete?: () => void;
     onSetActive?: () => void;
+    initialMembers?: TripMember[];
+    initialInvitations?: Invitation[];
+    initialHistoryOpen?: boolean;
 };
 
 type Feedback = {
@@ -55,13 +58,16 @@ export function TripDetail({
     onEdit,
     onDelete,
     onSetActive,
+    initialMembers = [],
+    initialInvitations = [],
+    initialHistoryOpen = false,
 }: TripDetailProps) {
     const adapter = useMemo(() => createTripAdapter(trip), [trip]);
-    const [members, setMembers] = useState<TripMember[]>([]);
-    const [invitations, setInvitations] = useState<Invitation[]>([]);
+    const [members, setMembers] = useState<TripMember[]>(initialMembers);
+    const [invitations, setInvitations] = useState<Invitation[]>(initialInvitations);
     const [feedback, setFeedback] = useState<Feedback | null>(null);
     const [copiedInvitationId, setCopiedInvitationId] = useState<string | null>(null);
-    const [historyOpen, setHistoryOpen] = useState(false);
+    const [historyOpen, setHistoryOpen] = useState(initialHistoryOpen);
     const [pendingAction, setPendingAction] = useState<"link" | "email" | null>(null);
     const [emailSendingInvitationId, setEmailSendingInvitationId] = useState<string | null>(null);
 
@@ -273,8 +279,11 @@ export function TripDetail({
                                     <h4>Current invitations</h4>
                                     {currentInvitations.length === 0 && <p>No pending invitations.</p>}
                                     {currentInvitations.map(invitation => {
+                                        const origin = typeof window === "undefined"
+                                            ? "https://travel-companion.local"
+                                            : window.location.origin;
                                         const inviteLink = invitation.acceptLink
-                                            ? buildInviteShareLink(window.location.origin, invitation.acceptLink)
+                                            ? buildInviteShareLink(origin, invitation.acceptLink)
                                             : undefined;
 
                                         return (
