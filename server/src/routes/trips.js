@@ -80,7 +80,7 @@ export function createTripRoutes() {
     return res.json(activeTrip);
   });
 
-  router.put('/:id/active', requireTripRole(['owner', 'editor']), requireActiveLock(currentTrip), (req, res) => {
+  router.put('/:id/active', requireTripRole(['owner', 'editor', 'viewer']), (req, res) => {
     const activeTrip = repo.setActiveTrip(req.params.id, req.user.id);
     return res.json(activeTrip);
   });

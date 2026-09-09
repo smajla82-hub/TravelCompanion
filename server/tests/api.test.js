@@ -409,6 +409,65 @@ test('active trips are selected independently for each authenticated user', asyn
   }
 });
 
+test('shared trip viewers can set that trip as their own active trip without an edit lock', async () => {
+  const { server, port } = await startServer();
+  try {
+    const registerUser = async (email) => {
+      const response = await fetch(`http://127.0.0.1:${port}/auth/register`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email, password: 'super-secret-1' }),
+      });
+      const { token, user } = await response.json();
+      return { user, headers: { 'Content-Type': 'application/json', Authorization: 'Bearer ' + token } };
+    };
+    const owner = await registerUser('viewer-active-owner@example.com');
+    const viewer = await registerUser('viewer-active-viewer@example.com');
+
+    const createResponse = await fetch(`http://127.0.0.1:${port}/trips`, {
+      method: 'POST',
+      headers: owner.headers,
+      body: JSON.stringify({ name: 'Viewer active trip', startDate: '2026-10-01', endDate: '2026-10-03' }),
+    });
+    const trip = await createResponse.json();
+
+    const invitationResponse = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/invitations`, {
+      method: 'POST',
+      headers: owner.headers,
+      body: JSON.stringify({ email: viewer.user.email, role: 'viewer' }),
+    });
+    assert.equal(invitationResponse.status, 201);
+    const invitation = await invitationResponse.json();
+
+    const acceptViewer = await fetch(`http://127.0.0.1:${port}/invitations/${invitation.token}/accept`, {
+      method: 'POST',
+      headers: viewer.headers,
+    });
+    assert.equal(acceptViewer.status, 200);
+
+    const activateViewerTrip = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/active`, {
+      method: 'PUT',
+      headers: viewer.headers,
+    });
+    assert.equal(activateViewerTrip.status, 200);
+    assert.equal((await activateViewerTrip.json()).id, trip.id);
+
+    const activeTrip = await fetch(`http://127.0.0.1:${port}/trips/active`, { headers: viewer.headers });
+    assert.equal(activeTrip.status, 200);
+    assert.equal((await activeTrip.json()).id, trip.id);
+
+    const viewerLock = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/lock`, {
+      method: 'POST',
+      headers: viewer.headers,
+    });
+    assert.equal(viewerLock.status, 403);
+  } finally {
+    await new Promise((resolve, reject) => {
+      server.close((error) => (error ? reject(error) : resolve()));
+    });
+  }
+});
+
 test('legacy unowned trips remain authenticated ownerless shared data', async () => {
   const { server, port } = await startServer();
   try {
