@@ -6,10 +6,12 @@ import {
 } from "react";
 
 import { Icon } from "../icon/Icon";
+import { lockBodyScroll, unlockBodyScroll } from "./modalScrollLock";
 
 type ModalProps = {
     open: boolean;
     title?: string;
+    ariaLabel?: string;
     children: ReactNode;
     onClose: () => void;
 };
@@ -17,17 +19,16 @@ type ModalProps = {
 export function Modal({
     open,
     title,
+    ariaLabel,
     children,
     onClose,
 }: ModalProps) {
     useEffect(() => {
         if (!open) {
-            document.body.style.overflow = "";
-
             return;
         }
 
-        document.body.style.overflow = "hidden";
+        lockBodyScroll();
 
         const listener = (
             event: KeyboardEvent,
@@ -43,7 +44,7 @@ export function Modal({
         );
 
         return () => {
-            document.body.style.overflow = "";
+            unlockBodyScroll();
 
             window.removeEventListener(
                 "keydown",
@@ -66,6 +67,7 @@ export function Modal({
                 onClick={(e) => e.stopPropagation()}
                 role="dialog"
                 aria-modal="true"
+                aria-label={title ? undefined : ariaLabel}
                 aria-labelledby={
                     title
                         ? "tc-modal-title"

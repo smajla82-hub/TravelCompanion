@@ -34,6 +34,7 @@ export type TripAdapter = {
     members: () => Promise<TripMember[]>;
     invitations: () => Promise<Invitation[]>;
     invite: (email: string, role: "editor" | "viewer") => Promise<Invitation>;
+    sendInvitationEmail: (invitationId: string) => Promise<void>;
     revokeInvitation: (id: string) => Promise<void>;
     updateTrip: (trip: Trip) => Promise<Trip>;
     setActive: () => Promise<Trip>;
@@ -70,6 +71,7 @@ function localAdapter(tripId: string): TripAdapter {
         members: async () => [],
         invitations: async () => [],
         invite: async () => Promise.reject(new Error("Invitations are only available online.")),
+        sendInvitationEmail: async () => Promise.reject(new Error("Invitations are only available online.")),
         revokeInvitation: async () => undefined,
         updateTrip: async trip => { TripService.update(trip); return trip; },
         setActive: async () => {
@@ -229,6 +231,9 @@ export function createTripAdapter(trip: Pick<Trip, "id" | "source"> | SyncedTrip
         members: () => SyncedTripApi.members(tripId),
         invitations: () => SyncedTripApi.invitations(tripId),
         invite: (email, role) => SyncedTripApi.invite(tripId, email, role),
+        sendInvitationEmail: async invitationId => {
+            await SyncedTripApi.sendInvitationEmail(tripId, invitationId);
+        },
         revokeInvitation: async id => { await SyncedTripApi.revokeInvitation(tripId, id); },
         updateTrip: updated => withLock(async () => toOnlineTrip(await SyncedTripApi.update(tripId, {
             ...updated,

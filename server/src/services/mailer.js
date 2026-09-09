@@ -106,3 +106,20 @@ export async function sendPasswordResetEmail(email, resetLink, expiresInMinutes)
 
   return sendMail({ to: email, subject, text, html });
 }
+
+export async function sendTripInvitationEmail({ email, tripName, acceptLink, role, expiresAt }) {
+  const subject = `You're invited to collaborate on ${tripName || 'a Travel Companion trip'}`;
+  const text = [
+    `You've been invited to join "${tripName || 'a trip'}" as ${role}.`,
+    '',
+    `Open invitation: ${acceptLink}`,
+    '',
+    `This invitation expires on ${new Date(expiresAt).toLocaleString()}.`,
+  ].join('\n');
+  const html = `
+    <p>You've been invited to join <strong>${tripName || 'a trip'}</strong> as <strong>${role}</strong>.</p>
+    <p><a href="${acceptLink}">Open invitation</a></p>
+    <p>This invitation expires on ${new Date(expiresAt).toLocaleString()}.</p>
+  `;
+  return sendMail({ to: email, subject, text, html });
+}

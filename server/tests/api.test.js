@@ -569,6 +569,23 @@ test('shared trip invitations and roles enforce access', async () => {
     const viewerInvitation = await invite(viewer, 'viewer');
     assert.ok(editorInvitation.token);
     assert.equal(editorInvitation.acceptLink, `/accept-invite/${editorInvitation.token}`);
+    const { getDb } = await import('../src/db/db.js');
+    const invitationsBeforeSend = getDb()
+      .prepare('SELECT COUNT(*) AS count FROM invitations WHERE trip_id = ?')
+      .get(trip.id).count;
+
+    const sendInvitationEmail = await fetch(`http://127.0.0.1:${port}/trips/${trip.id}/invitations/${editorInvitation.id}/send-email`, {
+      method: 'POST',
+      headers: owner.headers,
+    });
+    assert.equal(sendInvitationEmail.status, 200);
+    const sentInvitationPayload = await sendInvitationEmail.json();
+    assert.equal(sentInvitationPayload.sent, true);
+    assert.equal(sentInvitationPayload.invitation.id, editorInvitation.id);
+    const invitationsAfterSend = getDb()
+      .prepare('SELECT COUNT(*) AS count FROM invitations WHERE trip_id = ?')
+      .get(trip.id).count;
+    assert.equal(invitationsAfterSend, invitationsBeforeSend);
 
     const wrongRecipient = await fetch(`http://127.0.0.1:${port}/invitations/${editorInvitation.token}/accept`, {
       method: 'POST', headers: stranger.headers,
@@ -649,7 +666,6 @@ test('shared trip invitations and roles enforce access', async () => {
     assert.equal(revokedAccept.status, 400);
 
     const expired = await invite(stranger, 'viewer');
-    const { getDb } = await import('../src/db/db.js');
     getDb().prepare('UPDATE invitations SET expires_at = ? WHERE id = ?').run('2000-01-01T00:00:00.000Z', expired.id);
     const expiredReject = await fetch(`http://127.0.0.1:${port}/invitations/${expired.token}/reject`, {
       method: 'POST', headers: stranger.headers,

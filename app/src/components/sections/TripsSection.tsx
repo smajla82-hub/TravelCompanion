@@ -156,7 +156,7 @@ export function TripsSection({
 
             <Modal
                 open={selectedTrip !== null}
-                title="Trip Detail"
+                ariaLabel={selectedTrip ? `Trip detail for ${selectedTrip.name ?? selectedTrip.destination}` : "Trip detail"}
                 onClose={closeDetail}
             >
                 {selectedTrip && (

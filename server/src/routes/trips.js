@@ -9,6 +9,7 @@ import { requireTripRole } from '../middleware/tripRole.js';
 import { requireActiveLock } from '../middleware/tripLock.js';
 import { config } from '../config.js';
 import { RATE_LIMIT_WINDOW_MS } from '../middleware/rateLimitWindow.js';
+import { sendTripInvitationEmail } from '../services/mailer.js';
 
 function ensureExists(value, message) {
   if (!value) {
@@ -28,6 +29,18 @@ function isValidEmail(email) {
 
 function lockExpiry() {
   return new Date(Date.now() + config.tripLockTtlMs).toISOString();
+}
+
+function invitationAcceptPath(token) {
+  return `/accept-invite/${token}`;
+}
+
+function invitationAcceptUrl(token) {
+  return `${config.appBaseUrl}${invitationAcceptPath(token)}`;
+}
+
+function toInvitationPayload(invitation) {
+  return { ...invitation, acceptLink: invitationAcceptPath(invitation.token) };
 }
 
 function currentTrip(req) {
@@ -262,11 +275,35 @@ export function createTripRoutes() {
     }
     const expiresAt = new Date(Date.now() + config.invitationExpiresInDays * 24 * 60 * 60 * 1000).toISOString();
     const invitation = invitations.createInvitation(req.params.tripId, email, role, req.user.id, expiresAt);
-    return res.status(201).json({ ...invitation, acceptLink: `/accept-invite/${invitation.token}` });
+    return res.status(201).json(toInvitationPayload(invitation));
   });
 
   router.get('/:tripId/invitations', requireTripRole(['owner']), (req, res) => {
-    res.json(invitations.listInvitations(req.params.tripId));
+    res.json(invitations.listInvitations(req.params.tripId).map(toInvitationPayload));
+  });
+
+  router.post('/:tripId/invitations/:invitationId/send-email', requireTripRole(['owner']), async (req, res, next) => {
+    try {
+      const invitation = invitations.getInvitationById(req.params.tripId, req.params.invitationId);
+      if (!invitation) {
+        return res.status(404).json({ error: 'Invitation not found.' });
+      }
+      if (invitation.status !== 'pending') {
+        return res.status(400).json({ error: `Invitation is ${invitation.status}.` });
+      }
+      const trip = repo.getTripById(req.params.tripId, req.user.id);
+      ensureExists(trip, 'Trip not found.');
+      await sendTripInvitationEmail({
+        email: invitation.email,
+        tripName: trip.name,
+        acceptLink: invitationAcceptUrl(invitation.token),
+        role: invitation.role,
+        expiresAt: invitation.expiresAt,
+      });
+      return res.json({ sent: true, invitation: toInvitationPayload(invitation) });
+    } catch (error) {
+      return next(error);
+    }
   });
 
   router.delete('/:tripId/invitations/:invitationId', requireTripRole(['owner']), (req, res) => {
